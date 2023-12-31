@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Barcode Scanner</title>
+    {% load static %}
+    <script src="{% static 'js/quagga.min.js' %}"></script>
+</head>
+<body>
+    <h1>Barcode Scanner</h1>
+    <input type="file" accept="image/*" id="cameraInput" style="display: none">
+    <button onclick="captureAndScan()">Capture and Scan Barcode</button>
+    <p id="result">Scanned barcode will appear here</p>
+
+    <script>
+        function captureAndScan() {
+            const cameraInput = document.getElementById('cameraInput');
+            cameraInput.click();
+        }
+
+        document.getElementById('cameraInput').addEventListener('change', function(event) {
+            const files = event.target.files;
+            if (files.length > 0) {
+                const file = files[0];
+                const imageUrl = URL.createObjectURL(file);
+
+                // Display the image in a video element (optional)
+                const videoElement = document.createElement('video');
+                videoElement.src = imageUrl;
+                document.body.appendChild(videoElement);
+
+                // Scan barcode using QuaggaJS
+                Quagga.decodeSingle({
+                    src: imageUrl,
+                    numOfWorkers: 0,  // Default value
+                    inputStream: {
+                        size: 800  // adjust the size as needed
+                    },
+                    decoder: {
+                        readers: ['ean_reader']
+                    },
+                }, function(result) {
+                    // Handle the result
+                    const resultElement = document.getElementById('result');
+                    if (result && result.codeResult) {
+                        resultElement.innerText = `Scanned barcode: ${result.codeResult.code}`;
+                    } else {
+                        resultElement.innerText = 'No barcode detected';
+                    }
+
+                    // Discard the image (optional)
+                    URL.revokeObjectURL(imageUrl);
+
+                    // Remove the video element from the DOM (optional)
+                    document.body.removeChild(videoElement);
+                });
+            }
+        });
+    </script>
+</body>
+</html>

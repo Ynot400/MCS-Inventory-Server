@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    .button {
+    display: inline-block;
+    padding: 10px 20px;
+    background-color: #3498db;
+    color: #fff;
+    text-decoration: none;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+  </style>
+</head>
+<body>
+  {% block content %}
+  <div class="container-fluid mt-3">
+    <div class="row">
+        <div class="col-lg-12 col-md-12 col-sm-12 position-relative">
+            <!-- Use a div as a wrapper to position the button at the bottom middle -->
+            <div class="d-flex flex-column align-items-center justify-content-center h-100">
+                <a href="{% url 'dashboard' %}" class="btn marine-color btn-lg btn-block">Inventory Dashboard</a>
+            </div>
+        </div>
+        <div class="col-lg-4 col-md-4 col-sm-12">
+            <!-- Sidebar or additional content -->
+        </div>
+    </div>
+</div>
+
+
+  {% endblock %}
+</body>
+</html>
