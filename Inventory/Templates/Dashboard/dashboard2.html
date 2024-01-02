@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<style>
+  body {
+    background-color: #f8f9fa;
+  }
+
+  .dashboard-container {
+    max-width: 600px;
+    margin: 20px auto;
+  }
+
+  .dashboard-button {
+    width: 275px;
+    height: 275px;
+    margin: 10px;
+    font-size: 18px;
+  }
+</style>
+
+
+
+<h1>Dashboard</h1>
+<div class="container-fluid dashboard-container">
+  <div class="row">
+    <div class="col-md-6 col-sm-6">
+      <a href="{% url 'inventory' %}" class="btn btn-primary btn-lg btn-block dashboard-button">Add, Delete, Edit Inventory</a>
+    </div>
+  </div>
+</div>
+
+
+{% endblock content%}

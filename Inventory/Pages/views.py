@@ -8,10 +8,13 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 
 class Dashboard(LoginRequiredMixin, View):
    def get(self, request):
-      return render(request, 'Dashboard/dashboard.html')
+      if request.user.groups.filter(name='Inventory Technician').exists():
+        return render(request, 'Dashboard/dashboard2.html')
+      else:
+         return render(request, 'Dashboard/dashboard1.html')
 
 
-class DashboardInventory(View):
+class DashboardInventory(LoginRequiredMixin, View):
    items = None
    def get(self, request):
       form = SearchForm()
@@ -37,7 +40,7 @@ class DashboardInventory(View):
 
 
 
-class SignUpView(View):
+class SignUpView(LoginRequiredMixin, View):
   def get(self, request):
       form = UserRegisterForm()
       return render(request, 'signup.html', {'form': form})
