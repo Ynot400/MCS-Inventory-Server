@@ -16,26 +16,32 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
-from Pages.views import home_View, SignUpView, DashboardInventory, Dashboard, scan_barcode
-from Products.views import AddProduct, EditProduct, DeleteProduct
-from detect_barcodes.views import detect, camera_feed
+from Pages.views import home_View, SignUpView, DashboardInventory, Dashboard, ScanBarcode, QRCodeLogin
+from Products.views import AddProduct, EditProduct, DeleteProduct, update_quantity
 from django.contrib.auth import views as auth_views
 from django.conf import settings
 from django.conf.urls.static import static
+from barcodes.views import CreateBarcode, CreateQRCode, ProductFinder, PrintBarcode
 
 urlpatterns = [
     path('', home_View, name='home'),
     path('signup/', SignUpView.as_view(), name='signup'),
+    path('admin/', admin.site.urls, name='admin'),
     path('dashboard/admin/', admin.site.urls, name='admin'),
     path('login/', auth_views.LoginView.as_view(template_name = 'login.html'), name='login'),
+    path('QRCode-login', QRCodeLogin.as_view(), name='QR-login'),
     path('logout/', auth_views.LogoutView.as_view(template_name='logout.html'), name='logout'),
     path('dashboard/', Dashboard.as_view(), name='dashboard'),
     path('dashboard/inventory/', DashboardInventory.as_view(), name='inventory'),
+    path('dashboard/print-barcode/', PrintBarcode.as_view(), name='print-barcode'),
     path('add-product/', AddProduct.as_view(), name='add-product'),
     path('edit-product/<int:pk>', EditProduct.as_view(), name='edit-product'),
     path('delete-product/<int:pk>', DeleteProduct.as_view(), name='delete-product'),
     #path('dashboard/scan/', scan_barcode, name='scan_barcode'),
-    path('barcode/scan', detect, name='detect_barcodes'),
-    path('barcode/camera_feed', camera_feed, name='camera_feed'),
+    path('dashboard/quantity-modifier', ProductFinder.as_view(), name='barcode-quantity'),
+    path('scan/', ScanBarcode.as_view(), name='detect_barcodes'),
+    path('dashboard/create-barcode', CreateBarcode.as_view(), name='create-barcode'),
+    path('dashboard/create-QRCode', CreateQRCode.as_view(), name='create-QRCode'),
+    path('update_model/', update_quantity, name='update_model'),
    #path('detail/', )
 ] 

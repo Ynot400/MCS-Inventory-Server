@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block content %}
+<style>
+  body {
+      font-family: Arial, sans-serif;
+      background-color: #f8f9fa;
+      margin: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+  }
+
+  .error-container {
+      text-align: center;
+      padding: 20px;
+      border: 2px solid #dc3545;
+      border-radius: 8px;
+      background-color: #f8d7da;
+  }
+
+  h1 {
+      color: #dc3545;
+  }
+</style>
+
+
+<div class="error-container">
+  <h1>Something went wrong, please try again</h1>
+  <div class="alert alert-dismissible alert-danger">
+    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    <strong>{{error}}</strong>
+</div>
+</div>
+
+{% endblock %}

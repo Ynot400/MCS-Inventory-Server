@@ -94,3 +94,135 @@ Updated: qwertyu - Quantity: 4567 - Location: 01-06-05-03 - ID: na
 2023-12-30 14:47:01,360 INFO -- User JLuke added a product: Testoing (Quantity: 2343)
 2023-12-30 14:55:29,108 INFO -- User Ynot40 deleted Testoing with quantity: 2343  
 2023-12-30 15:04:39,321 INFO -- User Ynot40 added a product: Test (Quantity: 234)
+2024-01-03 11:15:45,817 INFO -- User JLuke deleted Test with quantity: 234  
+2024-01-03 11:16:33,211 INFO -- User JLuke added a product: Seakeeper 3 (Quantity: 232)
+2024-01-10 13:57:39,292 INFO -- User JLuke added a product: Chicken Butt (Quantity: 324)
+2024-01-15 17:33:27,678 INFO -- User JLuke added a product: Testing Product (Quantity: 231)
+2024-01-15 17:49:29,204 INFO -- User JLuke deleted Chicken Butt with quantity: 324  
+2024-01-15 17:49:30,937 INFO -- User JLuke deleted Seakeeper 3 with quantity: 232  
+2024-01-15 17:49:32,606 INFO -- User JLuke deleted Testing Product with quantity: 231  
+2024-01-15 17:49:55,675 INFO -- User JLuke added a product: Test (Quantity: 23443)
+2024-01-15 17:50:24,477 INFO -- User Ynot40 added a product: New Product (Quantity: 234)
+2024-01-15 18:04:09,136 INFO -- User JLuke added a product: Shreya (Quantity: 825)
+2024-01-16 23:07:34,288 INFO -- User JLuke added a product: TatayPwet (Quantity: 1)
+2024-01-17 14:00:18,009 INFO -- User JLuke added a product: IsaacPowell (Quantity: 1)
+2024-01-17 17:19:48,504 INFO -- User JLuke added a product: Emma Zverinsky (Quantity: 1)
+2024-01-20 22:32:07,899 INFO -- User JLuke added a product: dsf (Quantity: 234)
+2024-01-20 22:32:38,824 INFO -- User JLuke edited a product:
+Original: Emma Zverinsky - Quantity: 1 - Location: Palm COa - Part Number: Silly, fun, girl - Retail: 1.0 - Cost: 199.58
+Updated: Emma Zverinsky - Quantity: 1 - Location: Palm COa - Part Number: Silly, fun, girl - Retail: 1.00 - Cost: 199.58
+2024-01-20 22:34:19,326 INFO -- User JLuke added a product: Tebow (Quantity: 234)
+2024-01-20 22:37:38,270 INFO -- User JLuke added a product: fesdf (Quantity: 229)
+2024-01-20 22:38:24,172 INFO -- User JLuke deleted New Product with quantity: 234  
+2024-01-20 22:38:26,991 INFO -- User JLuke deleted fesdf with quantity: 229  
+2024-01-20 22:38:29,307 INFO -- User JLuke deleted Test with quantity: 23443  
+2024-01-20 22:38:31,574 INFO -- User JLuke deleted Shreya with quantity: 825  
+2024-01-20 22:38:34,036 INFO -- User JLuke deleted Tebow with quantity: 234  
+2024-01-20 22:38:49,210 INFO -- User JLuke added a product: sdf (Quantity: 32)
+2024-01-20 22:42:57,076 INFO -- User JLuke added a product: zdvsdg (Quantity: 3232)
+2024-01-20 22:43:16,637 INFO -- User JLuke added a product: Testing (Quantity: 324)
+2024-01-20 22:44:03,572 INFO -- User JLuke deleted dsf with quantity: 234  
+2024-01-20 22:44:06,417 INFO -- User JLuke deleted sdf with quantity: 32  
+2024-01-20 22:44:33,793 INFO -- User Ynot40 added a product: fdsadsgdsgvdsagd (Quantity: 2338)
+2024-01-20 22:44:47,454 INFO -- User JLuke deleted zdvsdg with quantity: 3232  
+2024-01-20 22:44:48,910 INFO -- User JLuke deleted fdsadsgdsgvdsagd with quantity: 2338  
+2024-01-20 22:44:50,632 INFO -- User JLuke deleted Testing with quantity: 324  
+2024-01-20 23:33:08,904 INFO -- User JLuke edited a product:
+Original: Emma Zverinsky - Quantity: 1 - Location: Palm COa - Part Number: Silly, fun, girl - Retail: 1.0 - Cost: 199.58
+Updated: Emma Zverinsky - Quantity: 1 - Location: Palm COa - Part Number: Silly, fun, girl - Retail: 1.00 - Cost: 199.58
+2024-01-20 23:33:20,530 INFO -- User JLuke edited a product:
+Original: Emma Zverinsky - Quantity: 1 - Location: Palm COa - Part Number: Silly, fun, girl - Retail: 1.0 - Cost: 199.58
+Updated: Emma Zverinsky - Quantity: 1 - Location: Palm COa - Part Number: Silly, fun, girl - Retail: 1.00 - Cost: 199.58
+2024-01-28 16:23:42,259 INFO -- User JLuke added a product: Tebow (Quantity: 322)
+2024-01-29 23:25:50,363 INFO -- User JLuke alterred Tebow's quantity from : 322 to F(quantity) + Value(0)
+2024-01-29 23:28:08,422 INFO -- User JLuke alterred Tebow's quantity from : 322 to F(quantity) + Value(0)
+2024-01-29 23:28:31,948 INFO -- User JLuke alterred Tebow's quantity from : 322 to F(quantity) + Value(0)
+2024-01-29 23:29:23,720 INFO -- User JLuke alterred Tebow's quantity from : 322 to F(quantity) + Value(3)
+2024-01-29 23:34:08,437 INFO -- User JLuke alterred Tebow's quantity from : 325 to F(quantity) + Value(6)
+2024-01-29 23:34:29,898 INFO -- User JLuke alterred Tebow's quantity from : 331 to F(quantity) + Value(-3)
+2024-01-29 23:35:16,327 INFO -- User JLuke alterred Tebow's quantity from : 328 to 423
+2024-01-29 23:35:30,461 INFO -- User JLuke alterred Tebow's quantity from : 423 to 213
+2024-01-29 23:35:45,565 INFO -- User JLuke alterred Tebow's quantity from : 213 to -179
+2024-01-29 23:35:55,464 INFO -- User JLuke alterred Tebow's quantity from : -179 to 61
+2024-01-29 23:36:36,768 INFO -- User JLuke alterred Emma Zverinsky's quantity from : 1 to -5
+2024-01-29 23:36:46,200 INFO -- User JLuke alterred Emma Zverinsky's quantity from : -5 to -2
+2024-01-29 23:36:55,318 INFO -- User JLuke alterred Emma Zverinsky's quantity from : -2 to 5
+2024-02-01 14:26:01,825 INFO -- User JLuke added a product: RosBot (Quantity: -1)
+2024-02-01 14:26:25,387 INFO -- User JLuke edited a product:
+Original: RosBot - Quantity: -1 - Location: 123-2412-324 - Part Number: 3224wasdsad - Retail: 99.43 - Cost: 14.23
+Updated: RosBot - Quantity: 2 - Location: 123-2412-324 - Part Number: 3224wasdsad - Retail: 99.43 - Cost: 14.23
+2024-02-01 14:27:05,287 INFO -- User JLuke added a product: Chicken (Quantity: 1231)
+2024-02-01 14:27:12,012 INFO -- User JLuke added a product: Chicken (Quantity: 1231)
+2024-02-01 14:27:15,941 INFO -- User JLuke deleted Chicken with quantity: 1231  
+2024-02-01 14:30:16,493 INFO -- User JLuke alterred RosBot's quantity from : 2 to 137
+2024-02-01 14:30:51,856 INFO -- User JLuke alterred Chicken's quantity from : 1231 to 1364
+2024-02-04 10:18:33,213 INFO -- User JLuke added a product: Mario Clock (Quantity: 332)
+2024-02-04 15:59:15,714 INFO -- User Barcode alterred RosBot's quantity from : 137 to 210
+2024-02-04 15:59:24,207 INFO -- User Barcode alterred Mario Clock's quantity from : 332 to 425
+2024-02-04 15:59:32,302 INFO -- User Barcode alterred Tebow's quantity from : 61 to 70
+2024-02-04 15:59:47,658 INFO -- User Barcode alterred TatayPwet's quantity from : 1 to 9
+2024-02-04 15:59:50,786 INFO -- User Barcode alterred TatayPwet's quantity from : 9 to 12
+2024-02-04 16:00:05,176 INFO -- User Barcode alterred IsaacPowell's quantity from : 1 to -92
+2024-02-04 16:00:08,692 INFO -- User Barcode alterred RosBot's quantity from : 210 to 212
+2024-02-04 16:00:11,806 INFO -- User Barcode alterred Emma Zverinsky's quantity from : 5 to 7
+2024-02-04 16:00:17,278 INFO -- User Barcode alterred Chicken's quantity from : 1364 to 1369
+2024-02-04 16:00:51,565 INFO -- User Barcode alterred Chicken's quantity from : 1369 to 1377
+2024-02-04 16:00:56,788 INFO -- User Barcode alterred RosBot's quantity from : 212 to 217
+2024-02-04 16:01:01,966 INFO -- User Barcode alterred Chicken's quantity from : 1377 to 1384
+2024-02-04 16:01:07,449 INFO -- User Barcode alterred Mario Clock's quantity from : 425 to 465
+2024-02-04 16:57:31,222 INFO -- User Barcode alterred Tebow's quantity from : 70 to 110
+2024-02-04 16:57:38,107 INFO -- User Barcode alterred Mario Clock's quantity from : 465 to 466
+2024-02-04 16:57:42,921 INFO -- User Barcode alterred RosBot's quantity from : 217 to 219
+2024-02-04 16:57:45,778 INFO -- User Barcode alterred TatayPwet's quantity from : 12 to 12
+2024-02-04 16:57:49,576 INFO -- User Barcode alterred IsaacPowell's quantity from : -92 to -92
+2024-02-04 16:57:52,246 INFO -- User Barcode alterred Chicken's quantity from : 1384 to 1384
+2024-02-04 16:58:06,576 INFO -- User Barcode alterred Chicken's quantity from : 1384 to 1384
+2024-02-04 16:58:25,043 INFO -- User Barcode alterred Chicken's quantity from : 1384 to 1384
+2024-02-04 16:58:34,654 INFO -- User Barcode alterred Chicken's quantity from : 1384 to 1384
+2024-02-04 16:58:49,488 INFO -- User Barcode alterred Chicken's quantity from : 1384 to 1384
+2024-02-04 16:59:07,264 INFO -- User Barcode alterred IsaacPowell's quantity from : -92 to -87
+2024-02-04 17:04:31,345 INFO -- User Barcode alterred Tebow's quantity from : 110 to 133
+2024-02-04 17:04:44,594 INFO -- User Barcode alterred Emma Zverinsky's quantity from : 7 to 10
+2024-02-04 17:04:52,123 INFO -- User Barcode alterred Mario Clock's quantity from : 466 to 468
+2024-02-04 17:05:28,295 INFO -- User Barcode alterred Chicken's quantity from : 1384 to 1388
+2024-02-16 23:48:26,187 INFO -- User Ynot40 added a product: Skibidi (Quantity: 324)
+2024-02-16 23:58:35,758 INFO -- User Ynot40 alterred Skibidi's quantity from : 324 to 330
+2024-02-17 00:33:13,953 INFO -- User Ynot40 alterred Skibidi's quantity from : 330 to 336
+2024-02-17 00:35:16,417 INFO -- User Ynot40 alterred Skibidi's quantity from : 336 to 340
+2024-02-17 00:35:40,085 INFO -- User Ynot40 alterred Skibidi's quantity from : 340 to 342
+2024-02-17 00:37:21,761 INFO -- User Ynot40 alterred Skibidi's quantity from : 342 to 337
+2024-02-17 00:42:24,002 INFO -- User Ynot40 alterred Skibidi's quantity from : 337 to 334
+2024-02-17 00:43:01,423 INFO -- User Ynot40 alterred Skibidi's quantity from : 334 to 244
+2024-02-17 00:43:17,067 INFO -- User Ynot40 alterred Skibidi's quantity from : 244 to 0
+2024-02-17 00:49:00,278 INFO -- User Ynot40 alterred Skibidi's quantity from : 0 to 6
+2024-02-17 12:15:49,793 INFO -- User Ynot40 alterred Skibidi's quantity from : 6 to 13
+2024-02-17 12:19:24,549 INFO -- User Ynot40 alterred Skibidi's quantity from : 13 to 15
+2024-02-17 12:21:03,438 INFO -- User Ynot40 alterred Skibidi's quantity from : 15 to 65
+2024-02-17 12:22:49,894 INFO -- User Ynot40 alterred Skibidi's quantity from : 65 to 95
+2024-02-17 12:25:16,331 INFO -- User Ynot40 alterred Mario Clock's quantity from : 468 to 471
+2024-02-17 12:25:59,040 INFO -- User Ynot40 alterred TatayPwet's quantity from : 12 to 14
+2024-02-17 12:28:48,375 INFO -- User JLuke added a product: Seakeeper 4 (Quantity: 33)
+2024-02-17 12:30:16,466 INFO -- User Ynot40 alterred Seakeeper 4's quantity from : 33 to 47
+2024-02-23 11:31:16,255 INFO -- User JLuke added a product: Slave - Josiah (Quantity: 1)
+2024-02-23 11:32:03,067 INFO -- User JLuke deleted Slave - Josiah with quantity: 1  
+2024-02-23 23:21:14,394 INFO -- User Ynot40 alterred Chicken's quantity from : 1388 to 1390
+2024-02-23 23:21:30,597 INFO -- User Ynot40 alterred Emma Zverinsky's quantity from : 10 to 13
+2024-02-23 23:21:48,167 INFO -- User Ynot40 alterred IsaacPowell's quantity from : -87 to 0
+2024-02-23 23:21:58,545 INFO -- User Ynot40 alterred Mario Clock's quantity from : 471 to 479
+2024-02-23 23:24:03,033 INFO -- User Ynot40 alterred Chicken's quantity from : 1390 to 1430
+2024-02-23 23:24:17,798 INFO -- User Ynot40 alterred Emma Zverinsky's quantity from : 13 to 3
+2024-02-23 23:24:35,745 INFO -- User Ynot40 alterred Mario Clock's quantity from : 479 to 480
+2024-02-23 23:26:24,071 INFO -- User Ynot40 alterred IsaacPowell's quantity from : 0 to 5
+2024-02-23 23:29:23,929 INFO -- User Ynot40 alterred IsaacPowell's quantity from : 5 to 10
+2024-02-24 00:03:23,398 INFO -- Inventory Technician Ynot40 edited a product:
+Original: Chicken - Quantity: 1430 - Location: aefaf213 - Part Number: wqrqwef
+Updated: aefaf213 - Test test lots Test test lotsTest test lotsTest test lotsTest test lotsTest test lotsTest test lotsTest test lotsTest test lotsTest test lotsTest test
+2024-02-24 00:03:27,386 INFO -- Inventory Technician Ynot40 edited a product:
+Original: Skibidi - Quantity: 95 - Location: 32432wef - Part Number: 324df
+Updated: 32432wef - Just a thing for testing
+2024-02-24 00:03:41,714 INFO -- Inventory Technician Ynot40 edited a product:
+Original: TatayPwet - Quantity: 14 - Location: Bathroom - Part Number: Jets
+Updated: Bathroom - Description of product
+2024-02-24 00:13:04,485 INFO -- Inventory Technician Ynot40 edited a product:
+Original: Chicken - Quantity: 1430 - Location: aefaf213 - Part Number: wqrqwef
+Updated: aefaf213 - Test test lots Test test lotsTest test lotsTest test lotsTest test lotsTest test lotsTest test lotsTest test lotsTest test lotsTest test lotsTest test

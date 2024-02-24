@@ -1,4 +1,5 @@
 {% load static %}
+{% load auth_extras %}
 <style>
   .nav-text {
     color: #1c2e3e;
@@ -14,38 +15,105 @@
     width: 120px;
     height: auto;
   }
+  @media (max-width: 767px) {
+            /* Styles for small screens */
+            .responsive-image {
+                width: 85px;  /* Adjust the size for smaller screens */
+            
+            }
+            .nav-text {
+                font-size: 23px;  /* Adjust the font size for smaller screens */
+            }
+            .navbar-toggler {
+                margin-left: 10px;
+                font-size: 10px; 
+            }
+        }
+  
+  @media (min-width: 768px) {
+    /* Styles for larger screens */
+    .navbar-nav {
+      display: flex;
+      align-items: center;
+    }
+
+    .navbar-nav .nav-item {
+      margin-right: 20px; /* Adjust the margin between items */
+    }
+
+    .navbar-nav .nav-link {
+      font-size: 20px; /* Adjust the font size */
+    }
+  }
+
 </style>
 
 
 <nav class="navbar navbar-expand-lg marine-color">
   <div class="container-fluid">
-    <img class="responsive-image" src="{% static 'images/mcs_logo.png' %}" alt="mcs logo">
-    <a class="navbar-brand nav-text" href="{% url 'home' %}">MCS Inventory Manager</a>
-    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-      <span class="navbar-toggler-icon"></span>
-    </button>
-    
-    <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
-      <ul class="navbar-nav">
-        {% if user.is_authenticated %}
+      <div class="d-flex align-items-center">
+          <img class="responsive-image" src="{% static 'images/mcs_logo.png' %}" alt="mcs logo">
+          <a class="navbar-brand nav-text" href="{% url 'home' %}">MCS Inventory Manager</a>
+      </div>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+          <span class="navbar-toggler-icon"></span>
+      </button>
+      
+      <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
+          <ul class="navbar-nav">
+            {% if user.is_authenticated and user.is_superuser %}
+            <li class="nav-item">
+              <strong class="nav-link nav-text" href="#">{{user.username}}</strong>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link nav-text" href="{% url 'inventory' %}">Inventory</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link nav-text" href="{% url 'create-barcode' %}">Generate Barcode</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link nav-text" href="{% url 'create-QRCode' %}">Generate Employee QRCode</a>
+            </li>
+            <li class="nav-item">
+              <form class="nav-text" method="post" action="{% url 'logout' %}">
+                {% csrf_token %}
+                <button type="submit" class="nav-link" style="border: none; background: none; cursor: pointer;">Sign out</button>
+              </form>
+            </li>
+          {% elif request.user|has_group:"Inventory Technician" %}
           <li class="nav-item">
-            <a class="nav-link nav-text" href="#">{{user.username}}</a>
+            <strong class="nav-link nav-text" href="#">{{user.username}}</strong>
           </li>
           <li class="nav-item">
+            <a class="nav-link nav-text" href="{% url 'detect_barcodes' %}">Inventory Scanning</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link nav-text" href="{% url 'create-barcode' %}">Generate Barcode</a>
+          </li>
+          <li class="nav-item">
+            <a href="{% url 'detect_barcodes' %}" class="nav-link nav-text">Edit Quantity with Barcode Scanning</a>
+          </li>
             <form class="nav-text" method="post" action="{% url 'logout' %}">
               {% csrf_token %}
               <button type="submit" class="nav-link" style="border: none; background: none; cursor: pointer;">Sign out</button>
             </form>
           </li>
-        {% else %}
-          <li class="nav-item nav-text">
-            <a class="nav-link text-color" href="{% url 'login' %}">Login</a>
+          {% elif request.user|has_group:"Shop Technician" %}
+          <li class="nav-item">
+            <strong class="nav-link nav-text" href="#">{{user.username}}</strong>
           </li>
-          <li class="nav-item nav-text">
-            <a class="nav-link" href="{% url 'signup' %}">Sign Up</a>
+          <li class="nav-item">
+            <a class="nav-link nav-text" href="{% url 'detect_barcodes' %}">Inventory Scanning</a>
           </li>
-        {% endif %}
-      </ul>
-    </div>
+          {% else %}
+            <li class="nav-item nav-text">
+              <a class="nav-link text-color" href="{% url 'login' %}">Login</a>
+            </li>
+            <li class="nav-item nav-text">
+              <a class="nav-link" href="{% url 'signup' %}">Sign Up</a>
+            </li>
+          {% endif %}
+        </ul>
+      </div>
   </div>
 </nav>

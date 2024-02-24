@@ -2,7 +2,7 @@ from django.http import HttpResponse
 from django.shortcuts import render, redirect
 from django.views.generic import TemplateView, View
 from django.contrib.auth import authenticate, login
-from .form import UserRegisterForm, SearchForm
+from .form import UserRegisterForm, SearchForm1
 from Products.models import Product
 from django.contrib.auth.mixins import LoginRequiredMixin
 
@@ -10,19 +10,22 @@ class Dashboard(LoginRequiredMixin, View):
    def get(self, request):
       if request.user.groups.filter(name='Inventory Technician').exists():
         return render(request, 'Dashboard/dashboard2.html')
-      else:
-         return render(request, 'Dashboard/dashboard1.html')
+      elif request.user.is_superuser:
+        return render(request, 'Dashboard/dashboard1.html')
+      elif request.user.groups.filter(name='Shop Technician').exists():
+         return render(request, 'Dashboard/dashboard3.html')
 
 
 class DashboardInventory(LoginRequiredMixin, View):
    items = None
    def get(self, request):
-      form = SearchForm()
-      self.items = Product.objects.order_by('title')
-      return render(request, 'Dashboard/inventory.html', {'items':self.items, 'form': form})
+      form = SearchForm1()
+      # self.items = Product.objects.order_by('title')
+      is_inventory_technician = request.user.groups.filter(name='Inventory Technician').exists()
+      return render(request, 'Dashboard/inventory.html', {'items':self.items, 'form': form, 'is_inventory_technician': is_inventory_technician})
    def post(self, request):
       if request.method == 'POST':
-        form = SearchForm(request.POST)
+        form = SearchForm1(request.POST)
         if form.is_valid():
           selectedOption = form.cleaned_data['inventory_field']
           if selectedOption == 'Show All':
@@ -35,12 +38,35 @@ class DashboardInventory(LoginRequiredMixin, View):
             else:   # If search field is empty, show all products
               self.items = Product.objects.order_by('title')
         else:
-          form = SearchForm()
-      return render(request, 'Dashboard/inventory.html', {'items': self.items, 'form': form})
+          form = SearchForm1()
+      is_inventory_technician = request.user.groups.filter(name='Inventory Technician').exists()
+      return render(request, 'Dashboard/inventory.html', {'items': self.items, 'form': form, 'is_inventory_technician': is_inventory_technician})
 
 
+class QRCodeLogin(View):
+    def get(self, request):
+        return render(request, 'QRCode_login.html')
 
-class SignUpView(LoginRequiredMixin, View):
+    def post(self, request):
+        if request.method == 'POST':
+            qr_data = request.POST.get('scannedData', '')
+            try:
+                username, password = qr_data.split(':')
+                user = authenticate(request, username=username, password=password)
+
+                if user is not None:
+                    login(request, user)
+                    if user.groups.filter(name='Inventory Technician').exists():
+                      return render(request, 'Dashboard/dashboard2.html')
+                    elif user.is_superuser:
+                      return render(request, 'Dashboard/dashboard1.html')
+                else:
+                    return render(request, 'QRCode_login.html', {'error': 'Invalid username or password'})
+
+            except Exception as e:
+                return render(request, 'QRCode_login.html', {'error': e})
+
+class SignUpView(View):
   def get(self, request):
       form = UserRegisterForm()
       return render(request, 'signup.html', {'form': form})
@@ -53,13 +79,20 @@ class SignUpView(LoginRequiredMixin, View):
           password=form.cleaned_data['password1']
         )
         login(request, user)
-        return redirect('home')
+        return redirect('dashboard')
       return render(request, 'signup.html', {'form': form})
 
 
-def scan_barcode(request):
-    return render(request, 'Dashboard/scan_barcode.html')
+class ScanBarcode(LoginRequiredMixin, View):
+    def get(self, request):
+      return render(request, 'Dashboard/scan_barcode.html')
+    def post(self, request):
+       return redirect(request, 'Dashboard/scan_barcode.html')
   
 
 def home_View(request):
-   return render(request, 'home.html')
+  if request.user.groups.filter(name='Inventory Technician').exists():
+    return render(request, 'Dashboard/dashboard2.html')
+  elif request.user.is_superuser:
+    return render(request, 'Dashboard/dashboard1.html')
+  return render(request, 'home.html')

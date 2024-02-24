@@ -11,20 +11,24 @@ class UserRegisterForm(UserCreationForm):
     fields = ['username', 'email', 'password1', 'password2']
 
 class ProductForm(forms.ModelForm):
+ 
   class Meta:
     model = Product
-    fields = ['title', 'location_ID', 'product_ID', 'quantity', 'vendor', 'admin_field_price1', 'admin_field_price2']
+    fields = ['title', 'description', 'location_ID', 'product_ID', 'quantity', 'vendor', 'high_priority', 'admin_field_price1', 'admin_field_price2']
     labels = {
             'title': 'Product Name',
+            'description': 'Description',
             'location_ID': 'Location ID',
             'product_ID': 'Part Number',
             'quantity': 'Quantity',
             'vendor': 'Vendor',
+            'high_priority': 'Does this product have high priority?',
             'admin_field_price1': 'Retail',
             'admin_field_price2': 'Cost',
         }
   def __init__(self, *args, **kwargs):
       # Extract user from kwargs or provide a default
+
       self.user = kwargs.pop('user', None) or User.objects.get(username='default_admin')
 
       # Call the parent constructor
@@ -34,15 +38,34 @@ class ProductForm(forms.ModelForm):
       if not self.user.is_superuser:
           del self.fields['admin_field_price1']
           del self.fields['admin_field_price2']
+      self.fields['description'].widget.attrs['placeholder'] = 'Enter product description and/or overstock information here.'
 
-class SearchForm(forms.ModelForm):
+class ProductForm2(forms.ModelForm):
+    class Meta:
+        model = Product
+        fields = ['location_ID', 'description']
+
+    def __init__(self, *args, **kwargs):
+        super(ProductForm2, self).__init__(*args, **kwargs)
+        self.fields['location_ID'].widget.attrs.update({
+            'class': 'form-control',
+            'placeholder': 'Enter location id',
+        })
+        self.fields['description'].widget.attrs.update({
+            'class': 'form-control',
+            'placeholder': 'Enter description',
+        })
+
+
+class SearchForm1(forms.ModelForm):
    class Meta:
       model = Search
       fields = ['inventory_field', 'search_field']
    def __init__(self, *args, **kwargs):
-    super(SearchForm, self).__init__(*args, **kwargs)
+    super(SearchForm1, self).__init__(*args, **kwargs)
 
     self.fields['inventory_field'].widget = forms.Select(choices=[('title', 'Product Name'), ('product_ID', 'Product ID'), ('location_ID', 'Location'), ('vendor', 'Vendor'), ('Show All', 'Show All')])
 
     self.fields['inventory_field'].label = 'Search based on'
     self.fields['search_field'].label = 'Search for:'
+

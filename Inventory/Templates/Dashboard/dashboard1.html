@@ -8,39 +8,82 @@
   }
 
   .dashboard-container {
-    max-width: 600px;
-    margin: 20px auto;
+    max-width: 100%;
+    display: flex;
+    justify-content: center; /* Center the rows horizontally */
+    align-items: center; /* Center the rows vertically */
   }
 
   .dashboard-button {
-    width: 275px;
-    height: 275px;
-    margin: 10px;
-    font-size: 18px;
+    width: 270px;
+    height: 270px;
+    margin: 15px;
+    font-size: 30px;
+    background-color: #6DB2EE;
+    border: none;
+    color: white;
+    text-align: center;
+    text-decoration: none;
+    display: flex;
+    align-items: center; /* Align text vertically */
+    justify-content: center; /* Align text horizontally */
+    cursor: pointer;
+    border-radius: 5px;
+  }
+
+  .dashboard-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 5px;
+  }
+
+  .dashboard-col {
+    flex-basis: calc(20% - 10px);
+  }
+
+  /* Additional styles for smaller screens */
+  @media (max-width: 600px) {
+    .dashboard-row {
+      flex-wrap: wrap;
+    }
+
+    .dashboard-col {
+      flex-basis: calc(50% - 10px)%;
+    }
+  }
+
+  .col-12, .col-sm-6, .col-md-4, .col-lg-3 {
+    padding: 2; /* or a smaller value if you want less space */
   }
 </style>
 
 
-
-<h1>Dashboard</h1>
 <div class="container-fluid dashboard-container">
-  <div class="row">
-    <div class="col-md-6 col-sm-6">
-      <a href="{% url 'inventory' %}" class="btn btn-primary btn-lg btn-block dashboard-button">Add, Delete, Edit Inventory</a>
+  <div class="row justify-content-center">
+    <div class="col-12 col-sm-6 col-md-4 col-lg-3 d-flex align-items-center">
+      <a href="{% url 'inventory' %}" class="btn btn-primary btn-block dashboard-button">Add, Delete, Edit Inventory</a>
     </div>
-    <div class="col-md-6 col-sm-6">
-      <a href="admin" class="btn btn-success btn-lg btn-block dashboard-button">Admin Settings</a>
+    <div class="col-12 col-sm-6 col-md-4 col-lg-3 d-flex align-items-center">
+      <a href="admin" class="btn btn-success btn-block dashboard-button">Admin Settings</a>
     </div>
-  </div>
-  <div class="row">
-    <div class="col-md-6 col-sm-6">
-      <a href="#section3" class="btn btn-info btn-lg btn-block dashboard-button">Placeholder Text</a>
+    <div class="col-12 col-sm-6 col-md-4 col-lg-3 d-flex align-items-center">
+      <a href="{% url 'create-barcode' %}" class="btn btn-info btn-block dashboard-button">Barcode Creation</a>
     </div>
-    <div class="col-md-6 col-sm-6">
-      <a href="#section4" class="btn btn-warning btn-lg btn-block dashboard-button">Placeholder Text</a>
+    <div class="col-12 col-sm-6 col-md-4 col-lg-3 d-flex align-items-center">
+      <a href="{% url 'create-QRCode' %}" class="btn btn-warning btn-block dashboard-button">Employee QRCode Creation</a>
     </div>
-  </div>
-</div>
-
-
-{% endblock content%}
+    <div class="col-12 col-sm-6 col-md-4 col-lg-3 d-flex align-items-center">
+      <a href="#" class="btn btn-primary btn-block dashboard-button">User Report</a>
+    </div>
+    <div class="col-12 col-sm-6 col-md-4 col-lg-3 d-flex align-items-center">
+      <a href="{% url 'print-barcode' %}" class="btn btn-success btn-block dashboard-button">Print Barcodes</a>
+    </div>
+    <div class="col-12 col-sm-6 col-md-4 col-lg-3 d-flex align-items-center">
+      <a href="#" class="btn btn-info btn-block dashboard-button">Placeholder</a>
+    </div>
+    <div class="col-12 col-sm-6 col-md-4 col-lg-3 d-flex align-items-center">
+      <a href="#" class="btn btn-warning btn-block dashboard-button">Placeholder</a>
+        </div>
+      </div>
+    </div>
+{% endblock %}

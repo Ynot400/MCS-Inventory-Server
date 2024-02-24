@@ -27,9 +27,8 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-)5eh9f4ocd794y6owo^@3@6(qx@n+h^8&7p79(iz(sm292x30z'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
-
-ALLOWED_HOSTS = ['127.0.0.1','192.168.0.201','0.0.0.0']
+DEBUG = False
+ALLOWED_HOSTS = ['*']
 
 
 
@@ -77,6 +76,7 @@ LOGGING = {
 # Application definition
 
 INSTALLED_APPS = [
+    'whitenoise.runserver_nostatic',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -87,12 +87,12 @@ INSTALLED_APPS = [
     'Pages',
     'crispy_forms',
     'crispy_bootstrap5',
-    'detect_barcodes',
-    'generate_barcodes',
+    'barcodes',
 ]
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -168,12 +168,13 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.0/howto/static-files/
 
-STATIC_URL = 'static/'
+STATIC_URL = '/staticfiles/'
 MEDIA_URL = '/images/'
-STATICFILES_DIRS = [
-  BASE_DIR / 'static'
-]
-
+# STATICFILES_DIRS = [
+#   BASE_DIR / 'static',
+# ]
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+STATIC_ROOT = BASE_DIR / "staticfiles"
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
 
@@ -184,3 +185,13 @@ CRISPY_TEMPLATE_PACK = "bootstrap5"
 
 LOGIN_REDIRECT_URL = '/dashboard'
 LOGIN_URL = 'login'
+# email configuration
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_HOST_USER = 'mcsinventorymanagement@gmail.com'
+EMAIL_HOST_PASSWORD = 'ojzsufcezaibmvkr'
+EMAIL_USE_TLS = True
+
+#EMAIL_USE_SSL = True
+

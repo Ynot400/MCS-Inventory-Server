@@ -2,8 +2,11 @@ asgiref==3.7.2
 crispy-bootstrap5==2023.10
 Django==5.0
 django-crispy-forms==2.1
+gunicorn==21.2.0
+mysqlclient==2.2.4
 numpy==1.26.2
 opencv-python==4.8.1.78
+packaging==23.2
 Pillow==10.1.0
 pypng==0.20220715.0
 python-barcode==0.15.1

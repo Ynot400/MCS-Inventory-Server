@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<style>
+  body {
+    background-color: #f8f9fa;
+  }
+
+  .dashboard-container {
+    max-width: 100%;
+    display: flex;
+    justify-content: center; /* Center the rows horizontally */
+    align-items: center; /* Center the rows vertically */
+  }
+
+  .dashboard-button {
+    width: 280px;
+    height: 280px;
+    margin: 15px;
+    font-size: 30px;
+    background-color: #6DB2EE;
+    border: none;
+    color: white;
+    text-align: center;
+    text-decoration: none;
+    display: flex;
+    align-items: center; /* Align text vertically */
+    justify-content: center; /* Align text horizontally */
+    cursor: pointer;
+    border-radius: 5px;
+  }
+
+  .dashboard-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 5px;
+  }
+
+  .dashboard-col {
+    flex-basis: calc(20% - 10px);
+  }
+
+  /* Additional styles for smaller screens */
+  @media (max-width: 600px) {
+    .dashboard-row {
+      flex-wrap: wrap;
+    }
+
+    .dashboard-col {
+      flex-basis: calc(50% - 10px)%;
+    }
+  }
+
+  .col-12, .col-sm-6, .col-md-4, .col-lg-3 {
+    padding: 2; /* or a smaller value if you want less space */
+  }
+</style>
+
+
+<div class="container-fluid dashboard-container">
+  <div class="row justify-content-center">
+    <div class="col-12 col-sm-6 col-md-4 col-lg-3 d-flex align-items-center">
+      <a href="{% url 'detect_barcodes' %}" class="btn btn-success btn-block dashboard-button">Barcode Scanning Edit Quantity</a>
+    </div>
+  </div>
+</div>
+{% endblock %}
