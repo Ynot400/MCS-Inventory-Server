@@ -4,7 +4,8 @@ crispy-bootstrap5==2023.10
 Django==5.0
 django-crispy-forms==2.1
 gunicorn==21.2.0
-mysqlclient==2.2.4
+mysql-connector-python==8.4.0
+mysqlclient==2.2.6
 numpy==1.26.2
 opencv-python==4.8.1.78
 packaging==23.2
