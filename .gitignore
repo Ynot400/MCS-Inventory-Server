@@ -5,6 +5,7 @@ __pycache__/
 
 # Ignore Mac file meta data
 .DS_Store
+.DS_Store?
 
 # C extensions
 *.so
