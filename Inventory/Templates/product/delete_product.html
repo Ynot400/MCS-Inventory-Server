@@ -1,0 +1,18 @@
+{% extends 'base.html' %}
+
+{% block content %}
+	<div>
+		<a href="{% url 'inventory' %}" class="btn btn-outline-primary my-3 mx-4">Go back</a>
+		<div class="row">
+			<form method="POST" action="{% url 'delete-product' pk=item.pk %}" class="col-sm-11 col-md-4 mx-auto mt-5">
+				{% csrf_token %}
+				<h1 class="fw-light">Are you sure you want to delete {{ item.title }}?</h1>
+				<p class="fw-light">THIS CANNOT BE UNDONE.</p>
+
+				<div>
+					<button type="submit" class="btn btn-danger">Delete</button>
+				</div>
+			</form>
+		</div>
+	</div>
+{% endblock content %}

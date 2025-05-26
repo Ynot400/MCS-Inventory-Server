@@ -1,0 +1,99 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<div class="container mt-4">
+
+  <div class="text-center">
+    <h2 style="border: 1px solid #6db2ee; padding: 10px; display: block;">{{product.title}}</h2>
+    <p style="border: 1px solid #6db2ee; padding: 10px; display: block;">Location: {{product.location_ID}} || Quantity: {{product.quantity}}</p>
+  </div>
+
+  <div class="text-center mt-4">
+    <h4>"+" Add To Stock, "-" Remove From Stock</h4>
+    <div class="input-group mb-3">
+      <div class="input-group-prepend">
+        <button class="btn btn-outline-secondary btn-yellow btn-wide" type="button" style="font-size: 5rem; border: 2px solid #000;" id="decrementButton">-</button>
+      </div>
+      <input type="text" class="form-control text-center" value="0" id="integerDisplay" readonly style="width: 120px; font-size: 3rem; border: 2px solid #000;">
+      <div class="input-group-append">
+        <button class="btn btn-outline-secondary marine-color btn-wide" type="button" style="font-size: 5rem; border: 2px solid #000;" id="incrementButton">+</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="form-group row">
+    <label for="incrementDropdown" class="col-5 col-form-label">Increment by:</label>
+    <div class="col-6">
+      <select class="form-control form-control-sm" style="border: 1px solid #000;" id="incrementDropdown">
+        <option value="1">1</option>
+        <option value="2">2</option>
+        <option value="5">5</option>
+        <option value="10">10</option>
+        <option value="30">30</option>
+      </select>
+    </div>
+  </div>
+  <form method="post" action="{% url 'update_model' %}">
+    {% csrf_token %}
+    <input type="hidden" name="product_id" value="{{ product.id }}">
+    <input type="hidden" name="integerDisplay" id="hiddenIntegerDisplay" value="0">
+
+    <div class="form-group">
+      <label for="textInput">Reason for quantity change:</label>
+      <input type="text" class="form-control" name="textInput" required>
+    </div>
+    <span class="text-danger" id="warningMessage" style="font-size: 20px"></span>
+    <button type="submit" class="btn marine-color btn-center mx-auto d-block" style="width: 120px; font-size: 2rem;">Submit</button>
+  </form>
+
+  <div class="mt-4">
+    <h3>Description:</h3>
+    <div class="container">
+      <p>{{product.description}}</p>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  document.addEventListener("DOMContentLoaded", function() {
+    // Initial value and increment step
+    let currentValue = 0;
+    let incrementStep = 1;
+    var productQuantity = {{product.quantity}};
+    // Function to update the display with the current value
+    function updateDisplay() {
+      document.getElementById("integerDisplay").value = currentValue;
+      document.getElementById("hiddenIntegerDisplay").value = currentValue;
+    };
+
+    // Event listener for the decrement button
+    document.getElementById("decrementButton").addEventListener("click", function() {
+      currentValue -= incrementStep;
+      updateDisplay();
+      if (currentValue + productQuantity < 0){
+        document.getElementById("warningMessage").textContent = "WARNING: You are decrementing the inventory beyond the current quantity available.";
+      }
+      else{
+        document.getElementById("warningMessage").textContent = "";
+      }
+    });
+
+    // Event listener for the increment button
+    document.getElementById("incrementButton").addEventListener("click", function() {
+      currentValue += incrementStep;
+      updateDisplay();
+      if(currentValue + productQuantity >= 0){
+        document.getElementById("warningMessage").textContent = "";
+      }
+    });
+
+    // Event listener for the increment dropdown
+    document.getElementById("incrementDropdown").addEventListener("change", function() {
+      incrementStep = parseInt(this.value, 10);
+    });
+  });
+</script>
+
+{% endblock %}

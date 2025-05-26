@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-5">
+  <h2 class="mb-4">Generate Employee QR Code</h2>
+  <td class="mb-4">*Please make sure the username and password are correct!</td>
+  <form id="generateQR">
+  {% csrf_token %}
+      <div class="form-group">
+          <label for="username">Username:</label>
+          <input type="text" class="form-control" id="username" name="username" required>
+      </div>
+      <div class="form-group">
+          <label for="password">Password:</label>
+          <input type="text" class="form-control" id="password" name="password" required>
+      </div>
+      <button type="submit" class="btn btn-primary" id="generateBtn">Generate Employee QR Code</button>
+  </form>
+</div>
+<script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+<script>
+  $(document).ready(function () {
+      var count = 1;
+      var successMessage = document.createElement('td');
+      successMessage.setAttribute('class', 'text-success');
+      document.body.appendChild(successMessage);
+      $("#generateQR").submit(function () {
+          event.preventDefault();
+          var username = document.getElementById('username').value
+          var password = document.getElementById('password').value
+
+          $.ajax({
+              url: "/dashboard/create-QRCode",
+              type: "POST",
+              data: {
+                'username': username,
+                'password': password,
+                'generateQR': 'true',
+                'csrfmiddlewaretoken': $('[name="csrfmiddlewaretoken"]').val(),
+                    },
+              success: function (data) {
+                successMessage.textContent = `QRCode generated and saved! (${count}x)`;
+                count = count + 1;
+              },
+              error: function (xhr, status, error) {
+                  console.error("Error:", error);
+                  var errorMessage = document.createElement('td');
+                  errorMessage.textContent = "Unknown error has occured, please try again";
+                  errorMessage.setAttribute('class', 'text-danger');
+                  document.body.appendChild(errorMessage);
+              },
+          });
+      });
+  });
+</script>
+{% endblock content %}

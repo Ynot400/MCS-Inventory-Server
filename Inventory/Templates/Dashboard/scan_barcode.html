@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+
+{% block title %}Scanning Page{% endblock %}
+
+{% block content %}
+
+<form id="scannedDataForm" method="post" action="{% url 'barcode-quantity' %}">
+    {% csrf_token %}
+    <input type="hidden" name="scannedData" id="scannedDataInput">
+    <input type="submit" style="display: none;">
+</form>
+
+{% if error %}
+<div class="alert alert-dismissible alert-danger">
+    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    <strong>{{error}}</strong>
+</div>
+{% endif %}
+
+
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-12 col-lg-12 col-sm-12">
+            <a href="{% url 'dashboard' %}" class="btn btn-primary">Go Back</a>
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="text-center">Start Scanning</h2>
+                </div>
+                <div class="card-body text-center">
+                    <p class="lead">Quantity options will be available after scan</p>
+                    
+                    <!-- Input box for manual barcode entry -->
+                    <div class="form-group">
+                        <label for="manualBarcode">Manual Barcode Entry:</label>
+                        <input type="text" class="form-control" id="manualBarcode" placeholder="Enter barcode">
+                        <button class="btn btn-primary mt-2" onclick="handleManualBarcode()">Submit Barcode</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        let scannedData = "";
+
+        document.addEventListener("keypress", function(event) {
+            event.preventDefault();
+            if (event.key === "Enter") {
+                if (scannedData.length > 10) {
+                    var scannedDataInput = document.getElementById('scannedDataInput');
+                    scannedDataInput.value = scannedData; // Remove the last digit
+                    document.getElementById('scannedDataForm').submit();
+                }
+            } else {
+                scannedData += event.key;
+            }
+        });
+
+        // Function to handle manual barcode entry
+        window.handleManualBarcode = function() {
+            const manualBarcode = document.getElementById('manualBarcode').value;
+            if (manualBarcode.trim() !== "") {
+                document.getElementById('scannedDataInput').value = manualBarcode; // Remove the last digit
+                document.getElementById('scannedDataForm').submit();
+            }
+        };
+    });
+</script>
+{% endblock %}

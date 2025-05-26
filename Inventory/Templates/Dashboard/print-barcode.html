@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+{% load crispy_forms_tags %}
+
+{% block content %}
+<div class="container mt-5">
+  <h2 class="marine-text">Select the product to print a barcode for.</h2>
+  <div style="display: flex; justify-content: start; align-items: center;">
+    <form method="POST" class="horizontal-form" style="margin-right: 10px;">
+      {% csrf_token %}
+      {{ form|crispy }}
+      <button type="submit" id="submitbtn" class="btn btn-primary">Submit</button>
+    </form>
+    {% if printAll == True %}
+    <!-- Add the "Print All" button next to the "Submit" button -->
+    <button type="button" id="printAll" class="btn btn-primary">Print All</button>
+    {% endif %}
+  </div>
+
+  <!-- Table to display items -->
+  <table class="table mt-4">
+    <thead>
+      <tr>
+        <th scope="col">Product</th>
+        <th scope="col">Part Number</th>
+        <th scope="col"></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for item in items %}
+        <tr>
+          <td>{{ item.title }}</td>
+          <td>{{ item.product_ID }}</td>
+          <td>
+            <!-- Button next to each item -->
+            <button type="button" class="printBarcode btn btn-secondary" data-id="{{ item.id }}">Print Barcode</button>
+          </td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+<script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+<script>
+    $(document).ready(function () {
+      var count = 1;
+
+      var successMessage = document.createElement('div');
+      successMessage.setAttribute('class', 'text-success mt-2');
+  
+      var errorMessage = document.createElement('div');
+      errorMessage.setAttribute('class', 'text-danger mt-2');
+
+      document.body.appendChild(successMessage);
+      $("#printAll").click(function () {
+        // Loop through all the "Print Barcode" buttons and trigger a click event for each of them
+        $(".printBarcode").each(function () {
+          $(this).trigger("click");
+        });
+      });
+
+      $(".printBarcode").click(function () {
+          console.log("This is working");
+          var productId = $(this).data('id');
+
+          $.ajax({
+              url: "/dashboard/print-barcode/",
+              type: "POST",
+              data: {
+                'product_ID': productId,
+                'printBarcode': 'true', 
+                'csrfmiddlewaretoken': $('[name="csrfmiddlewaretoken"]').val()
+            },
+              success: function (data) {
+                successMessage.textContent = `Barcode print request sent! (${count}x)`;
+                count = count + 1;
+                $('#submitbtn').after(successMessage);
+              },
+              error: function (xhr, status, error) {
+                console.error("Error:", error);
+                errorMessage.textContent = "Unknown error has occured, please try again";
+                $('#submitbtn').after(errorMessage);
+              }
+          });
+      });
+    });
+</script>
+{% endblock content %}

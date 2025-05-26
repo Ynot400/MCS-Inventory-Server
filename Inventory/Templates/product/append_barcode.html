@@ -1,0 +1,53 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div>
+    <a href="{% url 'barcode-hub' %}" class="btn btn-outline-primary my-3 mx-4">Go back</a>
+    <div class="row">
+      <div>
+        <label class="col-form-label col-form-label-lg mt-4" id="instructionText" for="inputLarge">Please scan the manufacturer's barcode now.</label>
+        <input class="form-control form-control-lg" type="text" id="barcodeInput" id="inputLarge" autofocus>
+      </div>
+        {% comment %} <input type="text" id="barcodeInput" placeholder="Scan barcode here" autofocus>
+        <p id="instructionText">Please scan the manufacturer's barcode now.</p> {% endcomment %}
+        <form method="POST" class="col-sm-11 col-md-4 mx-auto mt-5" id="form">
+            {% csrf_token %}
+            <input type="hidden" name="barcode" id="barcodeField">
+            <h1 class="fw-light"> Add <span id="barcodeDisplay"></span> to {{ product.title }}?</h1>
+            <p class="fw-light">Please make sure this is the correct product!</p>
+
+            <div>
+                <button type="submit" class="btn btn-lg marine-color" id="submitButton">Update</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+
+<script>
+ document.addEventListener("DOMContentLoaded", function() {
+    console.log('Page loaded');
+    var barcodeInput = document.getElementById('barcodeInput');
+    var form = document.getElementById('form');
+    var submitButton = document.getElementById('submitButton');
+    var instructionText = document.getElementById('instructionText');
+    var barcodeDisplay = document.getElementById('barcodeDisplay');
+
+    // Initially hide the form and the submit button
+    form.style.display = 'none';
+    submitButton.disabled = true;
+
+    barcodeInput.addEventListener('change', function() {
+        // When a barcode is scanned, hide the instruction text and show the form and the submit button
+        instructionText.style.display = 'none';
+        form.style.display = 'block';
+        submitButton.disabled = false;
+
+        // Update the barcode display with the scanned barcode
+        barcodeDisplay.innerHTML = barcodeInput.value;
+        document.getElementById('barcodeField').value = barcodeInput.value;
+
+    });
+ });
+</script>
+{% endblock content %}

@@ -1,0 +1,81 @@
+{% extends 'base.html' %}
+
+
+{% block content %}
+{% if error %}
+    <div class="alert alert-danger" role="alert">
+        {{ error }}
+    </div>
+{% endif %}
+<div class="container">
+  <h1 class="mt-5 mb-4">End of Report</h1>
+
+  <form id="selectUserForm" method="post">
+      {% csrf_token %}
+      <div class="mb-3">
+          <label for="userSelect" class="form-label">Select User:</label>
+          <select id="userSelect" name="userSelect" class="form-select">
+            <option value="" selected disabled hidden></option>
+            {% for username in usernames %}
+            <option value="{{ username }}">{{ username }}</option>
+          {% endfor %}
+          </select>
+      </div>
+
+      <div class="mb-3">
+          <label for="timeRangeSelect" class="form-label">Select Time Range:</label>
+          <select id="timeRangeSelect" name="timeRangeSelect" class="form-select">
+              <option value="" selected disabled hidden></option>
+              <option value="7">Last 7 days</option>
+              <option value="14">Last 14 days</option>
+              <option value="30">Last month</option>
+              <option value="all">Show All</option>
+          </select>
+      </div>
+
+      <button type="submit" class="btn btn-primary">Retrieve Logs</button>
+  </form>
+    {% if post %}
+    {% if selected_time_range == "all" %}
+    <h2>User <span class="text-primary font-weight-bold">{{ selected_user }}</span> has made <span class="text-primary font-weight-bold">{{ log_count }}</span> changes to the inventory. In particular:</h2>
+    <h3><span class="text-success font-weight-bold">{{ create_count }}</span> new inventory | <span class="text-info font-weight-bold">{{ update_count }}</span> changes to inventory | <span class="text-danger font-weight-bold">{{ delete_count }}</span> deleted inventory </h3>
+    {% else %}
+    <h2>User <span class="text-primary font-weight-bold">{{ selected_user }}</span> over the last <span class="text-secondary font-weight-bold">{{ selected_time_range }}</span> days has made <span class="text-primary font-weight-bold">{{ log_count }}</span> changes to the inventory. In particular:</h2>
+    <h3><span class="text-success font-weight-bold">{{ create_count }}</span> new inventory | <span class="text-info font-weight-bold">{{ update_count }}</span> changes to inventory | <span class="text-danger font-weight-bold">{{ delete_count }}</span> deleted inventory </h3>
+    {% endif %}
+
+    <div id="logsContainer" class="mt-4">
+        {% if log_objects %}
+        <form method="post" action="{% url 'pdf-logging' %}">
+            {% csrf_token %}
+            <input type="hidden" name="selected_user" value="{{ selected_user }}">
+            <input type="hidden" name="selected_time_range" value="{{ selected_time_range }}">
+            <button type="submit" class="btn btn-primary">Download logs as a PDF file</button>
+        </form>
+        <div class="accordion" id="accordionExample">
+            {% for log in log_objects %}
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="heading{{ forloop.counter }}">
+                <button class="accordion-button collapsed
+                {% if log.action_category == 'CREATE' %}text-success
+                {% elif log.action_category == 'DELETE' %}text-danger
+                {% elif log.action_category == 'UPDATE' %}text-info
+                {% endif %}" 
+                type="button" data-bs-toggle="collapse" data-bs-target="#collapse{{ forloop.counter }}" aria-expanded="false" aria-controls="collapse{{ forloop.counter }}">
+                   {{ log.timestamp }} - {{ log.action_category }} - {{ log.product_name }}
+                </button>
+                </h2>
+                <div id="collapse{{ forloop.counter }}" class="accordion-collapse collapse" aria-labelledby="heading{{ forloop.counter }}" data-bs-parent="#accordionExample">
+                <div class="accordion-body">
+                   <strong> Details: </strong> {{ log.details|linebreaks }}
+                </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+
+{% endblock %}
