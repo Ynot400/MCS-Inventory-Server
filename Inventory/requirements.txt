@@ -6,7 +6,7 @@ django-crispy-forms==2.1
 gunicorn==21.2.0
 mysql-connector-python==8.4.0
 mysqlclient==2.2.6
-numpy==1.26.2
+numpy==2.2.0
 opencv-python==4.8.1.78
 packaging==23.2
 Pillow==10.1.0
