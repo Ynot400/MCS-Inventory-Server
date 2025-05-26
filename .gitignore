@@ -132,6 +132,7 @@ celerybeat.pid
 *.sage.py
 
 # Environments
+Inventory_Management/
 .env
 .venv
 env/
