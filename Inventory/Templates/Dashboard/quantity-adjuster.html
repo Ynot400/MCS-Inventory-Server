@@ -6,7 +6,7 @@
 
   <div class="text-center">
     <h2 style="border: 1px solid #6db2ee; padding: 10px; display: block;">{{product.title}}</h2>
-    <p style="border: 1px solid #6db2ee; padding: 10px; display: block;">Part Number: {{product.location_ID}} || Quantity: {{product.quantity}}</p>
+    <p style="border: 1px solid #6db2ee; padding: 10px; display: block;">Location: {{product.location_ID}} || Quantity: {{product.quantity}}</p>
   </div>
 
   <div class="text-center mt-4">
@@ -34,11 +34,16 @@
       </select>
     </div>
   </div>
-
   <form method="post" action="{% url 'update_model' %}">
     {% csrf_token %}
     <input type="hidden" name="product_id" value="{{ product.id }}">
     <input type="hidden" name="integerDisplay" id="hiddenIntegerDisplay" value="0">
+
+    <div class="form-group">
+      <label for="textInput">Reason for quantity change:</label>
+      <input type="text" class="form-control" name="textInput" required>
+    </div>
+    <span class="text-danger" id="warningMessage" style="font-size: 20px"></span>
     <button type="submit" class="btn marine-color btn-center mx-auto d-block" style="width: 120px; font-size: 2rem;">Submit</button>
   </form>
 
@@ -56,7 +61,7 @@
     // Initial value and increment step
     let currentValue = 0;
     let incrementStep = 1;
-
+    var productQuantity = {{product.quantity}};
     // Function to update the display with the current value
     function updateDisplay() {
       document.getElementById("integerDisplay").value = currentValue;
@@ -67,12 +72,21 @@
     document.getElementById("decrementButton").addEventListener("click", function() {
       currentValue -= incrementStep;
       updateDisplay();
+      if (currentValue + productQuantity < 0){
+        document.getElementById("warningMessage").textContent = "WARNING: You are decrementing the inventory beyond the current quantity available.";
+      }
+      else{
+        document.getElementById("warningMessage").textContent = "";
+      }
     });
 
     // Event listener for the increment button
     document.getElementById("incrementButton").addEventListener("click", function() {
       currentValue += incrementStep;
       updateDisplay();
+      if(currentValue + productQuantity >= 0){
+        document.getElementById("warningMessage").textContent = "";
+      }
     });
 
     // Event listener for the increment dropdown

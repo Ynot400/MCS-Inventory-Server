@@ -94,6 +94,7 @@ Updated: qwertyu - Quantity: 4567 - Location: 01-06-05-03 - ID: na
 2023-12-30 14:47:01,360 INFO -- User JLuke added a product: Testoing (Quantity: 2343)
 2023-12-30 14:55:29,108 INFO -- User Ynot40 deleted Testoing with quantity: 2343  
 2023-12-30 15:04:39,321 INFO -- User Ynot40 added a product: Test (Quantity: 234)
+<<<<<<< HEAD
 2024-01-03 11:15:45,817 INFO -- User JLuke deleted Test with quantity: 234  
 2024-01-03 11:16:33,211 INFO -- User JLuke added a product: Seakeeper 3 (Quantity: 232)
 2024-01-10 13:57:39,292 INFO -- User JLuke added a product: Chicken Butt (Quantity: 324)
@@ -226,3 +227,135 @@ Updated: Bathroom - Description of product
 2024-02-24 00:13:04,485 INFO -- Inventory Technician Ynot40 edited a product:
 Original: Chicken - Quantity: 1430 - Location: aefaf213 - Part Number: wqrqwef
 Updated: aefaf213 - Test test lots Test test lotsTest test lotsTest test lotsTest test lotsTest test lotsTest test lotsTest test lotsTest test lotsTest test lotsTest test
+=======
+2024-01-02 15:11:17,233 INFO -- User JLuke added a product: Tesyinggg (Quantity: 34)
+2024-01-02 16:14:29,094 INFO -- User Gmatsikh added a product: Seakeeeper (Quantity: 456)
+2024-01-02 16:16:58,869 INFO -- User Gmatsikh added a product: xfgdgrf (Quantity: 435)
+2024-01-02 16:20:16,398 INFO -- User Gmatsikh added a product: Creating (Quantity: 45)
+>>>>>>> f180dbe9a33e929b30279befa2ae36dba28f1acc
+2024-02-28 16:53:09,467 INFO -- User JLuke added a product: <. aefoh 329hdafoj j! ! ? dsoifh (Quantity: 23)
+2024-02-29 23:08:54,253 INFO -- User JLuke added a product: Skibititidubdubdubyesye (Quantity: 123)
+2024-02-29 23:11:08,551 INFO -- User JLuke edited a product:
+Original: <. aefoh 329hdafoj j! ! ? dsoifh - Quantity: 23 - Location: erw - Part Number: 32342 - Retail: 12.22 - Cost: 23.33
+Updated: testingggg - Quantity: 23 - Location: erw - Part Number: 32342 - Retail: 12.22 - Cost: 23.33
+2024-03-04 16:17:51,886 INFO -- User JLuke added a product: ORganic 30g protein (Quantity: 34)
+2024-03-04 16:28:00,820 INFO -- User JLuke edited a product:
+Original: ORganic 30g protein - Quantity: 34 - Location: 3434-42-342 - Part Number: YTeow001 - Retail: 33.33 - Cost: 33.33
+Updated: Organic-30g-Protein - Quantity: 34 - Location: 3434-42-342 - Part Number: YTeow001 - Retail: 33.33 - Cost: 33.33
+2024-03-04 17:28:40,140 INFO -- User JLuke edited a product:
+Original: Organic-30g-Protein - Quantity: 34 - Location: 3434-42-342 - Part Number: YTeow001 - Retail: 33.33 - Cost: 33.33
+Updated: Organic-30g-Protein - Quantity: 34 - Location: 3434-42-34 - Part Number: YTeow001 - Retail: 33.33 - Cost: 33.33
+2024-03-04 17:29:10,774 INFO -- User JLuke edited a product:
+Original: Organic-30g-Protein - Quantity: 34 - Location: 3434-42-34 - Part Number: YTeow001 - Retail: 33.33 - Cost: 33.33
+Updated: Organic-30g-Protein - Quantity: 24 - Location: 3434-42-34 - Part Number: YTeow001 - Retail: 33.33 - Cost: 33.33
+2024-03-04 17:29:27,087 INFO -- User JLuke edited a product:
+Original: Organic-30g-Protein - Quantity: 24 - Location: 3434-42-34 - Part Number: YTeow001 - Retail: 33.33 - Cost: 33.33
+Updated: Organic-30g-Protein - Quantity: 24 - Location: 3434-42-34 - Part Number: YTeow00134 - Retail: 33.33 - Cost: 33.33
+2024-03-04 17:45:07,206 INFO -- User JLuke edited a product:
+Original: Chicken - Quantity: 1430 - Location: aefaf213 - Part Number: wqrqwef - Retail: 33.44 - Cost: 0.0
+Updated: Chicken!! - Quantity: 1430 - Location: aefaf213 - Part Number: wqrqwef - Retail: 33.44 - Cost: 0.00
+2024-03-04 17:45:34,731 INFO -- User JLuke edited a product:
+Original: Emma Zverinsky - Quantity: 3 - Location: Palm COa - Part Number: Silly, fun, girl - Retail: 1.0 - Cost: 199.58
+Updated: Emma Zverinsky:ppp - Quantity: 3 - Location: Palm COa - Part Number: Silly, fun, girl - Retail: 1.00 - Cost: 199.58
+2024-03-04 17:45:41,804 INFO -- User JLuke edited a product:
+Original: Mario Clock - Quantity: 480 - Location: 123235243442342343 - Part Number: !349354 - Retail: 99.99 - Cost: 32.55
+Updated: Mario ClockCoc - Quantity: 480 - Location: 123235243442342343 - Part Number: !349354 - Retail: 99.99 - Cost: 32.55
+2024-03-04 17:45:49,350 INFO -- User JLuke edited a product:
+Original: TatayPwet - Quantity: 14 - Location: Bathroom - Part Number: Jets - Retail: 99.99 - Cost: 100.99
+Updated: TatayPwetTTT - Quantity: 14 - Location: Bathroom - Part Number: Jets - Retail: 99.99 - Cost: 100.99
+2024-03-04 17:45:58,622 INFO -- User JLuke edited a product:
+Original: Tebow - Quantity: 133 - Location: 32rdf - Part Number: 324 - Retail: 0.0 - Cost: 0.03
+Updated: Tebow Yh bio - Quantity: 133 - Location: 32rdf - Part Number: 324 - Retail: 0.00 - Cost: 0.03
+2024-03-04 17:46:07,802 INFO -- User JLuke edited a product:
+Original: testingggg - Quantity: 23 - Location: erw - Part Number: 32342 - Retail: 12.22 - Cost: 23.33
+Updated: testinggggAlrighttt - Quantity: 23 - Location: erw - Part Number: 32342 - Retail: 12.22 - Cost: 23.33
+2024-03-04 17:46:14,895 INFO -- User JLuke edited a product:
+Original: Seakeeper 4 - Quantity: 47 - Location: 776-23df - Part Number: 3r32 - Retail: 33.44 - Cost: 234.43
+Updated: Seakeeper 4osdif - Quantity: 47 - Location: 776-23df - Part Number: 3r32 - Retail: 33.44 - Cost: 234.43
+2024-03-20 17:11:26,340 INFO -- User JLuke alterred testinggggAlrighttt's quantity from : 23 to 26
+2024-03-20 17:12:52,394 INFO -- User JLuke alterred Mario ClockCoc's quantity from : 480 to 485
+2024-03-20 17:13:41,420 INFO -- User JLuke alterred Mario ClockCoc's quantity from : 485 to 487
+2024-03-20 17:14:30,954 INFO -- User JLuke alterred Mario ClockCoc's quantity from : 487 to 490
+2024-03-20 17:18:10,099 INFO -- User JLuke alterred Mario ClockCoc's quantity from : 490 to 494
+2024-04-07 23:36:40,639 INFO -- Inventory Technician Tebow2 edited a product:
+Original: Chicken!! - Quantity: 1430 - Location: aefaf213 - Part Number: wqrqwef
+Updated: aefaf21333 - Test test lots Test test lotsTest test lotsTest test lotsTest test lotsTest test lotsTest test lotsTest test lotsTest test lotsTest test lotsTest test
+2024-04-09 14:34:39,355 INFO -- User Ynot40 alterred Emma Zverinsky:ppp's quantity from : 3 to -1
+2024-04-09 14:36:22,498 INFO -- User Ynot40 alterred Emma Zverinsky:ppp's quantity from : -1 to -5
+2024-04-09 14:37:51,509 INFO -- User Ynot40 alterred Emma Zverinsky:ppp's quantity from : -5 to -3
+2024-04-09 14:38:19,107 INFO -- User Ynot40 alterred Emma Zverinsky:ppp's quantity from : -3 to -1
+2024-04-09 14:38:26,093 INFO -- User Ynot40 alterred Emma Zverinsky:ppp's quantity from : -1 to 1
+2024-04-09 14:38:55,778 INFO -- User Ynot40 alterred Emma Zverinsky:ppp's quantity from : 1 to 3
+2024-04-09 14:42:42,767 INFO -- User Ynot40 alterred Emma Zverinsky:ppp's quantity from : 3 to 4
+2024-04-09 14:46:33,557 INFO -- User Ynot40 alterred Emma Zverinsky:ppp's quantity from : 4 to 5
+2024-04-09 14:46:56,102 INFO -- User Ynot40 alterred Emma Zverinsky:ppp's quantity from : 5 to -1
+2024-04-09 14:48:10,251 INFO -- User Ynot40 alterred Emma Zverinsky:ppp's quantity from : -1 to 5
+2024-04-09 14:49:38,054 INFO -- User Ynot40 alterred Emma Zverinsky:ppp's quantity from : 5 to -2
+2024-04-09 14:54:23,171 INFO -- User JLuke alterred Skibidi's quantity from : 95 to 97
+2024-04-09 14:55:14,348 INFO -- User JLuke alterred Skibidi's quantity from : 97 to -57
+Reason: I wanty to steal lol
+2024-04-09 14:58:42,396 INFO -- User JLuke edited a product:
+Original: Chicken!! - Quantity: 1430 - Location: aefaf21333 - Part Number: wqrqwef - Retail: 33.44 - Cost: 0.0
+Updated: Chicken!! - Quantity: 1430 - Location: aefaf21333 - Part Number: wqrqwef - Retail: None - Cost: 0.00
+2024-04-09 14:59:11,176 INFO -- User JLuke added a product: POOP (Quantity: 29)
+2024-04-09 14:59:29,622 INFO -- User JLuke edited a product:
+Original: POOP - Quantity: 29 - Location: FGAF - Part Number: AGSFR3 - Retail: 2.0 - Cost: 4.0
+Updated: POOP - Quantity: 29 - Location: FGAF - Part Number: AGSFR3 - Retail: -0.14 - Cost: 4.00
+2024-04-09 15:50:32,305 INFO -- User JLuke alterred Emma Zverinsky:ppp's quantity from : -2 to 1
+Reason: Switch it back to normal
+2024-04-09 15:51:00,494 INFO -- User JLuke alterred Skibidi's quantity from : -57 to -55
+Reason: Chickenpoop
+2024-04-09 15:51:28,728 INFO -- User JLuke alterred Skibidi's quantity from : -55 to 2
+Reason: Get it bavk to normal
+2024-04-09 15:57:44,664 INFO -- User JLuke added a product: Manav (INsertLAstName) (Quantity: 1)
+2024-04-09 15:59:11,770 INFO -- User JLuke added a product: Josiah Sexy (Quantity: 1)
+2024-04-09 16:05:02,646 INFO -- User JLuke alterred Skibidi's quantity from : 2 to 9
+Reason: Testing shit
+2024-04-09 16:05:13,610 INFO -- User JLuke alterred Skibidi's quantity from : 9 to -4
+Reason: decrement
+2024-04-09 16:05:47,599 INFO -- User JLuke alterred Skibidi's quantity from : -4 to -6
+Reason: No non
+2024-04-09 16:06:37,513 INFO -- User JLuke alterred Emma Zverinsky:ppp's quantity from : 1 to 0
+Reason: Chickejenenennesdnlaksdmadpkas[d[pasd poop
+2024-04-09 18:57:13,828 INFO -- User JLuke alterred Emma Zverinsky:ppp's quantity from : 0 to 1
+Reason: Poop
+2024-04-09 18:57:48,051 INFO -- User JLuke alterred Emma Zverinsky:ppp's quantity from : 1 to -2
+Reason: Lol i hate em
+2024-04-20 00:09:18,869 INFO -- User JLuke added a product: 123 (Quantity: 23)
+2024-04-20 00:13:01,140 INFO -- User JLuke edited a product:
+Original: 123 - Quantity: 23 - Location: 123 - Part Number: 3423DHD:_ - Retail: 123.0 - Cost: 3.0
+Updated: 123 - Quantity: 23 - Location: 123 - Part Number: 3423DHD:_ - Retail: 123.00 - Cost: 3.00
+2024-04-20 00:13:13,385 INFO -- User JLuke edited a product:
+Original: A new awesome1224#?@2 prodict - Quantity: 32 - Location: 23442qw - Part Number: 3423DHD - Retail: 234.34 - Cost: 12.24
+Updated: A new awesome1224#?@2 prodict - Quantity: 32 - Location: 23442qw - Part Number: 3423DHD - Retail: 234.34 - Cost: 12.24
+2024-04-20 00:13:42,755 INFO -- User JLuke added a product: 213dassa (Quantity: -9342)
+2024-04-20 00:16:49,865 INFO -- User JLuke edited a product:
+Original: 123 - Quantity: 23 - Location: 123 - Part Number: 3423DHD:_ - Retail: 123.0 - Cost: 3.0
+Updated: 123 - Quantity: 23 - Location: 123 - Part Number: 3423DHD:_ - Retail: 123.00 - Cost: 3.00
+2024-04-20 00:16:59,802 INFO -- User JLuke edited a product:
+Original: Skibidi - Quantity: -6 - Location: 32432wef - Part Number: 324df - Retail: 0.0 - Cost: 0.0
+Updated: Skibidi - Quantity: -6 - Location: 32432wef - Part Number: 324df - Retail: 0.00 - Cost: 0.00
+2024-04-20 00:17:15,132 INFO -- User JLuke edited a product:
+Original: TatayPwetTTT - Quantity: 14 - Location: Bathroom - Part Number: Jets - Retail: 99.99 - Cost: 100.99
+Updated: TatayPwetTTT - Quantity: 14 - Location: Bathroom - Part Number: Jets - Retail: 99.99 - Cost: 100.99
+2024-04-20 00:47:34,829 INFO -- Inventory Technician Ynot40 edited a product:
+Original: 213dassa - Quantity: -9342 - Location: 1sdf - Part Number: ewrwtf
+Updated: Chickenn - grata
+2024-04-26 14:50:10,979 INFO -- User Tebow added a product: CHucjken (Quantity: 22)
+2024-04-26 14:51:19,289 INFO -- User Tebow added a product: ffhh (Quantity: 34)
+2024-04-26 14:51:34,416 INFO -- User Tebow edited a product:
+Original: CHucjken - Quantity: 22 - Location: ty - Part Number: 1234 - Retail: 22.0 - Cost: 3.0
+Updated: CHucjken - Quantity: 22 - Location: ty - Part Number: 1234 - Retail: 22.00 - Cost: 3.00
+2024-04-26 14:56:01,069 INFO -- User Tebow added a product: bfvkdbfgds (Quantity: 45)
+2024-04-26 14:57:10,638 INFO -- User Tebow edited a product:
+Original: bfvkdbfgds - Quantity: 45 - Location: dsg - Part Number: 34534fd - Retail: 45.0 - Cost: 55.0
+Updated: bfvkdbfgds - Quantity: 45 - Location: dsg - Part Number: 34534fd3467823478623 - Retail: 45.00 - Cost: 55.00
+2024-04-26 14:57:29,349 INFO -- User Tebow edited a product:
+Original: ffhh - Quantity: 34 - Location: 1234 - Part Number: 12345 - Retail: 4.0 - Cost: 4.0
+Updated: ffhh - Quantity: 34 - Location: 12345 - Part Number: 12345 - Retail: 4.00 - Cost: 4.00
+2024-04-26 14:57:45,556 INFO -- User Tebow edited a product:
+Original: CHucjken - Quantity: 22 - Location: ty - Part Number: 1234 - Retail: 22.0 - Cost: 3.0
+Updated: CHucjken - Quantity: 22 - Location: ty - Part Number: 123456 - Retail: 22.00 - Cost: 3.00
+2024-04-26 15:02:30,148 INFO -- User Tebow added a product: Emma is awesome (Quantity: 1)
+2024-05-06 17:11:07,012 INFO -- User Ynot40 added a product: dweq (Quantity: 23)
+2024-05-06 17:13:24,522 INFO -- User Ynot40 deleted dweq with quantity: 23  

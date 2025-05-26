@@ -69,7 +69,7 @@
               <a class="nav-link nav-text" href="{% url 'inventory' %}">Inventory</a>
             </li>
             <li class="nav-item">
-              <a class="nav-link nav-text" href="{% url 'create-barcode' %}">Generate Barcode</a>
+              <a class="nav-link nav-text" href="{% url 'print-barcode' %}">Print Barcode</a>
             </li>
             <li class="nav-item">
               <a class="nav-link nav-text" href="{% url 'create-QRCode' %}">Generate Employee QRCode</a>
@@ -85,10 +85,7 @@
             <strong class="nav-link nav-text" href="#">{{user.username}}</strong>
           </li>
           <li class="nav-item">
-            <a class="nav-link nav-text" href="{% url 'detect_barcodes' %}">Inventory Scanning</a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link nav-text" href="{% url 'create-barcode' %}">Generate Barcode</a>
+            <a class="nav-link nav-text" href="{% url 'barcode-hub' %}">Add Manufacturer Barcode to Product</a>
           </li>
           <li class="nav-item">
             <a href="{% url 'detect_barcodes' %}" class="nav-link nav-text">Edit Quantity with Barcode Scanning</a>
@@ -105,12 +102,15 @@
           <li class="nav-item">
             <a class="nav-link nav-text" href="{% url 'detect_barcodes' %}">Inventory Scanning</a>
           </li>
+          <li class="nav-item">
+            <form class="nav-text" method="post" action="{% url 'logout' %}">
+              {% csrf_token %}
+              <button type="submit" class="nav-link" style="border: none; background: none; cursor: pointer;">Sign out</button>
+            </form>
+          </li>
           {% else %}
             <li class="nav-item nav-text">
               <a class="nav-link text-color" href="{% url 'login' %}">Login</a>
-            </li>
-            <li class="nav-item nav-text">
-              <a class="nav-link" href="{% url 'signup' %}">Sign Up</a>
             </li>
           {% endif %}
         </ul>

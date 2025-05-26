@@ -17,15 +17,17 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path
 from Pages.views import home_View, SignUpView, DashboardInventory, Dashboard, ScanBarcode, QRCodeLogin
-from Products.views import AddProduct, EditProduct, DeleteProduct, update_quantity
+from Products.views import AddProduct, EditProduct, DeleteProduct, update_quantity, AddBarcode, AddBarcodeHub
 from django.contrib.auth import views as auth_views
 from django.conf import settings
 from django.conf.urls.static import static
 from barcodes.views import CreateBarcode, CreateQRCode, ProductFinder, PrintBarcode
+from EORLogging.views import EndOfReport, report_pdf
+
 
 urlpatterns = [
-    path('', home_View, name='home'),
-    path('signup/', SignUpView.as_view(), name='signup'),
+    path('', home_View.as_view(), name='home'),
+    # path('signup/', SignUpView.as_view(), name='signup'),
     path('admin/', admin.site.urls, name='admin'),
     path('dashboard/admin/', admin.site.urls, name='admin'),
     path('login/', auth_views.LoginView.as_view(template_name = 'login.html'), name='login'),
@@ -42,6 +44,10 @@ urlpatterns = [
     path('scan/', ScanBarcode.as_view(), name='detect_barcodes'),
     path('dashboard/create-barcode', CreateBarcode.as_view(), name='create-barcode'),
     path('dashboard/create-QRCode', CreateQRCode.as_view(), name='create-QRCode'),
-    path('update_model/', update_quantity, name='update_model'),
+    path('update_model/', update_quantity.as_view(), name='update_model'),
+    path('add-barcode/<int:pk>', AddBarcode.as_view(), name='add-barcode'),
+    path('barcode_hub/', AddBarcodeHub.as_view(), name='barcode-hub'),
+    path('dashboard/eou-report/', EndOfReport.as_view(), name='eou-report'),
+    path('pdf-logging', report_pdf, name='pdf-logging')
    #path('detail/', )
 ] 

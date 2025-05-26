@@ -11,10 +11,14 @@ class Product(models.Model):
     quantity = models.IntegerField()
     vendor = models.TextField(max_length=200, default=None)
     date_created = models.DateTimeField(auto_now_add=True)
-    user = models.ForeignKey(User, on_delete=models.DO_NOTHING, default=None)
+    user = models.ForeignKey(User, on_delete=models.SET_NULL, default=None, null=True)
     barcode = models.BigIntegerField(unique=True, blank=True, null=True)
+    manufacturer_barcode = models.BigIntegerField(unique=True, blank=True, null=True)
     high_priority = models.BooleanField(default=False)
     description = models.TextField(max_length=150, default='')
+    printed = models.BooleanField(default=False)
+    modified_by = models.ForeignKey(User, default=None, on_delete=models.SET_NULL, null=True, related_name='modified_by')
+
 
 
     admin_field_price1 = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True, editable=True, default=0.00)

@@ -1,6 +1,12 @@
 import qrcode
 import os
 
+def sanitize_username(filename):
+    invalid_chars = ['<', '>', ':', '"', '/', '\\', '|', '?', '*', "'"]
+    for char in invalid_chars:
+        filename = filename.replace(char, '')
+    return filename
+
 def generateQR(username, password):
   combined_data = f"{username}:{password}"
   qr = qrcode.QRCode(
@@ -17,7 +23,7 @@ def generateQR(username, password):
     print(f"QR Code generation failed: {e}")
   desktop_path = os.path.join(os.path.expanduser('~'), 'Desktop')
   folder_path = os.path.join(desktop_path, "Employee-QRCodes")
-
+  username = sanitize_username(username)
   # Create the folder if it doesn't exist
   if not os.path.exists(folder_path):
       os.makedirs(folder_path)

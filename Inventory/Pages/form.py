@@ -14,12 +14,13 @@ class ProductForm(forms.ModelForm):
  
   class Meta:
     model = Product
-    fields = ['title', 'description', 'location_ID', 'product_ID', 'quantity', 'vendor', 'high_priority', 'admin_field_price1', 'admin_field_price2']
+    fields = ['title', 'description', 'location_ID', 'product_ID', 'manufacturer_barcode', 'quantity', 'vendor', 'high_priority', 'admin_field_price1', 'admin_field_price2']
     labels = {
             'title': 'Product Name',
             'description': 'Description',
             'location_ID': 'Location ID',
             'product_ID': 'Part Number',
+            'manufacturer_barcode': 'Manufacturer Barcode (if applicable)',
             'quantity': 'Quantity',
             'vendor': 'Vendor',
             'high_priority': 'Does this product have high priority?',
@@ -38,6 +39,9 @@ class ProductForm(forms.ModelForm):
       if not self.user.is_superuser:
           del self.fields['admin_field_price1']
           del self.fields['admin_field_price2']
+      else:
+          self.fields['admin_field_price1'].initial = ''
+          self.fields['admin_field_price2'].initial = ''
       self.fields['description'].widget.attrs['placeholder'] = 'Enter product description and/or overstock information here.'
 
 class ProductForm2(forms.ModelForm):
@@ -64,7 +68,7 @@ class SearchForm1(forms.ModelForm):
    def __init__(self, *args, **kwargs):
     super(SearchForm1, self).__init__(*args, **kwargs)
 
-    self.fields['inventory_field'].widget = forms.Select(choices=[('title', 'Product Name'), ('product_ID', 'Product ID'), ('location_ID', 'Location'), ('vendor', 'Vendor'), ('Show All', 'Show All')])
+    self.fields['inventory_field'].widget = forms.Select(choices=[('date_created', 'Recently Added'),('title', 'Product Name'), ('product_ID', 'Part Number'), ('location_ID', 'Location'), ('vendor', 'Vendor'), ('Show All', 'Show All'), ('printed', 'Not Yet Printed')])
 
     self.fields['inventory_field'].label = 'Search based on'
     self.fields['search_field'].label = 'Search for:'

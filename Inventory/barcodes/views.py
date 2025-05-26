@@ -1,7 +1,7 @@
 
 from django.http import JsonResponse
 from django.shortcuts import render, redirect
-from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.mixins import UserPassesTestMixin
 from django.views.generic import View
 from Pages.form import SearchForm1
 from Products.models import Product
@@ -9,7 +9,11 @@ from utils.generate_barcode import generate_barcode_and_save
 from utils.generate_qrcode import generateQR
 from utils.print_barcode import print_barcode
 
-class CreateBarcode(LoginRequiredMixin, View):
+class CreateBarcode(UserPassesTestMixin, View):
+    def test_func(self):
+        return self.request.user.groups.filter(name='Inventory Technician').exists() or self.request.user.is_superuser
+    def handle_no_permission(self):
+        return redirect('home')
     def get(self, request):
        form = SearchForm1()
        return render(request, 'Dashboard/Create-barcode.html', {'form': form})
@@ -23,8 +27,10 @@ class CreateBarcode(LoginRequiredMixin, View):
             except Product.DoesNotExist:
                 return JsonResponse({'status': 'error', 'message': 'Product not found'})
             product_name = product.title
+            product_location = product.location_ID
+            product_part = product.product_ID
             product_barcode = product.barcode
-            generate_barcode_and_save(product_barcode, product_name)
+            generate_barcode_and_save(product_barcode, product_name, product_part, product_location)
             return JsonResponse({'status': 'success'})
         else:
           form = SearchForm1(request.POST)
@@ -43,7 +49,11 @@ class CreateBarcode(LoginRequiredMixin, View):
           form = SearchForm1()
       return render(request, 'Dashboard/Create-barcode.html', {'items': self.items, 'form': form})
 
-class PrintBarcode(LoginRequiredMixin, View):
+class PrintBarcode(UserPassesTestMixin, View):
+   def test_func(self):
+        return self.request.user.groups.filter(name='Inventory Technician').exists() or self.request.user.is_superuser
+   def handle_no_permission(self):
+        return redirect('home')
    def get(self, request):
       form = SearchForm1()
       return render(request, 'Dashboard/print-barcode.html', {'form': form})
@@ -57,10 +67,11 @@ class PrintBarcode(LoginRequiredMixin, View):
             except Product.DoesNotExist:
                 return JsonResponse({'status': 'error', 'message': 'Product not found'})
             product_name = product.title
-            barcode_filename = f"barcode_{product_name}.png"
             try:
                print(f'Printing barcode for {product_name}')
-               print_barcode(barcode_filename, product_name)
+               print_barcode(product_name)
+               product.printed = True
+               product.save()
                return JsonResponse({'status': 'success'})
             except Exception as e:
                return JsonResponse({'status': 'error', 'message': f'Error printing barcode: {e}'})
@@ -71,6 +82,12 @@ class PrintBarcode(LoginRequiredMixin, View):
           if selectedOption == 'Show All':
             self.items = Product.objects.order_by('title')
             return render(request, 'Dashboard/print-barcode.html', {'items': self.items, 'form': form})
+          elif selectedOption == 'printed':
+             self.items = Product.objects.filter(printed=False)
+             printAll = True
+             return render(request, 'Dashboard/print-barcode.html', {'items': self.items, 'form': form, 'printAll': printAll})
+          elif selectedOption == 'date_created':
+            self.items = Product.objects.order_by('-date_created')
           else:
             user_search_input = form.cleaned_data['search_field']
             if user_search_input:
@@ -82,7 +99,11 @@ class PrintBarcode(LoginRequiredMixin, View):
       return render(request, 'Dashboard/print-barcode.html', {'items': self.items, 'form': form})
 
 
-class CreateQRCode(LoginRequiredMixin, View):
+class CreateQRCode(UserPassesTestMixin, View):
+   def test_func(self):
+        return self.request.user.is_superuser
+   def handle_no_permission(self):
+        return redirect('home')
    def get(self, request):
       return render(request, 'Dashboard/create-qr.html')
    def post(self, request):
@@ -94,20 +115,34 @@ class CreateQRCode(LoginRequiredMixin, View):
       else:
          return render(request, 'Dashboard/create-qr.html')
 
-class ProductFinder(LoginRequiredMixin, View):
-   def get(self, request):
-      return redirect(request, 'Dashboard/scan_barcode.html')
-   def post(self, request):
-      barcode2 = request.POST.get('scannedData', '')
-      try:
-        product = Product.objects.get(barcode=int(barcode2))
-      except Product.DoesNotExist:
-          error = "Product does not exist."
-          return render(request, 'Dashboard/scan_barcode.html', {'error': error})
-      except ValueError:
-         error = "The value received is of incorrect type."
-         return render(request, 'Dashboard/scan_barcode.html', {'error': error}) 
-      return render(request, 'Dashboard/quantity-adjuster.html', {'product': product})
+class ProductFinder(UserPassesTestMixin, View):
+    def test_func(self):
+        return self.request.user.is_staff
+    def handle_no_permission(self):
+        return redirect('home')
+    def get(self, request):
+        return render(request, 'Dashboard/scan_barcode.html')
+
+    def post(self, request):
+        barcode2 = request.POST.get('scannedData', '')
+        inv_barcode = int(barcode2) // 10
+        product = None
+        try:
+            product = Product.objects.get(barcode=int(inv_barcode))
+        except Product.DoesNotExist:
+            try:
+                product = Product.objects.get(manufacturer_barcode=int(barcode2))
+            except Product.DoesNotExist:
+                error = "Product does not exist."
+                return render(request, 'Dashboard/scan_barcode.html', {'error': error})
+            except ValueError:
+                error = "The value received is of incorrect type."
+                return render(request, 'Dashboard/scan_barcode.html', {'error': error})
+        except ValueError:
+            error = "The value received is of incorrect type."
+            return render(request, 'Dashboard/scan_barcode.html', {'error': error})
+
+        return render(request, 'Dashboard/quantity-adjuster.html', {'product': product})
 
  
 

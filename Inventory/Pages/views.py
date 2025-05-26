@@ -4,9 +4,13 @@ from django.views.generic import TemplateView, View
 from django.contrib.auth import authenticate, login
 from .form import UserRegisterForm, SearchForm1
 from Products.models import Product
-from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.mixins import UserPassesTestMixin
 
-class Dashboard(LoginRequiredMixin, View):
+class Dashboard(UserPassesTestMixin, View):
+   def test_func(self):
+        return self.request.user.is_staff
+   def handle_no_permission(self):
+        return redirect('home')
    def get(self, request):
       if request.user.groups.filter(name='Inventory Technician').exists():
         return render(request, 'Dashboard/dashboard2.html')
@@ -16,7 +20,11 @@ class Dashboard(LoginRequiredMixin, View):
          return render(request, 'Dashboard/dashboard3.html')
 
 
-class DashboardInventory(LoginRequiredMixin, View):
+class DashboardInventory(UserPassesTestMixin, View):
+   def test_func(self):
+        return self.request.user.groups.filter(name='Inventory Technician').exists() or self.request.user.is_superuser
+   def handle_no_permission(self):
+        return redirect('home')
    items = None
    def get(self, request):
       form = SearchForm1()
@@ -31,6 +39,10 @@ class DashboardInventory(LoginRequiredMixin, View):
           if selectedOption == 'Show All':
             self.items = Product.objects.order_by('title')
             return render(request, 'Dashboard/inventory.html', {'items': self.items, 'form': form})
+          elif selectedOption == 'date_created':
+            self.items = Product.objects.order_by('-date_created')
+          elif selectedOption == 'printed':
+             self.items = Product.objects.filter(printed=False)
           else:
             user_search_input = form.cleaned_data['search_field']
             if user_search_input:
@@ -58,6 +70,8 @@ class QRCodeLogin(View):
                     login(request, user)
                     if user.groups.filter(name='Inventory Technician').exists():
                       return render(request, 'Dashboard/dashboard2.html')
+                    elif user.groups.filter(name='Shop Technician').exists():
+                      return render(request, 'Dashboard/dashboard3.html')
                     elif user.is_superuser:
                       return render(request, 'Dashboard/dashboard1.html')
                 else:
@@ -83,16 +97,22 @@ class SignUpView(View):
       return render(request, 'signup.html', {'form': form})
 
 
-class ScanBarcode(LoginRequiredMixin, View):
+class ScanBarcode(UserPassesTestMixin, View):
+    def test_func(self):
+        return self.request.user.is_staff
+    def handle_no_permission(self):
+        return redirect('home')
     def get(self, request):
       return render(request, 'Dashboard/scan_barcode.html')
-    def post(self, request):
-       return redirect(request, 'Dashboard/scan_barcode.html')
+  
   
 
-def home_View(request):
-  if request.user.groups.filter(name='Inventory Technician').exists():
-    return render(request, 'Dashboard/dashboard2.html')
-  elif request.user.is_superuser:
-    return render(request, 'Dashboard/dashboard1.html')
-  return render(request, 'home.html')
+class home_View(View):
+  def get(self, request):
+    if request.user.groups.filter(name='Inventory Technician').exists():
+      return render(request, 'Dashboard/dashboard2.html')
+    elif request.user.groups.filter(name='Shop Technician').exists():
+      return render(request, 'Dashboard/dashboard3.html')
+    elif request.user.is_superuser:
+      return render(request, 'Dashboard/dashboard1.html')
+    return render(request, 'home.html')
