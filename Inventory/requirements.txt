@@ -9,7 +9,7 @@ mysqlclient==2.2.6
 numpy==2.2.0
 opencv-python==4.8.1.78
 packaging==23.2
-Pillow==10.1.0
+Pillow==11.2.1
 pypng==0.20220715.0
 python-barcode==0.15.1
 python-decouple==3.8
