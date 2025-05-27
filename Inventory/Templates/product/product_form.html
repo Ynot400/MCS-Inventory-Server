@@ -2,27 +2,30 @@
 {% load crispy_forms_tags %}
 
 {% block content %}
-	<a href="{% url 'inventory' %}" class="btn btn-outline-primary my-3 mx-4">Go Back</a>
+<a href="{% url 'inventory' %}" class="btn btn-outline-primary my-3 mx-4">Go Back</a>
 
-	<div class="row">
-		<div class="col-11 col-md-4 mx-auto mt-5">
-			<h1>Inventory Item</h1>
+<div class="row">
+	<div class="col-11 col-md-4 mx-auto mt-5">
+		<h1>Inventory Item</h1>
 
-			<form method="POST">
-				{% csrf_token %}
-				{{ form|crispy }}
-				<input type="checkbox" id="printBarcode" name="printBarcode" value="true">
-				<label for="printBarcode">Would you like to print this product upon creation?</label><br>
-				<div class="mt-3">
-					<button class="btn btn-primary">Add/Edit Item</button>
-				</div>
-			</form>
+		<!-- Display red alert if any form errors exist -->
+		{% if form.errors %}
+		<div class="alert alert-danger" role="alert">
+			<strong>Error in form:</strong> Please correct the error(s) below.
 		</div>
+		{% endif %}
+
+		<form method="POST">
+			{% csrf_token %}
+			<input type="hidden" name="submission_token" value="{{ submission_token }}">
+			{{ form|crispy }}
+			<input type="checkbox" id="printBarcode" name="printBarcode" value="true">
+			<label for="printBarcode">Would you like to print this product upon creation?</label><br>
+			<div class="mt-3">
+				<button class="btn btn-primary">Add/Edit Item</button>
+			</div>
+		</form>
 	</div>
-
-
-<script>
-
-</script>
+</div>
 
 {% endblock content %}

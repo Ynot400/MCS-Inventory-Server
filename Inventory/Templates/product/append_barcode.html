@@ -42,6 +42,8 @@
         instructionText.style.display = 'none';
         form.style.display = 'block';
         submitButton.disabled = false;
+        barcodeInput.blur(); // Remove focus from the input field to prevent accidental re-scanning
+
 
         // Update the barcode display with the scanned barcode
         barcodeDisplay.innerHTML = barcodeInput.value;

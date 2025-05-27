@@ -15,12 +15,16 @@
                 {% if messages %}
                 <div class="messages">
                     {% for message in messages %}
-                    <div class="{{ message.tags }}">
-                        {{ message }}
-                    </div>
+                        <div class="alert 
+                                    {% if message.tags == 'error' %}alert-danger
+                                    {% elif message.tags == 'success' %}alert-success
+                                    {% elif message.tags == 'info' %}alert-info
+                                    {% else %}alert-secondary{% endif %}">
+                            {{ message }}
+                        </div>
                     {% endfor %}
                 </div>
-                {% endif %}
+            {% endif %}            
             </div>
             <div class="table-responsive">
                 <table class="table table-hover table-striped">
