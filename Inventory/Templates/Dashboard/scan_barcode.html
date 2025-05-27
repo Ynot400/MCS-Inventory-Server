@@ -50,7 +50,7 @@
             if (event.key === "Enter") {
                 if (scannedData.length > 10) {
                     var scannedDataInput = document.getElementById('scannedDataInput');
-                    scannedDataInput.value = scannedData; // Remove the last digit
+                    scannedDataInput.value = scannedData; 
                     document.getElementById('scannedDataForm').submit();
                 }
             } else {
@@ -62,7 +62,7 @@
         window.handleManualBarcode = function() {
             const manualBarcode = document.getElementById('manualBarcode').value;
             if (manualBarcode.trim() !== "") {
-                document.getElementById('scannedDataInput').value = manualBarcode; // Remove the last digit
+                document.getElementById('scannedDataInput').value = manualBarcode; 
                 document.getElementById('scannedDataForm').submit();
             }
         };

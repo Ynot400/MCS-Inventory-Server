@@ -6,6 +6,7 @@
 		<div class="row">
 			<form method="POST" action="{% url 'delete-product' pk=item.pk %}" class="col-sm-11 col-md-4 mx-auto mt-5">
 				{% csrf_token %}
+				<input type="hidden" name="submission_token" value="{{ submission_token }}">
 				<h1 class="fw-light">Are you sure you want to delete {{ item.title }}?</h1>
 				<p class="fw-light">THIS CANNOT BE UNDONE.</p>
 

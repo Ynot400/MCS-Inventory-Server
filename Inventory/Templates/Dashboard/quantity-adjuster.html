@@ -2,6 +2,7 @@
 
 {% block content %}
 
+
 <div class="container mt-4">
 
   <div class="text-center">
@@ -36,6 +37,7 @@
   </div>
   <form method="post" action="{% url 'update_model' %}">
     {% csrf_token %}
+    <input type="hidden" name="submission_token" value="{{ submission_token }}">
     <input type="hidden" name="product_id" value="{{ product.id }}">
     <input type="hidden" name="integerDisplay" id="hiddenIntegerDisplay" value="0">
 

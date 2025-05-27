@@ -8,6 +8,9 @@ from Products.models import Product
 from utils.generate_barcode import generate_barcode_and_save
 from utils.generate_qrcode import generateQR
 from utils.print_barcode import print_barcode
+import re
+from uuid import uuid4
+from utils.tokens import create_submission_token
 
 class CreateBarcode(UserPassesTestMixin, View):
     def test_func(self):
@@ -114,48 +117,64 @@ class CreateQRCode(UserPassesTestMixin, View):
          return JsonResponse({'status': 'success'})
       else:
          return render(request, 'Dashboard/create-qr.html')
-
+      
 class ProductFinder(UserPassesTestMixin, View):
-    def test_func(self):
-        return self.request.user.is_staff
-    def handle_no_permission(self):
-        return redirect('home')
-    def get(self, request):
-        return render(request, 'Dashboard/scan_barcode.html')
-    def post(self, request):
-        barcode2 = request.POST.get('scannedData', '').strip()
-        print(f"Scanned barcode: {barcode2}")
+  def test_func(self):
+      return self.request.user.is_staff
+  def handle_no_permission(self):
+      return redirect('home')
+  def get(self, request):
+      return render(request, 'Dashboard/scan_barcode.html')
+  def post(self, request):
+    barcode_input = request.POST.get('scannedData', '').strip()
+    print(f"Scanned barcode: {barcode_input}")
+   
 
-        # Validate numeric input
-        if not barcode2.isdigit():
-            return render(request, 'Dashboard/scan_barcode.html', {
-                'error': "Barcode must contain only digits."
-            })
-
-        try:
-            inv_barcode = int(barcode2) // 10
-        except ValueError:
-            return render(request, 'Dashboard/scan_barcode.html', {
-                'error': "The barcode is not a valid number."
-            })
-
-        # Try internal barcode first
-        try:
-            product = Product.objects.get(barcode=inv_barcode)
-        except Product.DoesNotExist:
-            # Try manufacturer barcode as fallback
-            try:
-                product = Product.objects.get(manufacturer_barcode=int(barcode2))
-            except (Product.DoesNotExist, ValueError):
-                return render(request, 'Dashboard/scan_barcode.html', {
-                    'error': "Product does not exist or barcode is invalid."
-                })
-
-        return render(request, 'Dashboard/quantity-adjuster.html', {
-            'product': product
+    # General validation
+    if len(barcode_input) > 64:
+        return render(request, 'Dashboard/scan_barcode.html', {
+            'error': "Barcode is too long to be valid."
         })
 
+    if not re.match(r'^[\w\-]+$', barcode_input): # this regex will accept any barcode that contains alphanumeric characters, underscores, or hyphens -- anything else will be considered invalid
+        return render(request, 'Dashboard/scan_barcode.html', {
+            'error': "Invalid characters in barcode."
+        })
 
-    
+    # First: try to find product using manufacturer_barcode (alphanumeric allowed)
+    try:
+        product = Product.objects.get(manufacturer_barcode=barcode_input)
+        # Generate the submission token and store it in the session
+        token = create_submission_token()
+        return render(request, 'Dashboard/quantity-adjuster.html', {
+            'product': product,
+            'submission_token': token
 
-      
+        })
+    except Product.DoesNotExist:
+        pass  # Fall back to internal barcode
+
+    # If not found, try parsing internal barcode (must be numeric)
+    if barcode_input.isdigit():
+        try:
+            internal_barcode = int(barcode_input) // 10
+            product = Product.objects.get(barcode=internal_barcode)
+            # Generate the submission token and store it in the session
+            token = create_submission_token()
+            return render(request, 'Dashboard/quantity-adjuster.html', {
+                'product': product,
+                'submission_token': token
+            })
+        except Product.DoesNotExist:
+            pass
+        except ValueError:
+            # This should never hit if isdigit() passed, but keep just in case
+            return render(request, 'Dashboard/scan_barcode.html', {
+                'error': "Internal barcode is not a valid number."
+            })
+
+    return render(request, 'Dashboard/scan_barcode.html', {
+        'error': "Product does not exist or barcode is invalid."
+    })
+
+   
