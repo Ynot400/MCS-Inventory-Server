@@ -176,3 +176,5 @@ class ProductFinder(UserPassesTestMixin, View):
     return render(request, 'Dashboard/scan_barcode.html', {
         'error': "Product does not exist or barcode is invalid."
     })
+
+   
