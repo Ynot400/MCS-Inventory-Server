@@ -122,28 +122,40 @@ class ProductFinder(UserPassesTestMixin, View):
         return redirect('home')
     def get(self, request):
         return render(request, 'Dashboard/scan_barcode.html')
-
     def post(self, request):
-        barcode2 = request.POST.get('scannedData', '')
-        inv_barcode = int(barcode2) // 10
-        product = None
+        barcode2 = request.POST.get('scannedData', '').strip()
+        print(f"Scanned barcode: {barcode2}")
+
+        # Validate numeric input
+        if not barcode2.isdigit():
+            return render(request, 'Dashboard/scan_barcode.html', {
+                'error': "Barcode must contain only digits."
+            })
+
         try:
-            product = Product.objects.get(barcode=int(inv_barcode))
+            inv_barcode = int(barcode2) // 10
+        except ValueError:
+            return render(request, 'Dashboard/scan_barcode.html', {
+                'error': "The barcode is not a valid number."
+            })
+
+        # Try internal barcode first
+        try:
+            product = Product.objects.get(barcode=inv_barcode)
         except Product.DoesNotExist:
+            # Try manufacturer barcode as fallback
             try:
                 product = Product.objects.get(manufacturer_barcode=int(barcode2))
-            except Product.DoesNotExist:
-                error = "Product does not exist."
-                return render(request, 'Dashboard/scan_barcode.html', {'error': error})
-            except ValueError:
-                error = "The value received is of incorrect type."
-                return render(request, 'Dashboard/scan_barcode.html', {'error': error})
-        except ValueError:
-            error = "The value received is of incorrect type."
-            return render(request, 'Dashboard/scan_barcode.html', {'error': error})
+            except (Product.DoesNotExist, ValueError):
+                return render(request, 'Dashboard/scan_barcode.html', {
+                    'error': "Product does not exist or barcode is invalid."
+                })
 
-        return render(request, 'Dashboard/quantity-adjuster.html', {'product': product})
+        return render(request, 'Dashboard/quantity-adjuster.html', {
+            'product': product
+        })
 
- 
 
-   
+    
+
+      
