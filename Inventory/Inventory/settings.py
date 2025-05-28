@@ -27,7 +27,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = config('SECRET_KEY')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
-ALLOWED_HOSTS = ['192.168.88.111', '0.0.0.0', '192.168.88.80']
+ALLOWED_HOSTS = ['192.168.88.111', '0.0.0.0', '192.168.88.80', '127.0.0.1']
 
 
 
@@ -87,9 +87,7 @@ INSTALLED_APPS = [
     'EORLogging',
     'crispy_forms',
     'crispy_bootstrap5',
-    'barcodes',
-    'django_extensions',
-
+    'barcodes'
 ]
 
 MIDDLEWARE = [

@@ -5,27 +5,57 @@
 <a href="{% url 'inventory' %}" class="btn btn-outline-primary my-3 mx-4">Go Back</a>
 
 <div class="row">
-	<div class="col-11 col-md-4 mx-auto mt-5">
-		<h1>Inventory Item</h1>
+  <div class="col-11 col-md-6 mx-auto mt-5">
+    <h1>Inventory Item</h1>
 
-		<!-- Display red alert if any form errors exist -->
-		{% if form.errors %}
-		<div class="alert alert-danger" role="alert">
-			<strong>Error in form:</strong> Please correct the error(s) below.
-		</div>
+    <!-- Display red alert if any form errors exist -->
+    {% if form.errors %}
+    <div class="alert alert-danger" role="alert">
+      <strong>Error in form:</strong> Please correct the error(s) below.
+    </div>
+    {% endif %}
+		{% if form.non_field_errors %}
+			<div class="alert alert-danger" role="alert">
+				{% for error in form.non_field_errors %}
+					{{ error }}
+				{% endfor %}
+			</div>
 		{% endif %}
 
-		<form method="POST">
-			{% csrf_token %}
-			<input type="hidden" name="submission_token" value="{{ submission_token }}">
-			{{ form|crispy }}
-			<input type="checkbox" id="printBarcode" name="printBarcode" value="true">
-			<label for="printBarcode">Would you like to print this product upon creation?</label><br>
-			<div class="mt-3">
-				<button class="btn btn-primary">Add/Edit Item</button>
-			</div>
-		</form>
-	</div>
+
+    <form method="POST">
+      {% csrf_token %}
+      <input type="hidden" name="submission_token" value="{{ submission_token }}">
+
+      {{ form.title|as_crispy_field }}
+      {{ form.description|as_crispy_field }}
+      {{ form.product_ID|as_crispy_field }}
+      {{ form.manufacturer_barcode|as_crispy_field }}
+      {{ form.quantity|as_crispy_field }}
+      {{ form.vendor|as_crispy_field }}
+
+			<label class="mt-3">Location ID</label>
+      <div class="d-flex gap-2">
+        {{ form.section|as_crispy_field }}
+        {{ form.level|as_crispy_field }}
+        {{ form.vertical|as_crispy_field }}
+        {{ form.horizontal|as_crispy_field }}
+      </div>
+
+      {{ form.high_priority|as_crispy_field }}
+      {% if form.admin_field_price1 %}{{ form.admin_field_price1|as_crispy_field }}{% endif %}
+      {% if form.admin_field_price2 %}{{ form.admin_field_price2|as_crispy_field }}{% endif %}
+
+      <div class="form-check mt-3">
+        <input type="checkbox" class="form-check-input" id="printBarcode" name="printBarcode" value="true">
+        <label class="form-check-label" for="printBarcode">Would you like to print this product upon creation?</label>
+      </div>
+
+      <div class="mt-3">
+        <button class="btn btn-primary">Add/Edit Item</button>
+      </div>
+    </form>
+  </div>
 </div>
 
 {% endblock content %}

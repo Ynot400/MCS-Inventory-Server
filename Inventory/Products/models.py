@@ -3,11 +3,12 @@ from django.contrib.auth.models import User
 import random
 from django.db.models.signals import pre_save
 from django.dispatch import receiver
+from django.core.validators import MinValueValidator
 
 class Product(models.Model):
     title = models.TextField(max_length=200)
-    location_ID = models.TextField(max_length=20)
-    product_ID = models.TextField()
+    location_ID = models.CharField(max_length=11, unique=True)
+    product_ID = models.TextField() # Part Number
     quantity = models.IntegerField()
     vendor = models.TextField(max_length=200, default=None)
     date_created = models.DateTimeField(auto_now_add=True)
@@ -20,9 +21,23 @@ class Product(models.Model):
     modified_by = models.ForeignKey(User, default=None, on_delete=models.SET_NULL, null=True, related_name='modified_by')
 
 
+    admin_field_price1 = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        blank=True,
+        null=True,
+        default=0.00,
+        validators=[MinValueValidator(0.00)]
+    )
 
-    admin_field_price1 = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True, editable=True, default=0.00)
-    admin_field_price2 = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True, editable=True, default=0.00)
+    admin_field_price2 = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        blank=True,
+        null=True,
+        default=0.00,
+        validators=[MinValueValidator(0.00)]
+    )
 
     def save(self, *args, **kwargs):
         if self.admin_field_price1 is None:
@@ -49,5 +64,8 @@ class Product(models.Model):
 @receiver(pre_save, sender=Product)
 def generate_barcode(sender, instance, **kwargs):
     if not instance.barcode:
-        # Generate a random 12-digit integer
-        instance.barcode = random.randint(10**11, 10**12 - 1)
+        while True: # even though a barcode matching another is astronomically unlikely, we still want to ensure uniqueness 
+            random_barcode = random.randint(10**11, 10**12 - 1)
+            if not Product.objects.filter(barcode=random_barcode).exists():
+                instance.barcode = random_barcode
+                break

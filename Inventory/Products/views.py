@@ -39,20 +39,23 @@ class AddProduct(UserPassesTestMixin, View):
         # === Submission Token Check ===
         token_from_form = request.POST.get('submission_token')
         if not token_from_form:
-            print("Missing submission token.")
+            # print("Missing submission token.")
             return redirect("inventory")
 
         token_exists = SubmissionToken.objects.filter(token=token_from_form).exists()
         if not token_exists:
-            print("Invalid or already used submission token.")
+            # print("Invalid or already used submission token.")
             return redirect("inventory")
 
-        # === Validate Form ===
-        if not form.is_valid():
-            print(form.errors.as_data())
+       
         
         if form.is_valid():
-            manufacturer_barcode = form.cleaned_data.get('manufacturer_barcode', '').strip()
+            manufacturer_barcode = None
+
+            if isinstance(manufacturer_barcode, str): # check if there is a manufacturer_barcode
+                manufacturer_barcode = form.cleaned_data.get('manufacturer_barcode', '').strip()
+    
+
             if manufacturer_barcode:
                 if len(manufacturer_barcode) > 64:
                     form.add_error('manufacturer_barcode', "Barcode exceeds maximum allowed length.")
@@ -65,7 +68,7 @@ class AddProduct(UserPassesTestMixin, View):
                 return render(request, self.template_name, {'form': form, 'submission_token': token_from_form})
 
             try:
-                print(f"This will be only printed once for the product: {form.cleaned_data['title']}")
+                # print(f"This will be only printed once for the product: {form.cleaned_data['title']}")
                 with transaction.atomic():
                     form.instance.modified_by = request.user
                     product = form.save()
@@ -82,7 +85,7 @@ class AddProduct(UserPassesTestMixin, View):
                 )
 
                 if request.POST.get('printBarcode'):
-                    print_barcode(product.title)
+                    # print_barcode(product.title)
                     product.printed = True
                     product.save()
 
@@ -118,6 +121,12 @@ class EditProduct(UserPassesTestMixin, View):
         token = create_submission_token()
         if not form:
             return redirect('home')
+        
+        # Store original values in session
+        request.session['originalProduct'] = product.title
+        request.session['originalLocation'] = product.location_ID
+        request.session['originalProductID'] = product.product_ID
+
         return render(request, self.template_name, {'form': form, 'submission_token': token})
 
     def post(self, request, *args, **kwargs):
@@ -130,16 +139,22 @@ class EditProduct(UserPassesTestMixin, View):
 
         token_from_form = request.POST.get('submission_token')
         if not token_from_form:
-            print("Missing submission token.")
+            # print("Missing submission token.")
             return redirect("inventory")
 
         token_exists = SubmissionToken.objects.filter(token=token_from_form).exists()
         if not token_exists:
-            print("Invalid or already used submission token.")
+            # print("Invalid or already used submission token.")
             return redirect("inventory")
+       
 
         if form.is_valid():
-            manufacturer_barcode = form.cleaned_data.get('manufacturer_barcode', '').strip()
+
+            manufacturer_barcode = None
+
+            if isinstance(manufacturer_barcode, str):
+                manufacturer_barcode = form.cleaned_data.get('manufacturer_barcode', '').strip()
+    
 
             # Barcode validation
             if manufacturer_barcode:
@@ -149,7 +164,7 @@ class EditProduct(UserPassesTestMixin, View):
                     form.add_error('manufacturer_barcode', "Barcode contains invalid characters.")
                 elif Product.objects.filter(manufacturer_barcode=manufacturer_barcode).exclude(pk=product.pk).exists():
                     form.add_error('manufacturer_barcode', "This barcode is already assigned to another product.")
-
+        
             if form.errors:
                 return render(request, self.template_name, {'form': form, 'submission_token': token_from_form})
             
@@ -161,8 +176,10 @@ class EditProduct(UserPassesTestMixin, View):
                     loc_changed = request.session.get('originalLocation') != form.cleaned_data['location_ID']
                     id_changed = request.session.get('originalProductID') != form.cleaned_data['product_ID']
 
+
                     if request.user.is_superuser:
                         if title_changed or loc_changed or id_changed:
+                            # print("Changes detected, resetting printed status.")
                             product.printed = False
                     else:
                         if loc_changed:
@@ -170,6 +187,12 @@ class EditProduct(UserPassesTestMixin, View):
 
                     product.modified_by = request.user
                     product = form.save()
+
+                    # Session values are no longer needed
+                    request.session.pop('originalProduct', None)
+                    request.session.pop('originalLocation', None)
+                    request.session.pop('originalProductID', None)
+
                     
                 # Only delete token **after** save succeeded
                 SubmissionToken.objects.filter(token=token_from_form).delete()
