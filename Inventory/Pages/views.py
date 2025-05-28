@@ -5,6 +5,11 @@ from django.contrib.auth import authenticate, login
 from .form import UserRegisterForm, SearchForm1
 from Products.models import Product
 from django.contrib.auth.mixins import UserPassesTestMixin
+from utils.locationID_formatter import fixLocationIDFormat
+
+def location_demo(request):
+    fixLocationIDFormat()
+    return render(request, 'testinglocationid.html')
 
 class Dashboard(UserPassesTestMixin, View):
    def test_func(self):
