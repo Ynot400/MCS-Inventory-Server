@@ -53,53 +53,81 @@ class CreateBarcode(UserPassesTestMixin, View):
       return render(request, 'Dashboard/Create-barcode.html', {'items': self.items, 'form': form})
 
 class PrintBarcode(UserPassesTestMixin, View):
-   def test_func(self):
+    template_name = 'Dashboard/print-barcode.html'
+
+    def test_func(self):
         return self.request.user.groups.filter(name='Inventory Technician').exists() or self.request.user.is_superuser
-   def handle_no_permission(self):
+
+    def handle_no_permission(self):
         return redirect('home')
-   def get(self, request):
-      form = SearchForm1()
-      return render(request, 'Dashboard/print-barcode.html', {'form': form})
-   def post(self, request):
-      self.items = []
-      if request.method == 'POST':
+
+    def get(self, request):
+        form = SearchForm1(initial={'show_all': True})
+        items = Product.objects.order_by('title')
+        return render(request, self.template_name, {'form': form, 'items': items})
+
+    def post(self, request):
+        # Handle AJAX barcode printing
         if 'printBarcode' in request.POST:
             product_id = request.POST.get('product_ID')
             try:
                 product = Product.objects.get(pk=product_id)
+                print(f'Printing barcode for {product.title}')
+                print_barcode(product.title)
+                product.printed = True
+                product.save()
+                return JsonResponse({'status': 'success'})
             except Product.DoesNotExist:
                 return JsonResponse({'status': 'error', 'message': 'Product not found'})
-            product_name = product.title
-            try:
-               print(f'Printing barcode for {product_name}')
-               print_barcode(product_name)
-               product.printed = True
-               product.save()
-               return JsonResponse({'status': 'success'})
             except Exception as e:
-               return JsonResponse({'status': 'error', 'message': f'Error printing barcode: {e}'})
-        else:
-          form = SearchForm1(request.POST)
+                return JsonResponse({'status': 'error', 'message': f'Error printing barcode: {str(e)}'})
+
+        # Handle form submission
+        form = SearchForm1(request.POST)
+        items = Product.objects.none()
+        printAll = False
+
+         #  Check for "Not Yet Printed" manually via POST flag
+        if request.POST.get('printed') == 'true':
+            items = Product.objects.filter(printed=False).order_by('title')
+            printAll = True
+            return render(request, self.template_name, {
+            'form': SearchForm1(),
+            'items': items,
+            'printAll': printAll
+                })
+
+
         if form.is_valid():
-          selectedOption = form.cleaned_data['inventory_field']
-          if selectedOption == 'Show All':
-            self.items = Product.objects.order_by('title')
-            return render(request, 'Dashboard/print-barcode.html', {'items': self.items, 'form': form})
-          elif selectedOption == 'printed':
-             self.items = Product.objects.filter(printed=False)
-             printAll = True
-             return render(request, 'Dashboard/print-barcode.html', {'items': self.items, 'form': form, 'printAll': printAll})
-          elif selectedOption == 'date_created':
-            self.items = Product.objects.order_by('-date_created')
-          else:
-            user_search_input = form.cleaned_data['search_field']
-            if user_search_input:
-              self.items = Product.objects.filter(**{f"{selectedOption}__contains": user_search_input})
-            else:   # If search field is empty, show all products
-              self.items = Product.objects.order_by('title')
-        else:
-          form = SearchForm1()
-      return render(request, 'Dashboard/print-barcode.html', {'items': self.items, 'form': form})
+            show_all = form.cleaned_data.get('show_all')
+            sort_order = form.cleaned_data.get('sort_order')
+            filters = {}
+
+            if not show_all:
+            
+              if form.cleaned_data.get('product_name'):
+                  filters['title__icontains'] = form.cleaned_data['product_name']
+              if form.cleaned_data.get('product_ID'):
+                  filters['product_ID__icontains'] = form.cleaned_data['product_ID']
+              if form.cleaned_data.get('location_ID'):
+                  filters['location_ID__icontains'] = form.cleaned_data['location_ID']
+              if form.cleaned_data.get('vendor'):
+                  filters['vendor__icontains'] = form.cleaned_data['vendor']
+
+              items = Product.objects.filter(**filters)
+            else:
+                items = Product.objects.all()
+
+            if sort_order == 'recent':
+              items = items.order_by('-date_created')
+            elif sort_order == 'oldest':
+              items = items.order_by('date_created')
+
+        return render(request, self.template_name, {
+            'form': form,
+            'items': items,
+            'printAll': printAll
+        })
 
 
 class CreateQRCode(UserPassesTestMixin, View):
@@ -127,7 +155,7 @@ class ProductFinder(UserPassesTestMixin, View):
       return render(request, 'Dashboard/scan_barcode.html')
   def post(self, request):
     barcode_input = request.POST.get('scannedData', '').strip()
-    print(f"Scanned barcode: {barcode_input}")
+    # print(f"Scanned barcode: {barcode_input}")
    
 
     # General validation

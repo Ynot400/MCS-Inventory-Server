@@ -3,11 +3,13 @@
 
 {% block content %}
 <div class="container">
+
     <div class="row justify-content-center">
         <div class="col-md-10 col-12 mt-5">
+            <h2 class="marine-text">Select the product to add a Manufacturer Barcode for.</h2>
+
             <div class="form-container" style="margin-bottom: 10px;">
-                <a href="{% url 'dashboard' %}" class="btn btn-primary">Go Back</a>
-                <form method="POST" class="horizontal-form">
+                <form method="POST" class="horizontal-form" id="searchForm">
                     {% csrf_token %}
                     {{ form|crispy }}
                     <button type="submit" class="btn btn-primary">Submit</button>

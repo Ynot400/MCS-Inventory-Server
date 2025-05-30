@@ -1,56 +1,125 @@
 {% extends "base.html" %}
+{% load static %}
 
 {% block content %}
-<div class="container mt-5">
-  <h2 class="mb-4">Generate Employee QR Code</h2>
-  <td class="mb-4">*Please make sure the username and password are correct!</td>
+<style>
+  .qr-wrapper {
+    max-width: 600px;
+    margin: 3rem auto;
+    padding: 2rem;
+    background-color: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    text-align: center;
+  }
+
+  .qr-header {
+    font-size: 1.75rem;
+    font-weight: bold;
+    margin-bottom: 0.5rem;
+    color: #01acca;
+  }
+
+  .qr-subtitle {
+    font-size: 1rem;
+    color: #555;
+    margin-bottom: 1.5rem;
+  }
+
+  .form-group {
+    text-align: left;
+    margin-bottom: 1.25rem;
+  }
+
+  .form-control {
+    padding: 0.6rem;
+    font-size: 1rem;
+    border-radius: 6px;
+  }
+
+  .btn-custom {
+    background-color: #01acca;
+    color: white;
+    border: none;
+    padding: 0.6rem 1.5rem;
+    font-size: 1rem;
+    border-radius: 6px;
+    transition: background-color 0.2s;
+  }
+
+  .btn-custom:hover {
+    background-color: #01849e;
+  }
+
+  .status-message {
+    margin-top: 1rem;
+    font-weight: 500;
+  }
+
+  .qr-icon {
+    width: 100px;
+    height: auto;
+    margin-bottom: 1rem;
+    opacity: 0.85;
+  }
+</style>
+
+<div class="qr-wrapper">
+  <img src="{% static 'images/employee-badge.svg' %}" alt="User Icon" class="qr-icon">
+  <div class="qr-header">Generate Employee QR Code</div>
+  <p class="qr-subtitle">*Please make sure the username and password are correct before generating the QR Code.</p>
+
   <form id="generateQR">
-  {% csrf_token %}
-      <div class="form-group">
-          <label for="username">Username:</label>
-          <input type="text" class="form-control" id="username" name="username" required>
-      </div>
-      <div class="form-group">
-          <label for="password">Password:</label>
-          <input type="text" class="form-control" id="password" name="password" required>
-      </div>
-      <button type="submit" class="btn btn-primary" id="generateBtn">Generate Employee QR Code</button>
+    {% csrf_token %}
+    <div class="form-group">
+      <label for="username">Username:</label>
+      <input type="text" class="form-control" id="username" name="username" required>
+    </div>
+    <div class="form-group">
+      <label for="password">Password:</label>
+      <input type="text" class="form-control" id="password" name="password" required>
+    </div>
+    <button type="submit" class="btn btn-custom" id="generateBtn">Generate QR Code</button>
+    <div id="statusMessage" class="status-message"></div>
   </form>
 </div>
+
 <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
 <script>
   $(document).ready(function () {
-      var count = 1;
-      var successMessage = document.createElement('td');
-      successMessage.setAttribute('class', 'text-success');
-      document.body.appendChild(successMessage);
-      $("#generateQR").submit(function () {
-          event.preventDefault();
-          var username = document.getElementById('username').value
-          var password = document.getElementById('password').value
+    var count = 1;
 
-          $.ajax({
-              url: "/dashboard/create-QRCode",
-              type: "POST",
-              data: {
-                'username': username,
-                'password': password,
-                'generateQR': 'true',
-                'csrfmiddlewaretoken': $('[name="csrfmiddlewaretoken"]').val(),
-                    },
-              success: function (data) {
-                successMessage.textContent = `QRCode generated and saved! (${count}x)`;
-                count = count + 1;
-              },
-              error: function (xhr, status, error) {
-                  console.error("Error:", error);
-                  var errorMessage = document.createElement('td');
-                  errorMessage.textContent = "Unknown error has occured, please try again";
-                  errorMessage.setAttribute('class', 'text-danger');
-                  document.body.appendChild(errorMessage);
-              },
-          });
+    $("#generateQR").submit(function (event) {
+      event.preventDefault();
+
+      const username = $("#username").val();
+      const password = $("#password").val();
+      const statusMessage = $("#statusMessage");
+
+      $.ajax({
+        url: "/dashboard/create-QRCode",
+        type: "POST",
+        data: {
+          'username': username,
+          'password': password,
+          'generateQR': 'true',
+          'csrfmiddlewaretoken': $('[name="csrfmiddlewaretoken"]').val()
+        },
+        success: function () {
+          statusMessage
+            .text(`QR Code generated and saved! (${count}x)`)
+            .removeClass("text-danger")
+            .addClass("text-success");
+          count++;
+        },
+        error: function () {
+          statusMessage
+            .text("Unknown error has occurred, please try again.")
+            .removeClass("text-success")
+            .addClass("text-danger");
+        }
       });
+    });
   });
 </script>
 {% endblock content %}

@@ -2,37 +2,70 @@
 {% load crispy_forms_tags %}
 
 
+
 {% block content %}
-	{% if messages %}
-		<div class="row mt-3">
-			{% for message in messages %}
-				{% if message.tags == 'error' %}
-					<div class="col-md-10 col-12 mx-auto alert alert-danger">
-						{{ message }}
-					</div>
-				{% else %}
-					<div class="col-md-10 col-12 mx-auto alert alert-success">
-						{{ message }}
-					</div>
-				{% endif %}
-			{% endfor %}
+	{% if form.errors %}
+		<div class="alert alert-danger">
+			<strong>Please fix the following errors:</strong>
+			<ul class="mb-0">
+				{% for field in form %}
+					{% for error in field.errors %}
+						<li><strong>{{ field.label }}:</strong> {{ error }}</li>
+					{% endfor %}
+				{% endfor %}
+				{% for error in form.non_field_errors %}
+					<li>{{ error }}</li>
+				{% endfor %}
+			</ul>
 		</div>
 	{% endif %}
 	<div class="row">
 		<div class="col-md-10 col-12 mx-auto mt-5">
-			<div class="d-flex justify-content-between">
-				<div class="form-container" style="margin-bottom: 10px;">
-					<a href="{% url 'dashboard' %}" class="btn btn-primary">Go Back</a>
-					<form method="POST" class="horizontal-form">
-						{% csrf_token %}
-						{{ form|crispy }}
-						<button type="submit" class="btn btn-primary">Submit</button>
-					</form>
-				{% if user.is_superuser %}
-				</div>
-				<a href="{% url 'add-product' %}" class="btn btn-info align-self-center btn-lg">Add Product</a>
+			<div class="card p-3 shadow-sm">
+				<form method="POST" id="searchForm">
+					{% csrf_token %}
+	
+					<!-- Grid for Inputs -->
+					<div class="row g-3 mb-3">
+						<div class="col-md-2 col-12">
+							<label for="id_product_name" class="form-label">Product Name: </label>
+							{{ form.product_name }}
+						</div>
+						<div class="col-md-2 col-12">
+							<label for="id_product_ID" class="form-label">Part Number: </label>
+							{{ form.product_ID }}
+						</div>
+						<div class="col-md-2 col-12">
+							<label for="id_location_ID" class="form-label">Location ID: </label>
+							{{ form.location_ID }}
+						</div>
+						<div class="col-md-2 col-12">
+							<label for="id_vendor" class="form-label">Vendor: </label>
+							{{ form.vendor }}
+						</div>
+					</div>
+	
+					<!-- Sorting + Buttons -->
+					<div class="row g-3 align-items-end">
+						<div class="col-md-3 col-12">
+							<label for="id_sort_by" class="form-label">Sort By</label>
+							{{ form.sort_order }}
+						</div>
+						<div class="col-md-3 col-12 d-flex align-items-center">
+							{{ form.show_all }} <span class="ms-2">Show All</span>
+						</div>
+	
+						<div class="col-md-6 col-12 text-md-end text-start mt-3 mt-md-0">
+							<button type="submit" class="btn btn-primary me-2">Submit</button>
+							<button type="button" class="btn btn-secondary me-2" onclick="clearSearchForm()">Clear</button>
+							{% if user.is_superuser %}
+								<a href="{% url 'add-product' %}" class="btn btn-info">Add Product</a>
+							{% endif %}
+						</div>
+					</div>
+				</form>
 			</div>
-			{% endif %}
+	
 			<table class="table table-hover table-striped">
 				<thead> 
 					<tr>
@@ -99,4 +132,33 @@
 			</table>
 		</div>
 	</div>
+
+	<script>
+		document.addEventListener("DOMContentLoaded", function () {
+			const toggleFields = () => {
+				const isShowAll = document.getElementById("id_show_all").checked;
+				["id_product_name", "id_product_ID", "id_location_ID", "id_vendor"].forEach(id => {
+					const field = document.getElementById(id);
+					if (field) {
+						field.disabled = isShowAll;
+						field.style.backgroundColor = isShowAll ? "#e9ecef" : "";
+					}
+				});
+			};
+	
+			document.getElementById("id_show_all").addEventListener("change", toggleFields);
+			toggleFields(); // Initial load
+		});
+	
+		function clearSearchForm() {
+			["id_product_name", "id_product_ID", "id_location_ID", "id_vendor"].forEach(id => {
+				const field = document.getElementById(id);
+				if (field) field.value = "";
+			});
+			document.getElementById("id_sort_by").selectedIndex = 0;
+			document.getElementById("id_show_all").checked = false;
+			document.getElementById("id_show_all").dispatchEvent(new Event("change")); // Re-enable fields
+		}
+	</script>
+	
 {% endblock content %}

@@ -172,9 +172,12 @@ class EditProduct(UserPassesTestMixin, View):
             try:
                 with transaction.atomic():
                     # Compare session-stored values to determine if printed should be reset
-                    title_changed = request.session.get('originalProduct') != form.cleaned_data['title']
+                    if not request.user.groups.filter(name='Inventory Technician').exists() and request.user.is_superuser:
+                        title_changed = request.session.get('originalProduct') != form.cleaned_data['title']
+                        id_changed = request.session.get('originalProductID') != form.cleaned_data['product_ID']
+
                     loc_changed = request.session.get('originalLocation') != form.cleaned_data['location_ID']
-                    id_changed = request.session.get('originalProductID') != form.cleaned_data['product_ID']
+                    
 
 
                     if request.user.is_superuser:
@@ -197,13 +200,23 @@ class EditProduct(UserPassesTestMixin, View):
                 # Only delete token **after** save succeeded
                 SubmissionToken.objects.filter(token=token_from_form).delete()
 
-                # Only do this after successful save/commit
-                generate_barcode_and_save(
-                    product.barcode,
-                    product.title,
-                    product.product_ID,
-                    product.location_ID
-                )
+                # generate a new barcode if value changes
+                if request.user.is_superuser:
+                    if title_changed or loc_changed or id_changed:
+                         generate_barcode_and_save(
+                            product.barcode,
+                            product.title,
+                            product.product_ID,
+                            product.location_ID
+                        )
+                else:
+                    if loc_changed:
+                        generate_barcode_and_save(
+                            product.barcode,
+                            product.title,
+                            product.product_ID,
+                            product.location_ID
+                        )
 
                 if print_b:
                     print_barcode(product.title)
@@ -221,40 +234,46 @@ class EditProduct(UserPassesTestMixin, View):
 
 class AddBarcodeHub(UserPassesTestMixin, View):
     template_name = 'product/product_barcode_finder.html'
-    items = None
 
     def test_func(self):
         return self.request.user.groups.filter(name='Inventory Technician').exists() or self.request.user.is_superuser
-    
+
     def handle_no_permission(self):
-       return redirect('home')
+        return redirect('home')
 
     def get(self, request):
-      form = SearchForm1()
-      # self.items = Product.objects.order_by('title')
-      return render(request, self.template_name, {'items':self.items, 'form': form})
+        form = SearchForm1(initial={'show_all': True})
+        items = Product.objects.order_by('title')  # Default display
+        return render(request, self.template_name, {'form': form, 'items': items})
 
     def post(self, request):
-      if request.method == 'POST':
         form = SearchForm1(request.POST)
+        items = Product.objects.none()
+
         if form.is_valid():
-          selectedOption = form.cleaned_data['inventory_field']
-          if selectedOption == 'Show All':
-            self.items = Product.objects.order_by('title')
-            # return render(request, 'product/product_barcode_finder.html', {'items': self.items, 'form': form})
-          elif selectedOption == 'date_created':
-            self.items = Product.objects.order_by('-date_created')
-          elif selectedOption == 'printed':
-             self.items = Product.objects.filter(printed=False)
-          else:
-            user_search_input = form.cleaned_data['search_field']
-            if user_search_input:
-              self.items = Product.objects.filter(**{f"{selectedOption}__contains": user_search_input})
-            else:   # If search field is empty, show all products
-              self.items = Product.objects.order_by('title')
-        else:
-          form = SearchForm1()
-      return render(request, 'product/product_barcode_finder.html', {'items': self.items, 'form': form, })
+            sort_order = form.cleaned_data.get('sort_order')
+
+            if form.cleaned_data['show_all']:
+                items = Product.objects.all()
+            else:
+                filters = {}
+                if form.cleaned_data.get('product_name'):
+                    filters['title__icontains'] = form.cleaned_data['product_name']
+                if form.cleaned_data.get('product_ID'):
+                    filters['product_ID__icontains'] = form.cleaned_data['product_ID']
+                if form.cleaned_data.get('location_ID'):
+                    filters['location_ID__icontains'] = form.cleaned_data['location_ID']
+                if form.cleaned_data.get('vendor'):
+                    filters['vendor__icontains'] = form.cleaned_data['vendor']
+                    
+                items = Product.objects.filter(**filters)
+
+            if sort_order == 'recent':
+                items = items.order_by('-date_created')
+            elif sort_order == 'oldest':
+                items = items.order_by('date_created')
+
+        return render(request, self.template_name, {'form': form, 'items': items})
     
 class AddBarcode(UserPassesTestMixin, View):
     template_name = 'product/append_barcode.html'

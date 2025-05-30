@@ -16,7 +16,7 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
-from Pages.views import home_View, SignUpView, DashboardInventory, Dashboard, ScanBarcode, QRCodeLogin, location_demo
+from Pages.views import home_View, SignUpView, DashboardInventory, Dashboard, ScanBarcode, QRCodeLogin
 from Products.views import AddProduct, EditProduct, DeleteProduct, update_quantity, AddBarcode, AddBarcodeHub
 from django.contrib.auth import views as auth_views
 from django.conf import settings
@@ -48,8 +48,7 @@ urlpatterns = [
     path('add-barcode/<int:pk>', AddBarcode.as_view(), name='add-barcode'),
     path('barcode_hub/', AddBarcodeHub.as_view(), name='barcode-hub'),
     path('dashboard/eou-report/', EndOfReport.as_view(), name='eou-report'),
-    path('pdf-logging', report_pdf, name='pdf-logging'),
-    path('location-demo/', location_demo, name='location_demo')
+    path('pdf-logging', report_pdf, name='pdf-logging')
 
    #path('detail/', )
 ] 

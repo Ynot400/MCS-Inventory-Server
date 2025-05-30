@@ -70,13 +70,15 @@ class ProductForm(forms.ModelForm):
     
     class Meta:
         model = Product
-        fields = ['title', 'description', 'product_ID', 'manufacturer_barcode', 'quantity', 'vendor', 'high_priority', 'admin_field_price1', 'admin_field_price2']
+        fields = ['title', 'description', 'product_ID', 'manufacturer_barcode', 'quantity', 'min_quantity', 'max_quantity', 'vendor', 'high_priority', 'admin_field_price1', 'admin_field_price2']
         labels = {
                 'title': 'Product Name',
                 'description': 'Description',
                 'product_ID': 'Part Number',
                 'manufacturer_barcode': 'Manufacturer Barcode (if applicable)',
                 'quantity': 'Quantity',
+                'min_quantity': 'Minimum Quantity',
+                'max_quantity': 'Maximum Quantity',
                 'vendor': 'Vendor',
                 'high_priority': 'Does this product have high priority?',
                 'admin_field_price1': 'Retail',
@@ -140,6 +142,18 @@ class ProductForm(forms.ModelForm):
                 'style': 'resize:none;'
             })
 
+            self.fields['min_quantity'].widget.attrs.update({
+                'class': 'form-control',
+                'placeholder': 'Minimum stock level',
+            })
+
+            self.fields['max_quantity'].widget.attrs.update({
+                'class': 'form-control',
+                'placeholder': 'Maximum stock level',
+            })
+            self.fields['max_quantity'].initial = ''
+            self.fields['min_quantity'].initial = ''
+
 
 
 
@@ -195,14 +209,36 @@ class ProductForm2(forms.ModelForm):
             'placeholder': 'Enter description',
         })
 
-class SearchForm1(forms.ModelForm):
-   class Meta:
-      model = Search
-      fields = ['inventory_field', 'search_field']
-   def __init__(self, *args, **kwargs):
-    super(SearchForm1, self).__init__(*args, **kwargs)
 
-    self.fields['inventory_field'].widget = forms.Select(choices=[('date_created', 'Recently Added'),('title', 'Product Name'), ('product_ID', 'Part Number'), ('location_ID', 'Location'), ('vendor', 'Vendor'), ('Show All', 'Show All'), ('printed', 'Not Yet Printed')])
+SORT_CHOICES = [
+    ('recent', 'Recently Added'),
+    ('oldest', 'Oldest'),
+]
 
-    self.fields['inventory_field'].label = 'Search based on'
-    self.fields['search_field'].label = 'Search for:'
+class SearchForm1(forms.Form):
+    product_name = forms.CharField(label='Product Name', required=False)
+    product_ID = forms.CharField(label='Part Number', required=False)
+    location_ID = forms.CharField(label='Location ID', required=False)
+    vendor = forms.CharField(label='Vendor', required=False)
+    
+    sort_order = forms.ChoiceField(choices=SORT_CHOICES, required=False, label='Sort By')
+    show_all = forms.BooleanField(label='Show All', required=False)
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # This sets it as checked by default only when no POST data is submitted
+        if not self.is_bound:
+            self.fields['show_all'].initial = True
+        self.fields['sort_order'].widget.attrs.update({
+            'onchange': 'document.getElementById("searchForm").submit();'
+        })
+
+
+    def clean(self):
+        cleaned_data = super().clean()
+        show_all = cleaned_data.get('show_all')
+        search_fields = any(cleaned_data.get(field) for field in ['product_name', 'product_ID', 'location_ID', 'vendor'])
+
+        if not show_all and not search_fields:
+            raise forms.ValidationError("Please enter at least one field to search, or check 'Show All'.")
+        return cleaned_data

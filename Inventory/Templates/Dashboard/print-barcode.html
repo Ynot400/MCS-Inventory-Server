@@ -4,17 +4,40 @@
 {% block content %}
 <div class="container mt-5">
   <h2 class="marine-text">Select the product to print a barcode for.</h2>
-  <div style="display: flex; justify-content: start; align-items: center;">
-    <form method="POST" class="horizontal-form" style="margin-right: 10px;">
+
+    <!-- Buttons and Form Container -->
+    <div class="d-flex flex-wrap align-items-start gap-2 mb-3">
+
+      <!-- Search Form -->
+      <form method="POST" class="horizontal-form" id="searchForm">
+        {% csrf_token %}
+        <div class="d-flex flex-wrap align-items-end gap-2">
+          <div>
+            {{ form|crispy }}
+          </div>
+          <button type="submit" id="submitbtn" class="btn btn-primary">Submit</button>
+        </div>
+      </form>
+
+
+    </div>
+
+  <!-- Buttons side-by-side -->
+  <div class="d-flex gap-2 mt-3 flex-wrap">
+    <!-- Suggested Printing Form -->
+    <form method="POST" id="suggestedForm" class="m-0">
       {% csrf_token %}
-      {{ form|crispy }}
-      <button type="submit" id="submitbtn" class="btn btn-primary">Submit</button>
+      <input type="hidden" name="printed" value="true">
+      <button type="submit" class="btn btn-warning">Suggested Printing</button>
     </form>
-    {% if printAll == True %}
-    <!-- Add the "Print All" button next to the "Submit" button -->
-    <button type="button" id="printAll" class="btn btn-primary">Print All</button>
+
+    <!-- Print All Button -->
+    {% if printAll %}
+      <button type="button" id="printAll" class="btn btn-success">Print All</button>
     {% endif %}
   </div>
+
+
 
   <!-- Table to display items -->
   <table class="table mt-4">
@@ -31,7 +54,6 @@
           <td>{{ item.title }}</td>
           <td>{{ item.product_ID }}</td>
           <td>
-            <!-- Button next to each item -->
             <button type="button" class="printBarcode btn btn-secondary" data-id="{{ item.id }}">Print Barcode</button>
           </td>
         </tr>
@@ -39,49 +61,62 @@
     </tbody>
   </table>
 </div>
+
+<!-- Scripts -->
 <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
 <script>
-    $(document).ready(function () {
-      var count = 1;
-
-      var successMessage = document.createElement('div');
-      successMessage.setAttribute('class', 'text-success mt-2');
-  
-      var errorMessage = document.createElement('div');
-      errorMessage.setAttribute('class', 'text-danger mt-2');
-
-      document.body.appendChild(successMessage);
-      $("#printAll").click(function () {
-        // Loop through all the "Print Barcode" buttons and trigger a click event for each of them
-        $(".printBarcode").each(function () {
-          $(this).trigger("click");
-        });
+  document.addEventListener("DOMContentLoaded", function () {
+    // Disable form fields when "Show All" is checked
+    const toggleFields = () => {
+      const isShowAll = document.getElementById("id_show_all")?.checked;
+      const fieldIds = ["id_product_name", "id_product_ID", "id_location_ID", "id_vendor"];
+      fieldIds.forEach(id => {
+        const field = document.getElementById(id);
+        if (field) {
+          field.disabled = isShowAll;
+          field.style.backgroundColor = isShowAll ? "#e9ecef" : "";
+        }
       });
+    };
 
-      $(".printBarcode").click(function () {
-          console.log("This is working");
-          var productId = $(this).data('id');
+    const showAllCheckbox = document.getElementById("id_show_all");
+    if (showAllCheckbox) {
+      showAllCheckbox.addEventListener("change", toggleFields);
+      toggleFields(); // Initial state
+    }
 
-          $.ajax({
-              url: "/dashboard/print-barcode/",
-              type: "POST",
-              data: {
-                'product_ID': productId,
-                'printBarcode': 'true', 
-                'csrfmiddlewaretoken': $('[name="csrfmiddlewaretoken"]').val()
-            },
-              success: function (data) {
-                successMessage.textContent = `Barcode print request sent! (${count}x)`;
-                count = count + 1;
-                $('#submitbtn').after(successMessage);
-              },
-              error: function (xhr, status, error) {
-                console.error("Error:", error);
-                errorMessage.textContent = "Unknown error has occured, please try again";
-                $('#submitbtn').after(errorMessage);
-              }
-          });
+    // Barcode AJAX Printing
+    let count = 1;
+    const successMessage = $('<div class="text-success mt-2"></div>');
+    const errorMessage = $('<div class="text-danger mt-2"></div>');
+
+    $("#printAll").click(function () {
+      $(".printBarcode").each(function () {
+        $(this).trigger("click");
       });
     });
+
+    $(".printBarcode").click(function () {
+      const productId = $(this).data('id');
+      $.ajax({
+        url: "/dashboard/print-barcode/",
+        type: "POST",
+        data: {
+          'product_ID': productId,
+          'printBarcode': 'true',
+          'csrfmiddlewaretoken': $('[name="csrfmiddlewaretoken"]').val()
+        },
+        success: function (data) {
+          successMessage.text(`Barcode print request sent! (${count}x)`);
+          count++;
+          $('#submitbtn').after(successMessage);
+        },
+        error: function () {
+          errorMessage.text("Unknown error has occurred, please try again");
+          $('#submitbtn').after(errorMessage);
+        }
+      });
+    });
+  });
 </script>
 {% endblock content %}

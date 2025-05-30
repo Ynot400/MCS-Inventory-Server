@@ -130,30 +130,7 @@
         {% if user.is_authenticated %}
           <li class="nav-item">
             <span class="nav-user">{{ user.username }}</span>
-          </li>
-          {% if user.is_superuser %}
-            <li class="nav-item">
-              <a class="nav-link" href="{% url 'inventory' %}">Inventory</a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link" href="{% url 'print-barcode' %}">Print Barcode</a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link" href="{% url 'create-QRCode' %}">Generate Employee QRCode</a>
-            </li>
-          {% elif request.user|has_group:"Inventory Technician" %}
-            <li class="nav-item">
-              <a class="nav-link" href="{% url 'barcode-hub' %}">Add Manufacturer Barcode</a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link" href="{% url 'detect_barcodes' %}">Edit Quantity</a>
-            </li>
-          {% comment %} {% elif request.user|has_group:"Shop Technician" %}
-            <li class="nav-item">
-              <a class="nav-link" href="{% url 'detect_barcodes' %}">Inventory Scanning</a>
-            </li> {% endcomment %}
-          {% endif %} 
-          
+          </li>  
           <li class="nav-item">
             <form method="post" action="{% url 'logout' %}">
               {% csrf_token %}

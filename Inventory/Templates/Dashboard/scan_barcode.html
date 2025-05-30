@@ -1,71 +1,144 @@
 {% extends "base.html" %}
-
-{% block title %}Scanning Page{% endblock %}
+{% load static %}
+{% block title %}Scan Inventory Barcode{% endblock %}
 
 {% block content %}
+<style>
+  .scan-wrapper {
+    max-width: 600px;
+    margin: auto;
+    padding: 2rem 1rem;
+    background-color: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    text-align: center;
+  }
+
+  .scan-header {
+    font-size: 2rem;
+    font-weight: bold;
+    margin-bottom: 1rem;
+    color: #01acca;
+  }
+
+  .scan-description {
+    font-size: 1.1rem;
+    color: #555;
+    margin-bottom: 2rem;
+  }
+
+  .scan-form label {
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    display: block;
+    color: #222;
+  }
+
+  .scan-form input[type="text"] {
+    padding: 0.75rem;
+    font-size: 1rem;
+    width: 100%;
+    max-width: 400px;
+    margin: 0 auto 1rem auto;
+    display: block;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+  }
+
+  .scan-form button {
+    background-color: #01acca;
+    color: white;
+    border: none;
+    padding: 0.6rem 1.25rem;
+    font-size: 1rem;
+    border-radius: 6px;
+    transition: background-color 0.2s;
+  }
+
+  .scan-form button:hover {
+    background-color: #01849e;
+  }
+
+  .alert {
+    max-width: 600px;
+    margin: 1rem auto;
+    padding: 1rem;
+  }
+
+  @media (max-width: 500px) {
+    .scan-header {
+      font-size: 1.5rem;
+    }
+
+    .scan-description {
+      font-size: 1rem;
+    }
+  }
+
+  .scanner-icon {
+    width: 120px;
+    height: auto;
+    margin-bottom: 1rem;
+    opacity: 0.85;
+  }
+  
+</style>
 
 <form id="scannedDataForm" method="post" action="{% url 'barcode-quantity' %}">
-    {% csrf_token %}
-    <input type="hidden" name="scannedData" id="scannedDataInput">
-    <input type="submit" style="display: none;">
+  {% csrf_token %}
+  <input type="hidden" name="scannedData" id="scannedDataInput">
+  <input type="submit" style="display: none;">
 </form>
 
 {% if error %}
-<div class="alert alert-dismissible alert-danger">
-    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-    <strong>{{error}}</strong>
-</div>
+  <div class="alert alert-danger alert-dismissible fade show" role="alert">
+    {{ error }}
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+  </div>
 {% endif %}
 
+<div class="scan-wrapper">
+    <img src="{% static 'images/scanner-blue.svg' %}" class="scanner-icon" alt="Scanner Icon">
+  <div class="scan-header">Start Scanning</div>
+  <p class="scan-description">Scan a product barcode or enter it manually below to begin editing quantity.</p>
 
-<div class="container mt-4">
-    <div class="row justify-content-center">
-        <div class="col-md-12 col-lg-12 col-sm-12">
-            <a href="{% url 'dashboard' %}" class="btn btn-primary">Go Back</a>
-            <div class="card">
-                <div class="card-header">
-                    <h2 class="text-center">Start Scanning</h2>
-                </div>
-                <div class="card-body text-center">
-                    <p class="lead">Quantity options will be available after scan</p>
-                    
-                    <!-- Input box for manual barcode entry -->
-                    <div class="form-group">
-                        <label for="manualBarcode">Manual Barcode Entry:</label>
-                        <input type="text" class="form-control" id="manualBarcode" placeholder="Enter barcode">
-                        <button class="btn btn-primary mt-2" onclick="handleManualBarcode()">Submit Barcode</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
+  <div class="scan-form">
+    <label for="manualBarcode">Manual Barcode Entry:</label>
+    <input type="text" id="manualBarcode" placeholder="Enter barcode" />
+    <button onclick="handleManualBarcode()">Submit Barcode</button>
+  </div>
 </div>
 
 <script>
-    document.addEventListener("DOMContentLoaded", function() {
-        let scannedData = "";
-
-        document.addEventListener("keypress", function(event) {
-            event.preventDefault();
-            if (event.key === "Enter") {
-                if (scannedData.length > 10) {
-                    var scannedDataInput = document.getElementById('scannedDataInput');
-                    scannedDataInput.value = scannedData; 
-                    document.getElementById('scannedDataForm').submit();
-                }
-            } else {
-                scannedData += event.key;
-            }
-        });
-
-        // Function to handle manual barcode entry
-        window.handleManualBarcode = function() {
-            const manualBarcode = document.getElementById('manualBarcode').value;
-            if (manualBarcode.trim() !== "") {
-                document.getElementById('scannedDataInput').value = manualBarcode; 
-                document.getElementById('scannedDataForm').submit();
-            }
-        };
+    document.addEventListener("DOMContentLoaded", function () {
+      let scannedData = "";
+  
+      document.addEventListener("keypress", function (event) {
+        // Prevent interference when user is typing in a text input or textarea
+        if (event.target.tagName === "INPUT" || event.target.tagName === "TEXTAREA") {
+          return; // Don't interfere with manual typing
+        }
+  
+        event.preventDefault(); // still prevent the default outside input
+        if (event.key === "Enter") {
+          if (scannedData.length > 10) {
+            document.getElementById("scannedDataInput").value = scannedData;
+            document.getElementById("scannedDataForm").submit();
+          }
+        } else {
+          scannedData += event.key;
+        }
+      });
+  
+      //  Manual barcode handler (unchanged)
+      window.handleManualBarcode = function () {
+        const manualBarcode = document.getElementById("manualBarcode").value;
+        if (manualBarcode.trim() !== "") {
+          document.getElementById("scannedDataInput").value = manualBarcode;
+          document.getElementById("scannedDataForm").submit();
+        }
+      };
     });
-</script>
+  </script>
+  
 {% endblock %}

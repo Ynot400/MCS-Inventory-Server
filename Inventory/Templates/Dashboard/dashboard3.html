@@ -1,68 +1,117 @@
-{% extends "base.html" %}
-
+{% extends "base2.html" %}
+{% load static %}
 {% block content %}
-
 <style>
+  :root {
+    --primary: #01ACCA;
+    --secondary: #FAE043;
+    --highlight: #1E1E1E;
+    --background: #F4F8FA;
+    --white: #ffffff;
+  }
+
   body {
-    background-color: #f8f9fa;
+    background-color: var(--background);
+    font-family: 'Segoe UI', sans-serif;
   }
 
-  .dashboard-container {
-    max-width: 100%;
+  .dashboard-header {
     display: flex;
-    justify-content: center; /* Center the rows horizontally */
-    align-items: center; /* Center the rows vertically */
+    justify-content: center;
+    align-items: center;
+    background-color: var(--secondary);
+    color: var(--white);
+    padding: 1rem;
+    font-size: 2rem;
+    font-weight: 600;
+    margin-bottom: 2rem;
+    border-bottom: 4px solid var(--secondary);
   }
 
-  .dashboard-button {
-    width: 280px;
-    height: 280px;
-    margin: 15px;
-    font-size: 30px;
-    background-color: #6DB2EE;
-    border: none;
-    color: white;
-    text-align: center;
-    text-decoration: none;
-    display: flex;
-    align-items: center; /* Align text vertically */
-    justify-content: center; /* Align text horizontally */
-    cursor: pointer;
-    border-radius: 5px;
+  .dashboard-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 20px;
+    padding: 0 1rem 3rem;
+    max-width: 1200px;
+    margin: auto;
   }
-
-  .dashboard-row {
+  .dashboard-card {
+    background-color: var(--white);
+    color: var(--highlight);
+    border-left: 8px solid var(--primary);
+    border-radius: 8px;
+    padding: 1.5rem;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
     display: flex;
+    flex-direction: column;
     justify-content: space-between;
-    margin-bottom: 5px;
+    transition: all 0.25s ease-in-out;
+    text-align: left;
+    font-size: 1.1rem;
+    font-weight: 500;
+    position: relative; /* allow image inside to be absolute */
+    overflow: hidden;
+    min-height: 300px;
+    height: auto;
+    
   }
-
-  .dashboard-col {
-    flex-basis: calc(20% - 10px);
+  
+  .dashboard-card:hover {
+    transform: scale(1.03);
+    box-shadow: 0 6px 16px rgba(0,0,0,0.15);
+    border-left-color: var(--secondary);
   }
+  
+  .dashboard-card a {
+    text-decoration: none;
+    color: inherit;
+    display: block;
+    height: 100%;
+    position: relative;
+  }
+  
+  .dashboard-text {
+    z-index: 2;
+    position: relative;
+    padding-right: 40px;
+  }
+  
+  .dashboard-icon {
+    position: absolute;
+    bottom: -100px;
+    right: 0px;
+    width: 120px;
+    height: 120px;
+    opacity: 100;
+    z-index: 1;
+    pointer-events: none;
+  }
+  
 
-  /* Additional styles for smaller screens */
   @media (max-width: 600px) {
-    .dashboard-row {
-      flex-wrap: wrap;
-    }
-
-    .dashboard-col {
-      flex-basis: calc(50% - 10px)%;
+    .dashboard-header {
+      font-size: 1.5rem;
+      text-align: center;
     }
   }
-
-  .col-12, .col-sm-6, .col-md-4, .col-lg-3 {
-    padding: 2; /* or a smaller value if you want less space */
-  }
+  
 </style>
 
-
-<div class="container-fluid dashboard-container">
-  <div class="row justify-content-center">
-    <div class="col-12 col-sm-6 col-md-4 col-lg-3 d-flex align-items-center">
-      <a href="{% url 'detect_barcodes' %}" class="btn btn-success btn-block dashboard-button">Barcode Scanning Edit Quantity</a>
-    </div>
-  </div>
+<div class="dashboard-header">
+Shop Technician Dashboard
 </div>
+
+  <div class="dashboard-card">
+    <a href="{% url 'detect_barcodes' %}">
+      <div class="dashboard-text">
+        <strong>Edit Quantity</strong><br>
+        <strong>With Barcode Scan</strong>
+      </div>
+      <img src="{% static 'images/scanner.svg' %}" class="dashboard-icon" alt="scanner icon">
+    </a>
+  </div>
+
+</div>
+
 {% endblock %}
