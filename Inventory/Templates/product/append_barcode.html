@@ -1,55 +1,110 @@
 {% extends 'base.html' %}
+{% load static %}
 
 {% block content %}
-<div>
-    <a href="{% url 'barcode-hub' %}" class="btn btn-outline-primary my-3 mx-4">Go back</a>
-    <div class="row">
-      <div>
-        <label class="col-form-label col-form-label-lg mt-4" id="instructionText" for="inputLarge">Please scan the manufacturer's barcode now.</label>
-        <input class="form-control form-control-lg" type="text" id="barcodeInput" id="inputLarge" autofocus>
-      </div>
-        {% comment %} <input type="text" id="barcodeInput" placeholder="Scan barcode here" autofocus>
-        <p id="instructionText">Please scan the manufacturer's barcode now.</p> {% endcomment %}
-        <form method="POST" class="col-sm-11 col-md-4 mx-auto mt-5" id="form">
-            {% csrf_token %}
-            <input type="hidden" name="barcode" id="barcodeField">
-            <h1 class="fw-light"> Add <span id="barcodeDisplay"></span> to {{ product.title }}?</h1>
-            <p class="fw-light">Please make sure this is the correct product!</p>
+<style>
+  .scan-wrapper {
+    max-width: 600px;
+    margin: 3rem auto;
+    padding: 2rem;
+    background-color: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    text-align: center;
+  }
 
-            <div>
-                <button type="submit" class="btn btn-lg marine-color" id="submitButton">Update</button>
-            </div>
-        </form>
-    </div>
+  .scan-header {
+    font-size: 1.8rem;
+    font-weight: bold;
+    margin-bottom: 0.75rem;
+    color: #01acca;
+  }
+
+  .scan-subtitle {
+    font-size: 1rem;
+    color: #555;
+    margin-bottom: 2rem;
+  }
+
+  .scanner-icon {
+    width: 100px;
+    height: auto;
+    margin-bottom: 1rem;
+    opacity: 0.85;
+  }
+
+  .barcode-input {
+    padding: 0.75rem;
+    font-size: 1rem;
+    width: 100%;
+    max-width: 400px;
+    margin: 0 auto 1rem auto;
+    display: block;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+  }
+
+  .confirm-section {
+    margin-top: 2rem;
+    display: none;
+  }
+
+  .barcode-display {
+    font-weight: bold;
+    font-size: 1.25rem;
+    margin: 0.5rem 0;
+    color: #333;
+  }
+
+  .btn-lg-custom {
+    padding: 0.6rem 1.5rem;
+    font-size: 1.1rem;
+    border-radius: 6px;
+    background-color: #01acca;
+    color: white;
+    border: none;
+  }
+
+  .btn-lg-custom:hover {
+    background-color: #01849e;
+  }
+</style>
+
+<a href="{% url 'barcode-hub' %}" class="btn btn-outline-primary mb-3">← Go Back</a>
+
+
+<div class="scan-wrapper">
+  <img src="{% static 'images/barcode-blue.svg' %}" class="scanner-icon" alt="Scanner Icon">
+
+  <div class="scan-header">Scan Manufacturer Barcode</div>
+  <p class="scan-subtitle">Scan or enter the manufacturer's barcode for the product below.</p>
+
+  <input type="text" id="barcodeInput" class="barcode-input" placeholder="Scan or type barcode" autofocus>
+
+  <form method="POST" id="form" class="confirm-section">
+    {% csrf_token %}
+    <input type="hidden" name="barcode" id="barcodeField">
+    <p class="barcode-display">Apply barcode <span id="barcodeDisplay"></span> to <strong>{{ product.title }}</strong>?</p>
+    <button type="submit" class="btn-lg-custom">Confirm & Update</button>
+  </form>
 </div>
 
-
 <script>
- document.addEventListener("DOMContentLoaded", function() {
-    console.log('Page loaded');
-    var barcodeInput = document.getElementById('barcodeInput');
-    var form = document.getElementById('form');
-    var submitButton = document.getElementById('submitButton');
-    var instructionText = document.getElementById('instructionText');
-    var barcodeDisplay = document.getElementById('barcodeDisplay');
+  document.addEventListener("DOMContentLoaded", function () {
+    const barcodeInput = document.getElementById('barcodeInput');
+    const barcodeDisplay = document.getElementById('barcodeDisplay');
+    const barcodeField = document.getElementById('barcodeField');
+    const form = document.getElementById('form');
 
-    // Initially hide the form and the submit button
-    form.style.display = 'none';
-    submitButton.disabled = true;
-
-    barcodeInput.addEventListener('change', function() {
-        // When a barcode is scanned, hide the instruction text and show the form and the submit button
-        instructionText.style.display = 'none';
+    barcodeInput.addEventListener('change', function () {
+      const value = barcodeInput.value.trim();
+      if (value.length > 0) {
+        barcodeDisplay.textContent = value;
+        barcodeField.value = value;
         form.style.display = 'block';
-        submitButton.disabled = false;
-        barcodeInput.blur(); // Remove focus from the input field to prevent accidental re-scanning
-
-
-        // Update the barcode display with the scanned barcode
-        barcodeDisplay.innerHTML = barcodeInput.value;
-        document.getElementById('barcodeField').value = barcodeInput.value;
-
+        barcodeInput.blur();
+      }
     });
- });
+  });
 </script>
-{% endblock content %}
+{% endblock %}
