@@ -9,7 +9,13 @@ class Product(models.Model):
     title = models.TextField(max_length=200)
     location_ID = models.CharField(max_length=11, unique=True)
     product_ID = models.TextField() # Part Number
-    quantity = models.IntegerField()
+
+    quantity = models.PositiveIntegerField()
+    min_quantity = models.PositiveIntegerField(default=0, validators=[MinValueValidator(0)])
+    max_quantity = models.PositiveIntegerField(default=100, validators=[MinValueValidator(1)])
+
+
+
     vendor = models.TextField(max_length=200, default=None)
     date_created = models.DateTimeField(auto_now_add=True)
     user = models.ForeignKey(User, on_delete=models.SET_NULL, default=None, null=True)
@@ -19,6 +25,12 @@ class Product(models.Model):
     description = models.TextField(max_length=150, default='')
     printed = models.BooleanField(default=False)
     modified_by = models.ForeignKey(User, default=None, on_delete=models.SET_NULL, null=True, related_name='modified_by')
+
+    def is_below_min(self): # Checks if the quantity is below the minimum threshold
+        return self.quantity < self.min_quantity
+
+    def is_above_max(self): # Checks if the quantity is above the maximum threshold
+        return self.quantity > self.max_quantity
 
 
     admin_field_price1 = models.DecimalField(

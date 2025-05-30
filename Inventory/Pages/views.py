@@ -5,11 +5,8 @@ from django.contrib.auth import authenticate, login
 from .form import UserRegisterForm, SearchForm1
 from Products.models import Product
 from django.contrib.auth.mixins import UserPassesTestMixin
-from utils.locationID_formatter import fixLocationIDFormat
 
-def location_demo(request):
-    fixLocationIDFormat()
-    return render(request, 'testinglocationid.html')
+
 
 class Dashboard(UserPassesTestMixin, View):
    def test_func(self):
@@ -22,7 +19,9 @@ class Dashboard(UserPassesTestMixin, View):
       elif request.user.is_superuser:
         return render(request, 'Dashboard/dashboard1.html')
       elif request.user.groups.filter(name='Shop Technician').exists():
-         return render(request, 'Dashboard/dashboard3.html')
+         return render(request, 'Dashboard/scan_barcode.html')
+      else:
+         return render(request, 'home.html')
 
 
 class DashboardInventory(UserPassesTestMixin, View):
@@ -33,31 +32,40 @@ class DashboardInventory(UserPassesTestMixin, View):
    items = None
    def get(self, request):
       form = SearchForm1()
-      # self.items = Product.objects.order_by('title')
+      items = Product.objects.order_by('title')
       is_inventory_technician = request.user.groups.filter(name='Inventory Technician').exists()
-      return render(request, 'Dashboard/inventory.html', {'items':self.items, 'form': form, 'is_inventory_technician': is_inventory_technician})
+      return render(request, 'Dashboard/inventory.html', {'items':items, 'form': form, 'is_inventory_technician': is_inventory_technician})
    def post(self, request):
-      if request.method == 'POST':
-        form = SearchForm1(request.POST)
-        if form.is_valid():
-          selectedOption = form.cleaned_data['inventory_field']
-          if selectedOption == 'Show All':
-            self.items = Product.objects.order_by('title')
-            return render(request, 'Dashboard/inventory.html', {'items': self.items, 'form': form})
-          elif selectedOption == 'date_created':
-            self.items = Product.objects.order_by('-date_created')
-          elif selectedOption == 'printed':
-             self.items = Product.objects.filter(printed=False)
-          else:
-            user_search_input = form.cleaned_data['search_field']
-            if user_search_input:
-              self.items = Product.objects.filter(**{f"{selectedOption}__contains": user_search_input})
-            else:   # If search field is empty, show all products
-              self.items = Product.objects.order_by('title')
+    form = SearchForm1(request.POST)
+    if form.is_valid():
+        if form.cleaned_data['show_all']:
+            items = Product.objects.all()
         else:
-          form = SearchForm1()
-      is_inventory_technician = request.user.groups.filter(name='Inventory Technician').exists()
-      return render(request, 'Dashboard/inventory.html', {'items': self.items, 'form': form, 'is_inventory_technician': is_inventory_technician})
+            filters = {}
+            if form.cleaned_data['product_name']:
+                filters['title__icontains'] = form.cleaned_data['product_name']
+            if form.cleaned_data['product_ID']:
+                filters['product_ID__icontains'] = form.cleaned_data['product_ID']
+            if form.cleaned_data['location_ID']:
+                filters['location_ID__icontains'] = form.cleaned_data['location_ID']
+            if form.cleaned_data['vendor']:
+                filters['vendor__icontains'] = form.cleaned_data['vendor']
+            
+            items = Product.objects.filter(**filters)
+
+        if form.cleaned_data.get('sort_order') == 'recent':
+            items = items.order_by('-date_created')
+        elif form.cleaned_data.get('sort_order') == 'oldest':
+            items = items.order_by('date_created')
+    else:
+        items = Product.objects.none()
+
+    is_inventory_technician = request.user.groups.filter(name='Inventory Technician').exists()
+    return render(request, 'Dashboard/inventory.html', {
+        'items': items,
+        'form': form,
+        'is_inventory_technician': is_inventory_technician
+    })
 
 
 class QRCodeLogin(View):
@@ -76,7 +84,7 @@ class QRCodeLogin(View):
                     if user.groups.filter(name='Inventory Technician').exists():
                       return render(request, 'Dashboard/dashboard2.html')
                     elif user.groups.filter(name='Shop Technician').exists():
-                      return render(request, 'Dashboard/dashboard3.html')
+                      return render(request, 'Dashboard/scan_barcode.html')
                     elif user.is_superuser:
                       return render(request, 'Dashboard/dashboard1.html')
                 else:
@@ -117,7 +125,7 @@ class home_View(View):
     if request.user.groups.filter(name='Inventory Technician').exists():
       return render(request, 'Dashboard/dashboard2.html')
     elif request.user.groups.filter(name='Shop Technician').exists():
-      return render(request, 'Dashboard/dashboard3.html')
+      return render(request, 'Dashboard/scan_barcode.html')
     elif request.user.is_superuser:
       return render(request, 'Dashboard/dashboard1.html')
     return render(request, 'home.html')

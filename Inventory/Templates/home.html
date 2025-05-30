@@ -1,46 +1,92 @@
 {% extends "base.html" %}
 {% load static %}
 
-  
 {% block content %}
 <style>
-   .dashboard-button {
-    width: 270px;
-    height: 270px;
-    margin: 15px;
-    font-size: 30px;
-    background-color: #6DB2EE;
-    border: none;
+  :root {
+    --mcs-blue: #01acca;
+    --mcs-yellow: #fae043;
+    --mcs-dark: #000000;
+    --mcs-light: #ffffff;
+    --card-radius: 12px;
+    --shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  }
+
+  body {
+    background-color: #f4f8fa;
+  }
+
+  .login-wrapper {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 1rem 1rem;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 2rem;
+    justify-content: center;
+  }
+
+  .login-card {
+    background-color: var(--mcs-blue);
+    border-radius: var(--card-radius);
+    box-shadow: var(--shadow);
     color: white;
     text-align: center;
-    text-decoration: none;
-    display: flex;
-    align-items: center; /* Align text vertically */
-    justify-content: center; /* Align text horizontally */
-    cursor: pointer;
-    border-radius: 5px;
-    background-size: cover;
-    background-position: center;
+    transition: transform 0.25s ease;
+    position: relative;
+    overflow: hidden;
+    padding: 2rem 1rem;
+  }
+
+  .login-card:hover {
+    transform: translateY(-5px);
+    background-color: #0295b0;
+  }
+
+  .login-card img {
+    max-width: 100px;
+    height: 150px;
+    margin-bottom: 1rem;
+  }
+
+  .login-card-title {
+    font-size: 1.4rem;
+    font-weight: bold;
+  }
+
+  @media (max-width: 600px) {
+    .login-card {
+      padding: 1.5rem 1rem;
+    }
+
+    .login-card img {
+      max-width: 80px;
+    }
+
+    .login-card-title {
+      font-size: 1.1rem;
+    }
   }
 </style>
-<div class="container mt-5">
-  <div class="row justify-content-center text-center"> <!-- Added justify-content-center -->
-    <div class="col-lg-3 col-md-6 col-sm-8">
-      <a href="{% url 'QR-login' %}">
-        <button class="btn dashboard-button" style="background-image: url({% static 'images/Qrcode.png' %});">
-        </button>
-      </a>
-    </div>
-    <div class="col-lg-3 col-md-6 col-sm-8">
-      <a href="{% url 'login' %}">
-        <button class="btn dashboard-button" style="background-image: url({% static 'images/password.png' %});">
-        </button>
-      </a>
-    </div>
-  </div>
+
+<div class="container text-center mt-4">
+  <h2 style="color: #000000; font-weight: 600;">Welcome to the MCS Inventory System</h2>
+  <p style="color: #555;">Choose your preferred login method to continue</p>
 </div>
 
+<div class="login-wrapper">
+  <a href="{% url 'QR-login' %}" class="text-decoration-none">
+    <div class="login-card">
+      <img src="{% static 'images/qrcode-solid.svg' %}" alt="QR Login">
+      <div class="login-card-title">Log In with QR Code</div>
+    </div>
+  </a>
 
-
+  <a href="{% url 'login' %}" class="text-decoration-none">
+    <div class="login-card">
+      <img src="{% static 'images/login.svg' %}" alt="Password Login">
+      <div class="login-card-title">Log In with Username & Password</div>
+    </div>
+  </a>
+</div>
 {% endblock %}
-
