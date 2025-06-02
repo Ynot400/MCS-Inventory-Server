@@ -62,4 +62,35 @@
         </div>
     </div>
 </div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+      const showAllCheckbox = document.querySelector('input[name="show_all"]');
+      const fieldsToToggle = [
+        'input[name="product_name"]',
+        'input[name="product_ID"]',
+        'input[name="location_ID"]',
+        'input[name="vendor"]'
+      ];
+  
+      function toggleSearchFields() {
+        const shouldDisable = showAllCheckbox?.checked;
+        fieldsToToggle.forEach(selector => {
+          const field = document.querySelector(selector);
+          if (field) {
+            field.disabled = shouldDisable;
+            field.classList.toggle('bg-light', shouldDisable);
+            field.classList.toggle('text-muted', shouldDisable);
+          }
+        });
+      }
+  
+      if (showAllCheckbox) {
+        toggleSearchFields(); // initial state
+        showAllCheckbox.addEventListener('change', toggleSearchFields);
+      }
+    });
+</script>
+  
+      
 {% endblock content %}
