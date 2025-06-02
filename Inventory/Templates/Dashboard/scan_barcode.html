@@ -110,35 +110,45 @@
 </div>
 
 <script>
-    document.addEventListener("DOMContentLoaded", function () {
-      let scannedData = "";
-  
-      document.addEventListener("keypress", function (event) {
-        // Prevent interference when user is typing in a text input or textarea
-        if (event.target.tagName === "INPUT" || event.target.tagName === "TEXTAREA") {
-          return; // Don't interfere with manual typing
-        }
-  
-        event.preventDefault(); // still prevent the default outside input
-        if (event.key === "Enter") {
-          if (scannedData.length > 10) {
-            document.getElementById("scannedDataInput").value = scannedData;
-            document.getElementById("scannedDataForm").submit();
-          }
-        } else {
-          scannedData += event.key;
-        }
-      });
-  
-      //  Manual barcode handler (unchanged)
-      window.handleManualBarcode = function () {
-        const manualBarcode = document.getElementById("manualBarcode").value;
-        if (manualBarcode.trim() !== "") {
-          document.getElementById("scannedDataInput").value = manualBarcode;
+  let scannedData = ""; 
+
+  document.addEventListener("DOMContentLoaded", function () {
+    document.addEventListener("keypress", function (event) {
+      if (event.target.tagName === "INPUT" || event.target.tagName === "TEXTAREA") return;
+
+      event.preventDefault();
+      if (event.key === "Enter") {
+        if (scannedData.length > 10) {
+          document.getElementById("scannedDataInput").value = scannedData;
           document.getElementById("scannedDataForm").submit();
         }
-      };
+      } else {
+        scannedData += event.key;
+      }
     });
-  </script>
+
+    window.handleManualBarcode = function () {
+      const manualBarcode = document.getElementById("manualBarcode");
+      if (manualBarcode && manualBarcode.value.trim() !== "") {
+        document.getElementById("scannedDataInput").value = manualBarcode.value;
+        document.getElementById("scannedDataForm").submit();
+      }
+    };
+  });
+
+  //  Clear on back/forward navigation (back button or cache restore)
+  window.addEventListener('pageshow', function (event) {
+    if (event.persisted) {
+      scannedData = "";
+
+      const hiddenInput = document.getElementById("scannedDataInput");
+      if (hiddenInput) hiddenInput.value = "";
+
+      const manualInput = document.getElementById("manualBarcode");
+      if (manualInput) manualInput.value = "";
+    }
+  });
+</script>
+
   
 {% endblock %}

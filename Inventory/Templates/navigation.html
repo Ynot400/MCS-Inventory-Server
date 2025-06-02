@@ -138,9 +138,6 @@
             <li class="nav-item">
               <a class="nav-link" href="{% url 'print-barcode' %}">Print Barcode</a>
             </li>
-            <li class="nav-item">
-              <a class="nav-link" href="{% url 'create-QRCode' %}">Generate Employee QRCode</a>
-            </li>
           {% elif request.user|has_group:"Inventory Technician" %}
             <li class="nav-item">
               <a class="nav-link" href="{% url 'barcode-hub' %}">Add Manufacturer Barcode</a>
