@@ -5,6 +5,22 @@ from Products.models import Product
 from Pages.models import Search
 from django.core.exceptions import ValidationError
 
+class UserRegistrationAdminForm(UserCreationForm):
+    class Meta:
+        model = User
+        fields = ['username', 'password1', 'password2']
+
+    def clean_username(self):
+        username = self.cleaned_data.get('username')
+        if ':' in username:
+            raise ValidationError("Username cannot contain ':'")
+        return username
+
+    def clean_password1(self):
+        password = self.cleaned_data.get('password1')
+        if ':' in password:
+            raise ValidationError("Password cannot contain ':'")
+        return password
 
 class UserRegisterForm(UserCreationForm):
   email = forms.EmailField()
