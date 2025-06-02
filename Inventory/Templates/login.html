@@ -1,18 +1,73 @@
 {% extends "base.html" %}
 {% load crispy_forms_tags %}
+{% load static %}
+
+{% block title %}Login{% endblock %}
 
 {% block content %}
-<div class="row">
-	<div class="col-11 col-md-4 mx-auto mt-5">
-		<h1>Log In</h1>
-		<form method="post">
-			{% csrf_token %}
-			{{ form|crispy }}
-			<button class="btn btn-primary">Sign In</button>
-		</form>
-		<div class="pt-3">
-			<small class="text-muted">Need an account? Ask Gena to make you one!</small>
-		</div>
-	</div>
+<style>
+  .login-wrapper {
+    max-width: 500px;
+    margin: 3rem auto;
+    background-color: #ffffff;
+    padding: 2rem;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    text-align: center;
+  }
+
+  .login-title {
+    font-size: 2rem;
+    font-weight: 600;
+    color: #01acca;
+    margin-bottom: 1.5rem;
+  }
+
+  .login-info {
+    font-size: 0.9rem;
+    color: #666;
+    margin-top: 1rem;
+  }
+
+  .qr-login-btn {
+    margin-top: 1.2rem;
+    background-color: #000;
+    border: none;
+    color: white;
+    padding: 0.6rem 1.25rem;
+    font-size: 0.95rem;
+    border-radius: 6px;
+    text-decoration: none;
+    display: inline-block;
+  }
+
+  .qr-login-btn:hover {
+    background-color: #5a6268;
+  }
+
+  .login-btn {
+    margin-top: 1rem;
+    width: 100%;
+  }
+
+  .user-icon {
+    width: 90px;
+    height: auto;
+    margin-bottom: 1rem;
+    opacity: 0.9;
+  }
+</style>
+
+<div class="login-wrapper">
+  <img src="{% static 'images/login-blue.svg' %}" class="user-icon" alt="User Icon">
+  <div class="login-title">Welcome Back!</div>
+  <form method="post">
+    {% csrf_token %}
+    {{ form|crispy }}
+    <button class="btn btn-primary login-btn">Sign In</button>
+  </form>
+  <div class="login-info">Need an account? Ask Gena to make you one!</div>
+
+  <a href="{% url 'QR-login' %}" class="qr-login-btn">Sign In with QR Code</a>
 </div>
-{% endblock content %}
+{% endblock %}
