@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-4">
+  <h2 class="mb-4 text-center">Log Report Viewer</h2>
+
+  <form method="get" class="row g-3 mb-4">
+    <div class="col-md-3">
+      <label>Start Date</label>
+      <input type="date" class="form-control" name="start_date" value="{{ start_date }}">
+    </div>
+    <div class="col-md-3">
+      <label>End Date</label>
+      <input type="date" class="form-control" name="end_date" value="{{ end_date }}">
+    </div>
+    <div class="col-md-3">
+      <label>User</label>
+      <select class="form-control" name="user">
+        <option value="all">All Users</option>
+        {% for username in usernames %}
+          <option value="{{ username }}" {% if username == selected_user %}selected{% endif %}>{{ username }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-md-3 d-flex align-items-end">
+      <button class="btn btn-primary w-100">Filter Logs</button>
+    </div>
+  </form>
+
+  <div class="table-responsive">
+    <table class="table table-bordered table-hover align-middle">
+      <thead class="table-light">
+        <tr>
+          <th>Date</th>
+          <th>User</th>
+          <th>Action</th>
+          <th>Product</th>
+          <th>Summary</th>
+          <th>Changes</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for log in logs %}
+        <tr>
+          <td>{{ log.timestamp|date:"Y-m-d H:i" }}</td>
+          <td>{{ log.username_snapshot|default:"Unknown" }}</td>
+          <td>{{ log.action_category }}</td>
+          <td>{{ log.product_name_snapshot|default:"N/A" }}</td>
+          <td>{{ log.summary }}</td>
+          <td>
+            <pre style="font-size: 0.85rem;">{{ log.changed_fields|safe }}</pre>
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="6" class="text-center">No logs found for this filter.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

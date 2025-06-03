@@ -22,7 +22,7 @@ from django.contrib.auth import views as auth_views
 from django.conf import settings
 from django.conf.urls.static import static
 from barcodes.views import CreateBarcode, CreateQRCode, ProductFinder, PrintBarcode
-from EORLogging.views import EndOfReport, report_pdf
+from EORLogging.views import LogReportView
 
 
 urlpatterns = [
@@ -47,8 +47,7 @@ urlpatterns = [
     path('update_model/', update_quantity.as_view(), name='update_model'),
     path('add-barcode/<int:pk>', AddBarcode.as_view(), name='add-barcode'),
     path('barcode_hub/', AddBarcodeHub.as_view(), name='barcode-hub'),
-    path('dashboard/eou-report/', EndOfReport.as_view(), name='eou-report'),
-    path('pdf-logging', report_pdf, name='pdf-logging')
-
+    path('dashboard/eou-report/', LogReportView.as_view(), name='eou-report')
+    # path('pdf-logging', report_pdf, name='pdf-logging')
    #path('detail/', )
 ] 

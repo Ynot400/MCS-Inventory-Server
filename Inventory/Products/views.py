@@ -14,6 +14,8 @@ import re
 from django.db import transaction, IntegrityError
 from Pages.models import SubmissionToken
 from utils.tokens import create_submission_token
+from utils.log_generator import log_product_action
+from decimal import Decimal
 
 
 # logger = logging.getLogger('main')
@@ -34,6 +36,12 @@ class AddProduct(UserPassesTestMixin, View):
         return render(request, self.template_name, {'form': form, 'submission_token': token})
     
     def post(self, request, *args, **kwargs):
+        # used to fix the decimal issue with json
+        def serialize_value(val):
+            if isinstance(val, Decimal):
+                return float(val)
+            return val
+        
         form = ProductForm(request.POST, user=request.user)
 
         # === Submission Token Check ===
@@ -70,8 +78,29 @@ class AddProduct(UserPassesTestMixin, View):
             try:
                 # print(f"This will be only printed once for the product: {form.cleaned_data['title']}")
                 with transaction.atomic():
-                    form.instance.modified_by = request.user
                     product = form.save()
+                    
+                    # === LOG ENTRY CREATED HERE ===
+                    log_product_action(
+                        user=request.user,
+                        action_category="CREATE",
+                        product=product,
+                        changes={
+                            'Product Name': product.title,
+                            'Location ID': product.location_ID,
+                            'Part Number': product.product_ID,
+                            'Starting Quantity': product.quantity,
+                            'Vendor': product.vendor,
+                            'Description': product.description,
+                            'Retail': serialize_value(product.admin_field_price1),
+                            'Cost': serialize_value(product.admin_field_price2),
+                            'Manufacturer Barcode': product.manufacturer_barcode,
+                            'High Priority': product.high_priority,
+                            'Min Quantity': product.min_quantity,
+                            'Max Quantity': product.max_quantity
+                        }
+                    )
+
 
                 # Only delete token **after** save succeeded
                 SubmissionToken.objects.filter(token=token_from_form).delete()
@@ -85,7 +114,7 @@ class AddProduct(UserPassesTestMixin, View):
                 )
 
                 if request.POST.get('printBarcode'):
-                    # print_barcode(product.title)
+                    print_barcode(product.title)
                     product.printed = True
                     product.save()
 
@@ -102,6 +131,7 @@ class EditProduct(UserPassesTestMixin, View):
     template_name = 'product/product_form.html'
     success_url = reverse_lazy('inventory')
 
+ 
     def test_func(self):
         return self.request.user.groups.filter(name='Inventory Technician').exists() or self.request.user.is_superuser
 
@@ -130,6 +160,14 @@ class EditProduct(UserPassesTestMixin, View):
         return render(request, self.template_name, {'form': form, 'submission_token': token})
 
     def post(self, request, *args, **kwargs):
+
+        # used to fix the decimal issue with json
+        def serialize_value(val):
+            if isinstance(val, Decimal):
+                return float(val)
+            return val
+        
+
         product = get_object_or_404(Product, pk=kwargs['pk'])
         form = (ProductForm(request.POST, instance=product, user=request.user)
                 if request.user.is_superuser else
@@ -179,7 +217,7 @@ class EditProduct(UserPassesTestMixin, View):
                     loc_changed = request.session.get('originalLocation') != form.cleaned_data['location_ID']
                     
 
-
+                    # resets the printed status
                     if request.user.is_superuser:
                         if title_changed or loc_changed or id_changed:
                             # print("Changes detected, resetting printed status.")
@@ -187,10 +225,43 @@ class EditProduct(UserPassesTestMixin, View):
                     else:
                         if loc_changed:
                             product.printed = False
+                    
+                    # Create log entry before saving
 
-                    product.modified_by = request.user
-                    product = form.save()
+                    newProduct = form.save(commit=False)
+                    oldProduct = Product.objects.get(pk=product.pk)
 
+                    changes = {}
+                    tracked_fields = [
+                        'title', 'location_ID', 'product_ID', 'quantity',
+                        'vendor', 'description', 'admin_field_price1',
+                        'admin_field_price2', 'manufacturer_barcode', 'high_priority',
+                        'min_quantity', 'max_quantity'
+                    ]
+
+                
+
+
+                    for field in tracked_fields:
+                        oldVal = getattr(oldProduct, field)
+                        newVal = getattr(product, field)
+                        if oldVal != newVal:
+                            changes[field] = {
+                                'old_value': serialize_value(oldVal),
+                                'new_value': serialize_value(newVal)
+                            }
+                    
+                    newProduct.save() # actyally save the product
+                    
+                    # if the save was succesful, log the new entry
+                    if changes:
+                        log_product_action(
+                                user=request.user,
+                                action_category="UPDATE",
+                                product=product,
+                                changes=changes
+                            )
+                    
                     # Session values are no longer needed
                     request.session.pop('originalProduct', None)
                     request.session.pop('originalLocation', None)
@@ -272,6 +343,8 @@ class AddBarcodeHub(UserPassesTestMixin, View):
                 items = items.order_by('-date_created')
             elif sort_order == 'oldest':
                 items = items.order_by('date_created')
+            elif sort_order == 'alphabetical':
+                items = items.order_by('title')
 
         return render(request, self.template_name, {'form': form, 'items': items})
     
@@ -295,27 +368,41 @@ class AddBarcode(UserPassesTestMixin, View):
         # Validate: not empty
         if not barcode:
             messages.error(request, "Barcode cannot be empty.")
-            return redirect('barcode-hub')
+            return render(request, self.template_name, {'product': product})
 
         # Validate: max length
         if len(barcode) > 64:
             messages.error(request, "Barcode exceeds maximum allowed length.")
-            return redirect('barcode-hub')
+            return render(request, self.template_name, {'product': product})
 
         # Validate: allowed characters (letters, digits, underscores, hyphens only)
         if not re.match(r'^[\w\-]+$', barcode):
             messages.error(request, "Barcode contains invalid characters.")
-            return redirect('barcode-hub')
+            return render(request, self.template_name, {'product': product})
 
         # Check for duplicates
         if Product.objects.filter(manufacturer_barcode=barcode).exclude(pk=pk).exists():
             messages.error(request, f"Barcode {barcode} is already assigned to another product.")
-            return redirect('barcode-hub')
+            return render(request, self.template_name, {'product': product})
 
-        # Apply and save
+        # Save and log
+        old_barcode = product.manufacturer_barcode
         product.manufacturer_barcode = barcode
-        product.modified_by = request.user
         product.save()
+
+        # Log the action
+        log_product_action(
+            user=request.user,
+            action_category='UPDATE',
+            product=product,
+            summary=f"Manufacturer barcode update",
+            changes={
+                'manufacturer_barcode': {
+                    'old_value': old_barcode,
+                    'new_value': barcode
+                }
+            }
+        )
 
         messages.success(request, f'Barcode {barcode} added successfully to {product.title}.')
         return redirect('barcode-hub')
@@ -342,13 +429,37 @@ class DeleteProduct(UserPassesTestMixin, View):
         product_id = product.id
         product_barcode = product.barcode
 
+        # Collect field values before deletion
+        tracked_fields = {
+            'title':'Product Name', 
+            'location_ID':'Location ID', 
+            'product_ID':'Part Number', 
+            'quantity':'Quantity',
+            'min_quantity':'Min Quantity',
+            'max_quantity':'Max Quantity', 
+            'vendor':'Vendor',
+            'description':'Description',
+            'admin_field_price1':'Retail', 
+            'admin_field_price2':'Cost',
+            'manufacturer_barcode':'Manufacturer Barcode', 
+            'barcode':'Barcode', 
+            'high_priority':'High Priority'
+        }
+
+        changes = {}
+        for field in tracked_fields:
+            val = getattr(product, field, None)
+            if isinstance(val, Decimal):
+                val = float(val)
+            label = tracked_fields.get(field, field)  # fallback to raw field name if not labeled
+            changes[label] = val
+
         try:
             # Log BEFORE delete
-            LogEntry.objects.create(
+            log_product_action(
                 user=request.user,
                 action_category='DELETE',
-                details=f"Product '{product_title}' (ID: {product_id}, barcode: {product_barcode}) was deleted by {request.user}.",
-                product_name=product_title
+                changes=changes
             )
 
             product.delete()
@@ -382,39 +493,67 @@ class update_quantity(UserPassesTestMixin, View):
             print("Missing submission token.")
             return redirect("detect_barcodes")
 
+    
+        # Lock the product row first
+        try:
+            # print(f"Attempting to lock product with ID {product_ID} for update")
+            product = Product.objects.select_for_update().get(id=product_ID)
+        except Product.DoesNotExist as e:
+            return redirect("detect_barcodes")
+        except Exception:
+            return redirect("detect_barcodes")
+        
+        product_name = product.title
+        product_older_quantity = product.quantity
+
+        # Reject if resulting quantity would go negative
+        if product_older_quantity + quantity_value < 0:
+            messages.error(request, f"Cannot adjust quantity for by {quantity_value}. Resulting quantity would be negative.")
+            return render(request, 'Dashboard/quantity-adjuster.html', {
+                'product': product,
+                'submission_token': token_from_form
+            })
+        elif quantity_value == 0:
+            messages.error(request, "Submit a valid quantity change.")
+            return render(request, 'Dashboard/quantity-adjuster.html', {
+                'product': product,
+                'submission_token': token_from_form
+            })
+        
         token_used = SubmissionToken.objects.filter(token=token_from_form).delete()
         if token_used[0] == 0:
             print("Invalid or already used submission token.")
             return redirect("detect_barcodes")
 
-        # Lock the product row first
-        try:
-            print(f"Attempting to lock product with ID {product_ID} for update")
-            product = Product.objects.select_for_update().get(id=product_ID)
-        except Product.DoesNotExist as e:
-            return render(request, "error.html", {'error': e})
-        except Exception:
-            return render(request, "error.html", {"error": "Unknown error"})
 
-
-
-        print(f"Updating product {product.title} with quantity {quantity_value} by {request.user.username}")
+        # print(f"Updating product {product.title} with quantity {quantity_value} by {request.user.username}")
 
         product_name = product.title
-        product_older_quantity = product.quantity
         product.quantity += quantity_value
-        product.modified_by = request.user
+        
         product.save()
         product.refresh_from_db()
 
-        date_string = datetime.now().strftime("%m/%d/%Y, %H:%M:%S")
+        # Log the action
+        log_product_action(
+            user=request.user,
+            action_category='UPDATE',
+            product=product,
+            summary=f"Reason: {text}",
+            changes={
+                'quantity': {
+                    'old_value': product_older_quantity,
+                    'new_value': product.quantity
+                }
+            }
+        )
 
         # Email warnings
         if product.quantity < 0:
             try:
                 send_mail(
                     f"Negative Quantity for {product_name}",
-                    f"Product {product_name} has a negative quantity of {product.quantity} by {request.user.username} on {date_string}\nThe original quantity was {product_older_quantity}.\nReason: {text}",
+                    f"Product {product_name} has a negative quantity of {product.quantity} by {request.user.username} on {datetime.now().strftime("%m/%d/%Y, %H:%M:%S")}\nThe original quantity was {product_older_quantity}.\nReason: {text}",
                     "MCSinventory@django.com",
                     ["kenny@marinecustomsolutions.com"],
                     fail_silently=True,
@@ -425,7 +564,7 @@ class update_quantity(UserPassesTestMixin, View):
             try:
                 send_mail(
                     f"H.P. {product_name} Quantity Updated",
-                    f"Product {product_name} has been updated by {request.user.username} from {product_older_quantity} to {product.quantity} on {date_string}\nReason: {text}",
+                    f"Product {product_name} has been updated by {request.user.username} from {product_older_quantity} to {product.quantity} on {datetime.now().strftime("%m/%d/%Y, %H:%M:%S")}\nReason: {text}",
                     "MCSinventory@django.com",
                     ["kenny@marinecustomsolutions.com"],
                     fail_silently=True,

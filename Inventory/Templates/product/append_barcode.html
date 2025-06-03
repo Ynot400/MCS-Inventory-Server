@@ -70,6 +70,17 @@
   }
 </style>
 
+{% if messages %}
+  <div class="mt-2">
+    {% for message in messages %}
+      <div class="alert alert-danger text-center" style="font-size: 1.2rem;" role="alert">
+        {{ message }}
+      </div>
+    {% endfor %}
+  </div>
+{% endif %}
+
+
 <a href="{% url 'barcode-hub' %}" class="btn btn-outline-primary mb-3">← Go Back</a>
 
 

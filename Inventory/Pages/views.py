@@ -57,6 +57,8 @@ class DashboardInventory(UserPassesTestMixin, View):
             items = items.order_by('-date_created')
         elif form.cleaned_data.get('sort_order') == 'oldest':
             items = items.order_by('date_created')
+        elif form.cleaned_data.get('sort_order') == 'alphabetical':
+            items = items.order_by('title')
     else:
         items = Product.objects.none()
 

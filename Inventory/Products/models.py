@@ -18,13 +18,13 @@ class Product(models.Model):
 
     vendor = models.TextField(max_length=200, default=None)
     date_created = models.DateTimeField(auto_now_add=True)
-    user = models.ForeignKey(User, on_delete=models.SET_NULL, default=None, null=True)
+    user = models.ForeignKey(User, on_delete=models.SET_NULL, default=None, null=True) 
     barcode = models.BigIntegerField(unique=True, blank=True, null=True)
     manufacturer_barcode = models.CharField(max_length=64, unique=True, null=True, blank=True)
     high_priority = models.BooleanField(default=False)
     description = models.TextField(max_length=150, default='')
     printed = models.BooleanField(default=False)
-    modified_by = models.ForeignKey(User, default=None, on_delete=models.SET_NULL, null=True, related_name='modified_by')
+    # modified_by = models.ForeignKey(User, default=None, on_delete=models.SET_NULL, null=True, related_name='modified_by')
 
     def is_below_min(self): # Checks if the quantity is below the minimum threshold
         return self.quantity < self.min_quantity

@@ -122,6 +122,8 @@ class PrintBarcode(UserPassesTestMixin, View):
               items = items.order_by('-date_created')
             elif sort_order == 'oldest':
               items = items.order_by('date_created')
+            elif sort_order == 'alphabetical':
+              items = items.order_by('title')
 
         return render(request, self.template_name, {
             'form': form,
