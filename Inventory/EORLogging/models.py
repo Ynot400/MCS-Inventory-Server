@@ -4,18 +4,6 @@ from django.db.models.signals import post_save, pre_save, post_delete
 from django.dispatch import receiver
 from Products.models import Product
 
-field_names = {
-    'title': 'Product Name',
-    'location_ID': 'Location ID',
-    'product_ID': 'Part Number',
-    'quantity': 'Quantity',
-    'vendor': 'Vendor',
-    'description': 'Description',
-    'admin_field_price1': 'Retail Price',
-    'admin_field_price2': 'Cost Price',
-    'manufacturer_barcode': 'Manufacturer Barcode',
-    'high_priority': 'High Priority',
-}
 
 class LogEntry(models.Model):
     ACTION_CHOICES = [
@@ -47,7 +35,7 @@ class LogEntry(models.Model):
         return f"[{self.timestamp}] {self.action_category} by {self.username_snapshot or 'Unknown'}"
     
 
-    
+
 # @receiver(pre_save, sender=Product)
 # def log_product_action(sender, instance, **kwargs):
 #     if instance.pk is not None:
