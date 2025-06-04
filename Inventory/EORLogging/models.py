@@ -22,6 +22,7 @@ class LogEntry(models.Model):
 
     # Product reference is optional, but we don’t store product metadata
     product = models.ForeignKey(Product, on_delete=models.SET_NULL, null=True, blank=True)
+    product_name = models.CharField(max_length=200, blank=True, null=True)
 
     # Only used on UPDATEs
     changed_fields = models.JSONField(blank=True, null=True)
@@ -29,7 +30,21 @@ class LogEntry(models.Model):
     def save(self, *args, **kwargs):
         if not self.username_snapshot and self.user:
             self.username_snapshot = self.user.username
+        if self.action_category == 'CREATE' or self.action_category == 'UPDATE':
+            self.product_name = self.product.title if self.product else 'Unknown Product'
+        if self.action_category == 'DELETE':
+            self.product_name = self.resolved_product_name()
+      
         super().save(*args, **kwargs)
+
+    def resolved_product_name(self):
+        if self.product_name:
+            return self.product_name
+        elif isinstance(self.changed_fields, dict) and "Product Name" in self.changed_fields:
+            return self.changed_fields["Product Name"]
+        elif self.product and hasattr(self.product, 'title'):
+            return self.product.title
+        return "N/A"
 
     def __str__(self):
         return f"[{self.timestamp}] {self.action_category} by {self.username_snapshot or 'Unknown'}"

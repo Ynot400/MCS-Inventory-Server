@@ -161,6 +161,22 @@ class EditProduct(UserPassesTestMixin, View):
 
     def post(self, request, *args, **kwargs):
 
+        tracked_fields = {
+            'title':'Product Name', 
+            'location_ID':'Location ID', 
+            'product_ID':'Part Number', 
+            'quantity':'Quantity',
+            'min_quantity':'Min Quantity',
+            'max_quantity':'Max Quantity', 
+            'vendor':'Vendor',
+            'description':'Description',
+            'admin_field_price1':'Retail', 
+            'admin_field_price2':'Cost',
+            'manufacturer_barcode':'Manufacturer Barcode', 
+            'barcode':'Barcode', 
+            'high_priority':'High Priority'
+        }
+
         # used to fix the decimal issue with json
         def serialize_value(val):
             if isinstance(val, Decimal):
@@ -232,13 +248,7 @@ class EditProduct(UserPassesTestMixin, View):
                     oldProduct = Product.objects.get(pk=product.pk)
 
                     changes = {}
-                    tracked_fields = [
-                        'title', 'location_ID', 'product_ID', 'quantity',
-                        'vendor', 'description', 'admin_field_price1',
-                        'admin_field_price2', 'manufacturer_barcode', 'high_priority',
-                        'min_quantity', 'max_quantity'
-                    ]
-
+                 
                 
 
 
@@ -246,7 +256,8 @@ class EditProduct(UserPassesTestMixin, View):
                         oldVal = getattr(oldProduct, field)
                         newVal = getattr(product, field)
                         if oldVal != newVal:
-                            changes[field] = {
+                            fieldName = tracked_fields.get(field, field)  # fallback to raw field name if not labeled
+                            changes[fieldName] = {
                                 'old_value': serialize_value(oldVal),
                                 'new_value': serialize_value(newVal)
                             }
@@ -459,7 +470,8 @@ class DeleteProduct(UserPassesTestMixin, View):
             log_product_action(
                 user=request.user,
                 action_category='DELETE',
-                changes=changes
+                changes=changes,
+                summary=f"{product_title} has been permanently deleted.",
             )
 
             product.delete()
