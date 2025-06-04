@@ -6,7 +6,7 @@
 
     <div class="row justify-content-center">
         <div class="col-md-10 col-12 mt-5">
-            <h2 class="marine-text">Select the product to add a Manufacturer Barcode for.</h2>
+            <h2 class="marine-text">Select the product to update a Manufacturer Barcode for.</h2>
 
             <div class="form-container" style="margin-bottom: 10px;">
                 <form method="POST" class="horizontal-form" id="searchForm">
@@ -53,7 +53,7 @@
                             <th scope="row">{{ item.title }}</th>
                             <td>{{ item.product_ID }}</td>
                             <td>{{ item.vendor }}</td>
-                            <td><a href="{% url 'add-barcode' item.id %}" class="btn btn-outline-secondary">Add Manufacturer Barcode</a></td>
+                            <td><a href="{% url 'add-barcode' item.id %}" class="btn btn-outline-secondary">Update Manufacturer Barcode</a></td>
                         </tr>
                         {% endfor %}
                     </tbody>

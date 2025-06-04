@@ -227,8 +227,9 @@ class ProductForm2(forms.ModelForm):
 
 
 SORT_CHOICES = [
-    ('recent', 'Recently Added'),
-    ('oldest', 'Oldest'),
+    ('alphabetical', 'Product Order'),
+    ('recent', 'Recently Added/Updated'),
+    ('oldest', 'Oldest')
 ]
 
 class SearchForm1(forms.Form):

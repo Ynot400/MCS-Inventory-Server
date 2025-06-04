@@ -1,0 +1,143 @@
+{% extends "base.html" %}
+{% load static %}
+
+
+{% block content %}
+<div class="container mt-4">
+  <h1 class="mb-4 text-center">
+    <strong>Log Report Viewer</strong>
+    <img src="{% static 'images/report.svg' %}" alt="Log Icon" width="50" height="50">
+  </h1>
+  
+  <form method="get" class="row g-3 mb-4 align-items-end">
+    <!-- Start Date -->
+    <div class="col-sm-6 col-md-3">
+      <label class="form-label">Start Date</label>
+      <input type="date" class="form-control" name="start_date" value="{{ start_date }}">
+    </div>
+  
+    <!-- End Date -->
+    <div class="col-sm-6 col-md-3">
+      <label class="form-label">End Date</label>
+      <input type="date" class="form-control" name="end_date" value="{{ end_date }}">
+    </div>
+  
+    <!-- User -->
+    <div class="col-sm-6 col-md-3">
+      <label class="form-label">User</label>
+      <select class="form-select" name="user">
+        <option value="all">All Users</option>
+        {% for username in usernames %}
+          <option value="{{ username }}" {% if username == selected_user %}selected{% endif %}>{{ username }}</option>
+        {% endfor %}
+      </select>
+    </div>
+  
+    <!-- Product Search -->
+    <div class="col-sm-6 col-md-3 position-relative">
+      <label class="form-label">Product</label>
+      <input type="text" class="form-control" id="productSearch" name="product" autocomplete="off" value="{{ selected_product }}">
+      <div id="productSuggestions" class="list-group position-absolute w-100 z-3" style="max-height: 200px; overflow-y: auto;"></div>
+    </div>
+
+    
+
+  
+    <!-- Submit Button (always bottom-right on desktop) -->
+    <div class="col-12 d-flex justify-content-md-end justify-content-center">
+      <button type="submit" class="btn btn-primary px-4 ">Filter Logs</button>
+      <a href="{% url 'excel-log-creation' %}?start_date={{ start_date }}&end_date={{ end_date }}&user={{ selected_user }}&product={{ selected_product }}" class="btn btn-success ms-2">Download Excel</a>
+    </div>
+  </form>
+  
+
+  {% if logs %}
+    {% for log in logs %}
+      <div class="card shadow-sm mb-3">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <div>
+            <strong>Date:</strong> {{ log.timestamp|date:"Y-m-d H:i" }}
+          </div>
+          <div>
+            <strong>Product:</strong> {{ log.resolved_product_name }}   <span style="display: inline-block; width: 10px;"></span> <strong>Part Number:</strong> {{ log.product.product_ID|default:"N/A" }}
+          </div>
+        </div>
+
+        <div class="card-body">
+          <p class="mb-1"><strong>User:</strong> {{ log.username_snapshot|default:"Unknown" }}</p>
+          <p class="mb-1">
+            <strong>Action:</strong>
+            <span class="badge {% if log.action_category == 'DELETE' %}bg-danger
+                                {% elif log.action_category == 'CREATE' %}bg-primary
+                                {% else %}bg-success{% endif %}">
+              {{ log.action_category }}
+            </span>
+          </p>
+          <p><strong>Summary:</strong> {{ log.summary }}</p>
+
+          {% if log.changed_fields %}
+            <div class="border rounded p-2" style="background-color: #f9f9f9;">
+              {% if log.action_category == "UPDATE" %}
+                {% for field, values in log.changed_fields.items %}
+                  <div class="mb-1">
+                    <strong>{{ field }}</strong>: 
+                    <span style="color: red;">{{ values.old_value }}</span> → 
+                    <span style="color: green;">{{ values.new_value }}</span>
+                  </div>
+                {% endfor %}
+              {% else %}
+                {% for key, value in log.changed_fields.items %}
+                  <div class="mb-1">
+                    <strong>{{ key }}</strong>: {{ value }}
+                  </div>
+                {% endfor %}
+              {% endif %}
+            </div>
+          {% endif %}
+        </div>
+      </div>
+    {% endfor %}
+  {% else %}
+    <div class="alert alert-info text-center">No logs found for this filter.</div>
+  {% endif %}
+</div>
+
+<script>
+  document.addEventListener("DOMContentLoaded", function() {
+    const input = document.getElementById("productSearch");
+    const suggestionBox = document.getElementById("productSuggestions");
+  
+    input.addEventListener("input", function() {
+      const query = input.value;
+      if (query.length === 0) {
+        suggestionBox.innerHTML = "";
+        return;
+      }
+  
+      fetch(`/logs/search-products/?q=${encodeURIComponent(query)}`)
+        .then(res => res.json())
+        .then(data => {
+          suggestionBox.innerHTML = "";
+          data.results.forEach(product => {
+            const item = document.createElement("div");
+            item.classList.add("list-group-item", "list-group-item-action");
+            item.textContent = product.title;
+            item.addEventListener("click", () => {
+              input.value = product.title;
+              suggestionBox.innerHTML = "";
+            });
+            suggestionBox.appendChild(item);
+          });
+        });
+    });
+  
+    // Close dropdown when clicking outside
+    document.addEventListener("click", (e) => {
+      if (!input.contains(e.target) && !suggestionBox.contains(e.target)) {
+        suggestionBox.innerHTML = "";
+      }
+    });
+  });
+  </script>
+  
+{% endblock %}
