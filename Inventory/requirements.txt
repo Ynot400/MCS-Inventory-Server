@@ -5,11 +5,11 @@ Django==5.0
 django-crispy-forms==2.1
 gunicorn==21.2.0
 mysql-connector-python==8.4.0
-mysqlclient==2.2.6
+mysqlclient==2.2.7
 numpy==2.2.0
 opencv-python==4.8.1.78
 packaging==23.2
-Pillow==11.2.1
+pillow==11.2.1
 pypng==0.20220715.0
 python-barcode==0.15.1
 python-decouple==3.8
@@ -22,3 +22,4 @@ six==1.16.0
 sqlparse==0.4.4
 typing_extensions==4.9.0
 whitenoise==6.6.0
+XlsxWriter==3.2.3
