@@ -27,10 +27,11 @@
 	
 					<!-- Grid for Inputs -->
 					<div class="row g-3 mb-3">
-						<div class="col-md-2 col-12">
-							<label for="id_product_name" class="form-label">Product Name: </label>
+						<div class="col-md-2 col-12 position-relative">
+							<label for="id_product_name" class="form-label" autocomplete="off">Product Name: </label>
 							{{ form.product_name }}
-						</div>
+							<div id="productSuggestionsGlobal" class="list-group position-absolute w-100 z-3" style="max-height: 200px; overflow-y: auto;"></div>
+						</div>						
 						<div class="col-md-2 col-12">
 							<label for="id_product_ID" class="form-label">Part Number: </label>
 							{{ form.product_ID }}
@@ -159,6 +160,42 @@
 			document.getElementById("id_show_all").checked = false;
 			document.getElementById("id_show_all").dispatchEvent(new Event("change")); // Re-enable fields
 		}
+
+		document.addEventListener("DOMContentLoaded", function () {
+			const input = document.getElementById("id_product_name");
+			const suggestions = document.getElementById("productSuggestionsGlobal");
+		
+		
+			input.addEventListener("input", function () {
+				const query = input.value.trim();
+				if (query.length === 0) {
+					suggestions.innerHTML = "";
+					return;
+				}
+		
+				fetch("{% url 'product-autocomplete' %}?q=" + encodeURIComponent(query))
+					.then(res => res.json())
+					.then(data => {
+						suggestions.innerHTML = "";
+						data.results.forEach(product => {
+							const item = document.createElement("div");
+							item.classList.add("list-group-item", "list-group-item-action");
+							item.textContent = product.title;
+							item.addEventListener("click", () => {
+								input.value = product.title;
+								suggestions.innerHTML = "";
+							});
+							suggestions.appendChild(item);
+						});
+					});
+			});
+		
+			document.addEventListener("click", (e) => {
+				if (!input.contains(e.target) && !suggestions.contains(e.target)) {
+					suggestions.innerHTML = "";
+				}
+			});
+		});
 	</script>
 	
 {% endblock content %}

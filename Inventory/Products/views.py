@@ -551,7 +551,7 @@ class update_quantity(UserPassesTestMixin, View):
             user=request.user,
             action_category='UPDATE',
             product=product,
-            summary=f"Reason: {text}",
+            summary=f"{text}",
             changes={
                 'quantity': {
                     'old_value': product_older_quantity,

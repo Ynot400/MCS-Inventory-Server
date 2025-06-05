@@ -1,6 +1,6 @@
 from django import forms
 from django.contrib.auth.models import User
-from django.contrib.auth.forms import UserCreationForm
+from django.contrib.auth.forms import UserCreationForm, AdminPasswordChangeForm
 from Products.models import Product 
 from Pages.models import Search
 from django.core.exceptions import ValidationError
@@ -21,6 +21,14 @@ class UserRegistrationAdminForm(UserCreationForm):
         if ':' in password:
             raise ValidationError("Password cannot contain ':'")
         return password
+
+class NoColonAdminPasswordChangeForm(AdminPasswordChangeForm):
+     def clean_password1(self):
+        password = self.cleaned_data.get('password1')
+        if ":" in password:
+            raise ValidationError("Password cannot contain a colon (:) character.")
+        return password
+
 
 class UserRegisterForm(UserCreationForm):
   email = forms.EmailField()
@@ -228,7 +236,7 @@ class ProductForm2(forms.ModelForm):
 
 SORT_CHOICES = [
     ('alphabetical', 'Product Order'),
-    ('recent', 'Recently Added/Updated'),
+    ('recent', 'Recently Added'),
     ('oldest', 'Oldest')
 ]
 
@@ -249,6 +257,11 @@ class SearchForm1(forms.Form):
         self.fields['sort_order'].widget.attrs.update({
             'onchange': 'document.getElementById("searchForm").submit();'
         })
+
+        self.fields['product_name'].widget.attrs.update({
+            'autocomplete': 'off',
+        })
+
 
 
     def clean(self):
