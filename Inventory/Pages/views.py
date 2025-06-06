@@ -1,10 +1,15 @@
-from django.http import HttpResponse
+from django.http import JsonResponse
 from django.shortcuts import render, redirect
 from django.views.generic import TemplateView, View
 from django.contrib.auth import authenticate, login
 from .form import UserRegisterForm, SearchForm1
 from Products.models import Product
 from django.contrib.auth.mixins import UserPassesTestMixin
+
+def product_autocomplete(request):
+    query = request.GET.get('q', '')
+    matches = Product.objects.filter(title__istartswith=query).values('id', 'title')[:10]
+    return JsonResponse({'results': list(matches)})
 
 
 

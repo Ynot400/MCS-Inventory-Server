@@ -14,14 +14,18 @@
   </div>
   {% endif %}
 
-  <div class="text-center">
-    <h2 style="border: 1px solid #6db2ee; padding: 10px; display: block;">{{product.title}}</h2>
-    <p style="border: 1px solid #6db2ee; padding: 10px; display: block;">Location: {{product.location_ID}} || Quantity: {{product.quantity}}</p>
+  <!-- Product Info Card -->
+  <div class="card shadow-sm p-3 mb-4 bg-light text-dark text-center" style="border: 1px solid #ccc;">
+    <h2 class="mb-2" style="font-weight: bold;">{{ product.title }}</h2>
+    <p class="mb-0" style="font-size: 1.1rem;">
+      Location: <strong>{{ product.location_ID }}</strong> || Quantity: <strong>{{ product.quantity }}</strong>
+    </p>
   </div>
 
   <div class="text-center mt-4">
-    <h4>"+" Add To Stock, "-" Remove From Stock</h4>
-    <div class="input-group mb-3">
+    <p class="text-dark mt-2" style="font-size: 1.2rem;">
+      New Quantity: <strong><span id="previewQuantity">{{ product.quantity }}</span></strong>
+    </p>    <div class="input-group mb-3">
       <div class="input-group-prepend">
         <button class="btn btn-outline-secondary btn-yellow btn-wide" type="button" style="font-size: 5rem; border: 2px solid #000;" id="decrementButton">-</button>
       </div>
@@ -55,7 +59,7 @@
       <input type="text" class="form-control" name="textInput" required>
     </div>
     <span class="text-danger" id="warningMessage" style="font-size: 20px"></span>
-    <button type="submit" class="btn marine-color btn-center mx-auto d-block" style="width: 120px; font-size: 2rem;">Submit</button>
+    <button type="submit" class="btn marine-color btn-center mx-auto d-block" style="width: 150px; font-size: 2rem;">Submit</button>
   </form>
 
   <div class="mt-4">
@@ -72,11 +76,13 @@
     // Initial value and increment step
     let currentValue = 0;
     let incrementStep = 1;
-    var productQuantity = {{product.quantity}};
+    const productQuantity = {{product.quantity}};
     // Function to update the display with the current value
     function updateDisplay() {
       document.getElementById("integerDisplay").value = currentValue;
       document.getElementById("hiddenIntegerDisplay").value = currentValue;
+      document.getElementById("previewQuantity").textContent = productQuantity + currentValue;
+
     };
 
     // Event listener for the decrement button

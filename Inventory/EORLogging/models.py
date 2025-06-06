@@ -45,6 +45,16 @@ class LogEntry(models.Model):
         elif self.product and hasattr(self.product, 'title'):
             return self.product.title
         return "N/A"
+    
+    def resolved_part_number(self):
+        if isinstance(self.changed_fields, dict) and "Part Number" in self.changed_fields:
+            part_number_field = self.changed_fields["Part Number"]
+            if isinstance(part_number_field, dict) and "new_value" in part_number_field: # checks if the field has another dict of values
+                return part_number_field["new_value"] # if the field is a dict, return the new value
+            return part_number_field # no dict, just has the part number
+        elif self.product and hasattr(self.product, 'product_ID'):
+            return self.product.product_ID
+        return "N/A"
 
     def __str__(self):
         return f"[{self.timestamp}] {self.action_category} by {self.username_snapshot or 'Unknown'}"

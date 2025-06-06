@@ -59,7 +59,7 @@
             <strong>Date:</strong> {{ log.timestamp|date:"Y-m-d H:i" }}
           </div>
           <div>
-            <strong>Product:</strong> {{ log.resolved_product_name }}   <span style="display: inline-block; width: 10px;"></span> <strong>Part Number:</strong> {{ log.product.product_ID|default:"N/A" }}
+            <strong>Product:</strong> {{ log.resolved_product_name }}   <span style="display: inline-block; width: 10px;"></span> <strong>Part Number:</strong> {{ log.resolved_part_number }}
           </div>
         </div>
 
@@ -114,7 +114,7 @@
         return;
       }
   
-      fetch(`/logs/search-products/?q=${encodeURIComponent(query)}`)
+      fetch(`/search-products/?q=${encodeURIComponent(query)}`)
         .then(res => res.json())
         .then(data => {
           suggestionBox.innerHTML = "";

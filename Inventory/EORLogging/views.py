@@ -4,7 +4,7 @@ from django.contrib.auth.mixins import UserPassesTestMixin
 from django.contrib.auth.models import User
 from django.utils.timezone import make_aware
 from datetime import datetime, timedelta
-from django.http import JsonResponse, HttpResponse
+from django.http import HttpResponse
 from Products.models import Product
 from django.utils.timezone import localtime
 
@@ -30,8 +30,8 @@ class LogReportView(UserPassesTestMixin, View):
         return redirect('home')
 
     def get(self, request):
-        start_date = request.GET.get('start_date')
-        end_date = request.GET.get('end_date')
+        start_date = request.GET.get('start_date', '')
+        end_date = request.GET.get('end_date', '')
         selected_user = request.GET.get('user')
         selected_product = request.GET.get('product', '')
 
@@ -71,14 +71,11 @@ class LogReportView(UserPassesTestMixin, View):
         }
         return render(request, self.template_name, context)
 
-def product_autocomplete(request):
-    query = request.GET.get('q', '')
-    matches = Product.objects.filter(title__icontains=query).values('id', 'title')[:10]
-    return JsonResponse({'results': list(matches)})
+
 
 def excel_log_creation(request):
-    start_date = request.GET.get('start_date')
-    end_date = request.GET.get('end_date')
+    start_date = request.GET.get('start_date', '')
+    end_date = request.GET.get('end_date', '')
     selected_user = request.GET.get('user')
     selected_product = request.GET.get('product', '')
 
@@ -138,7 +135,7 @@ def excel_log_creation(request):
             continue
 
         product_name = log.resolved_product_name()
-        part_number = log.product.product_ID if log.product else "N/A"
+        part_number = log.resolved_part_number()
         action_fmt = action_colors.get("UPDATE")
 
 
@@ -169,7 +166,7 @@ def excel_log_creation(request):
             continue
 
         product_name = log.resolved_product_name()
-        part_number = log.product.product_ID if log.product else "N/A"
+        part_number = log.resolved_part_number()
         action_fmt = action_colors.get(log.action_category)
 
     
@@ -197,7 +194,9 @@ def excel_log_creation(request):
     if selected_user and selected_user != "all":
         filename_parts.append(f"user_{selected_user}")
     if selected_product:
-        filename_parts.append(f"product_{selected_product.replace(' ', '_')}")
+        selected_product = sanitize_filename(selected_product)
+        if selected_product:
+            filename_parts.append(f"product_{selected_product.replace(' ', '_')}")
 
     filename = "_".join(filename_parts) + ".xlsx"
     response = HttpResponse(output.read(), content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
