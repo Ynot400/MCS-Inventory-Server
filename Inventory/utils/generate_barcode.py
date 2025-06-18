@@ -23,10 +23,13 @@ def generate_barcode_and_save(barcode_value, product_title, part_number, locatio
 
     # Sanitize the product_title
     sanitized_title = sanitize_filename(product_title)
-    sanitized_partNum = sanitize_filename(part_number)
+    if part_number is not None:
+        sanitized_partNum = sanitize_filename(part_number)
 
-    # Generate the filename
-    filename = f"barcode_{sanitized_title}_{sanitized_partNum}"
+        # Generate the filename
+        filename = f"barcode_{sanitized_title}_{sanitized_partNum}"
+    else:
+        filename = f"barcode_{sanitized_title}_{location}"
 
     # Define the full filepath
     filepath = os.path.join(folder_path, f"{filename}")
@@ -48,7 +51,7 @@ def generate_barcode_and_save(barcode_value, product_title, part_number, locatio
 
     # Define the text
     text1 = f"{product_title}"
-    text2 = f"{part_number}  {location}"
+    text2 = f"{part_number}  {location}" if part_number else f"N/A  {location}"
     # Get the width and height of the image
     img_width = padded_img.width
     # Define the maximum width and height of the text

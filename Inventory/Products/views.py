@@ -105,7 +105,7 @@ class AddProduct(UserPassesTestMixin, View):
                 # Only delete token **after** save succeeded
                 SubmissionToken.objects.filter(token=token_from_form).delete()
 
-                # Optional barcode generation
+                # barcode generation
                 generate_barcode_and_save(
                     product.barcode,
                     product.title,
@@ -114,7 +114,7 @@ class AddProduct(UserPassesTestMixin, View):
                 )
 
                 if request.POST.get('printBarcode'):
-                    print_barcode(product.title, product.product_ID)
+                    print_barcode(product.title, product.product_ID, product.location_ID)
                     product.printed = True
                     product.save()
 
@@ -301,7 +301,7 @@ class EditProduct(UserPassesTestMixin, View):
                         )
 
                 if print_b:
-                    print_barcode(product.title, product.product_ID)
+                    print_barcode(product.title, product.product_ID, product.location_ID)
                     product.printed = True
                     product.save()
 
