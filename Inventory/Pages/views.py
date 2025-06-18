@@ -5,6 +5,8 @@ from django.contrib.auth import authenticate, login
 from .form import UserRegisterForm, SearchForm1
 from Products.models import Product
 from django.contrib.auth.mixins import UserPassesTestMixin
+from django.db.models.functions import Substr
+
 
 def product_autocomplete(request):
     query = request.GET.get('q', '')
@@ -43,26 +45,47 @@ class DashboardInventory(UserPassesTestMixin, View):
    def post(self, request):
     form = SearchForm1(request.POST)
     if form.is_valid():
-        if form.cleaned_data['show_all']:
+        cd = form.cleaned_data
+
+        if cd['show_all']:
             items = Product.objects.all()
         else:
             filters = {}
-            if form.cleaned_data['product_name']:
-                filters['title__icontains'] = form.cleaned_data['product_name']
-            if form.cleaned_data['product_ID']:
-                filters['product_ID__icontains'] = form.cleaned_data['product_ID']
-            if form.cleaned_data['location_ID']:
-                filters['location_ID__icontains'] = form.cleaned_data['location_ID']
-            if form.cleaned_data['vendor']:
-                filters['vendor__icontains'] = form.cleaned_data['vendor']
-            
-            items = Product.objects.filter(**filters)
+            if cd['product_name']:
+                filters['title__icontains'] = cd['product_name']
+            if cd['product_ID']:
+                filters['product_ID__icontains'] = cd['product_ID']
+            if cd['vendor']:
+                filters['vendor__icontains'] = cd['vendor']
 
-        if form.cleaned_data.get('sort_order') == 'recent':
+            # Begin with location annotations for partial filtering
+            items = Product.objects.annotate(
+                loc_section=Substr('location_ID', 1, 2),
+                loc_level=Substr('location_ID', 4, 2),
+                loc_vertical=Substr('location_ID', 7, 2),
+                loc_horizontal=Substr('location_ID', 10, 2)
+            )
+
+            # Apply partial location filters
+            if cd.get('section'):
+                items = items.filter(loc_section=cd['section'])
+            if cd.get('level'):
+                items = items.filter(loc_level=cd['level'])
+            if cd.get('vertical'):
+                items = items.filter(loc_vertical=cd['vertical'])
+            if cd.get('horizontal'):
+                items = items.filter(loc_horizontal=cd['horizontal'])
+
+            # Apply other filters (product name, vendor, etc.)
+            items = items.filter(**filters)
+
+        # Apply sorting
+        sort_order = cd.get('sort_order')
+        if sort_order == 'recent':
             items = items.order_by('-date_created')
-        elif form.cleaned_data.get('sort_order') == 'oldest':
+        elif sort_order == 'oldest':
             items = items.order_by('date_created')
-        elif form.cleaned_data.get('sort_order') == 'alphabetical':
+        elif sort_order == 'alphabetical':
             items = items.order_by('title')
     else:
         items = Product.objects.none()

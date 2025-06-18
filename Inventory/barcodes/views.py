@@ -11,6 +11,7 @@ from utils.print_barcode import print_barcode
 import re
 from uuid import uuid4
 from utils.tokens import create_submission_token
+from django.contrib import messages
 
 class CreateBarcode(UserPassesTestMixin, View):
     def test_func(self):
@@ -72,8 +73,8 @@ class PrintBarcode(UserPassesTestMixin, View):
             product_id = request.POST.get('product_ID')
             try:
                 product = Product.objects.get(pk=product_id)
-                print(f'Printing barcode for {product.title}')
-                print_barcode(product.title, product.product_ID)
+                # print(f'Printing barcode for {product.title}')
+                print_barcode(product.title, product.product_ID, product.location_ID)
                 product.printed = True
                 product.save()
                 return JsonResponse({'status': 'success'})
@@ -162,14 +163,12 @@ class ProductFinder(UserPassesTestMixin, View):
 
     # General validation
     if len(barcode_input) > 64:
-        return render(request, 'Dashboard/scan_barcode.html', {
-            'error': "Barcode is too long to be valid."
-        })
+        messages.error(request, "Barcode is too long to be valid.")
+        return redirect('barcode-quantity')
 
     if not re.match(r'^[\w\-]+$', barcode_input): # this regex will accept any barcode that contains alphanumeric characters, underscores, or hyphens -- anything else will be considered invalid
-        return render(request, 'Dashboard/scan_barcode.html', {
-            'error': "Invalid characters in barcode."
-        })
+        messages.error(request, "Invalid characters in barcode.")
+        return redirect('barcode-quantity')
 
     # First: try to find product using manufacturer_barcode (alphanumeric allowed)
     try:
@@ -199,12 +198,9 @@ class ProductFinder(UserPassesTestMixin, View):
             pass
         except ValueError:
             # This should never hit if isdigit() passed, but keep just in case
-            return render(request, 'Dashboard/scan_barcode.html', {
-                'error': "Internal barcode is not a valid number."
-            })
-
-    return render(request, 'Dashboard/scan_barcode.html', {
-        'error': "Product does not exist or barcode is invalid."
-    })
-
+            messages.error(request, "Internal barcode is not a valid number.")
+            return redirect('barcode-quantity')
+    # If no product found, return an error message
+    messages.error(request, "Product does not exist or barcode is invalid.")
+    return redirect('barcode-quantity')
    
