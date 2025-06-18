@@ -2,6 +2,27 @@
 
 {% block content %}
 
+<style>
+  .pulse-animation {
+    animation: pulse-scale 150ms ease;
+  }
+
+  @keyframes pulse-scale {
+    0% {
+      transform: scale(1);
+    }
+    50% {
+      transform: scale(1.08);
+    }
+    100% {
+      transform: scale(1);
+    }
+  }
+
+  
+</style>
+
+
 
 <div class="container mt-4">
   {% if messages %}
@@ -15,39 +36,56 @@
   {% endif %}
 
   <!-- Product Info Card -->
-  <div class="card shadow-sm p-3 mb-4 bg-light text-dark text-center" style="border: 1px solid #ccc;">
+  <div class="card shadow-sm p-3 mb-4 bg-light text-dark text-center" style="border: 1.5px solid #ccc; padding: 10px; border-radius: 10px;">
     <h2 class="mb-2" style="font-weight: bold;">{{ product.title }}</h2>
-    <p class="mb-0" style="font-size: 1.1rem;">
-      Location: <strong>{{ product.location_ID }}</strong> || Quantity: <strong>{{ product.quantity }}</strong>
+    <p class="mb-0" style="font-size: 1.0rem;">
+      Part Number: <strong>{{ product.product_ID }}</strong>
+    </p>
+    <p class="mb-0" style="font-size: 1.0rem;">
+      Location: <strong>{{ product.location_ID }}</strong>
     </p>
   </div>
 
   <div class="text-center mt-4">
-    <p class="text-dark mt-2" style="font-size: 1.2rem;">
-      New Quantity: <strong><span id="previewQuantity">{{ product.quantity }}</span></strong>
-    </p>    <div class="input-group mb-3">
+  <div class="text-center mt-2 mb-3">
+    <h4 class="text-dark mb-2" style="font-weight: bold;">Quantity</h4>
+    <div style="font-size: 1.6rem; font-weight: 500;">
+      <span style="font-weight: bold;">{{ product.quantity }}</span>
+      <span style="margin: 0 10px;">→</span>
+      <span id="previewQuantity" style="font-weight: bold;">{{ product.quantity }}</span>
+    </div>
+  </div>
+
+
+
+    <div class="input-group mb-3">
       <div class="input-group-prepend">
-        <button class="btn btn-outline-secondary btn-yellow btn-wide" type="button" style="font-size: 5rem; border: 2px solid #000;" id="decrementButton">-</button>
+        <button class="btn-yellow btn-wide" type="button" style="width: 120px; height:136px; font-size: 5rem; border: 2px solid #000;" id="decrementButton">-</button>
       </div>
-      <input type="text" class="form-control text-center" value="0" id="integerDisplay" readonly style="width: 120px; font-size: 3rem; border: 2px solid #000;">
+      <input type="text" class="form-control text-center" value="0" id="integerDisplay" readonly style="width: 113px; font-size: 3rem; border: 2px solid #000;">
       <div class="input-group-append">
-        <button class="btn btn-outline-secondary marine-color btn-wide" type="button" style="font-size: 5rem; border: 2px solid #000;" id="incrementButton">+</button>
+        <button class=" marine-color btn-wide" type="button" style="width: 120px; height: 136px; font-size: 5rem; border: 2px solid #000;" id="incrementButton">+</button>
       </div>
     </div>
   </div>
 
   <div class="form-group row">
-    <label for="incrementDropdown" class="col-5 col-form-label">Increment by:</label>
-    <div class="col-6">
-      <select class="form-control form-control-sm" style="border: 1px solid #000;" id="incrementDropdown">
-        <option value="1">1</option>
-        <option value="2">2</option>
-        <option value="5">5</option>
-        <option value="10">10</option>
-        <option value="30">30</option>
-      </select>
-    </div>
+  <label for="incrementDropdown" class="col-5 col-form-label font-weight-bold"><strong>Increment by:</strong></label>
+  <div class="col-6">
+    <select class="form-control form-control-lg border-dark shadow-sm"
+            id="incrementDropdown"
+            aria-label="Choose increment step"
+            style="font-size: 1.2rem;">
+      <option value="1">+1</option>
+      <option value="2">+2</option>
+      <option value="5">+5</option>
+      <option value="10">+10</option>
+      <option value="30">+30</option>
+    </select>
   </div>
+</div>
+
+
   <form method="post" action="{% url 'update_model' %}">
     {% csrf_token %}
     <input type="hidden" name="submission_token" value="{{ submission_token }}">
@@ -59,7 +97,7 @@
       <input type="text" class="form-control" name="textInput" required>
     </div>
     <span class="text-danger" id="warningMessage" style="font-size: 20px"></span>
-    <button type="submit" class="btn marine-color btn-center mx-auto d-block" style="width: 150px; font-size: 2rem;">Submit</button>
+    <button type="submit" class="btn marine-color btn-center mx-auto d-block" style="width: 150px; font-size: 2rem; border: 2px solid #000;">Submit</button>
   </form>
 
   <div class="mt-4">
@@ -77,6 +115,14 @@
     let currentValue = 0;
     let incrementStep = 1;
     const productQuantity = {{product.quantity}};
+
+    function updatePreview() {
+      const previewSpan = document.getElementById("previewQuantity");
+      const newQty = productQuantity + currentValue;
+      previewSpan.textContent = newQty;
+      previewSpan.style.color = newQty > productQuantity ? 'green' : (newQty < productQuantity ? 'red' : 'black');
+    }
+
     // Function to update the display with the current value
     function updateDisplay() {
       document.getElementById("integerDisplay").value = currentValue;
@@ -85,12 +131,21 @@
 
     };
 
+    function animateButton(button) {
+      button.classList.add('pulse-animation');
+      setTimeout(() => button.classList.remove('pulse-animation'), 150);
+    }
+
+
     // Event listener for the decrement button
     document.getElementById("decrementButton").addEventListener("click", function() {
       currentValue -= incrementStep;
+      this.blur(); // Remove focus after click
+      animateButton(this); // trigger pulse
       updateDisplay();
+      updatePreview();
       if (currentValue + productQuantity < 0){
-        document.getElementById("warningMessage").textContent = "WARNING: You are decrementing the inventory beyond the current quantity available.";
+        document.getElementById("warningMessage").textContent = "WARNING: Cannot decrement inventory beyond the current quantity available.";
       }
       else{
         document.getElementById("warningMessage").textContent = "";
@@ -100,7 +155,11 @@
     // Event listener for the increment button
     document.getElementById("incrementButton").addEventListener("click", function() {
       currentValue += incrementStep;
+      this.blur(); // Remove focus after click
+      animateButton(this); // trigger pulse
       updateDisplay();
+      updatePreview();
+
       if(currentValue + productQuantity >= 0){
         document.getElementById("warningMessage").textContent = "";
       }

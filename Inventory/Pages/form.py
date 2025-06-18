@@ -44,9 +44,17 @@ class ProductForm(forms.ModelForm):
         vertical = cleaned_data.get('vertical')
         horizontal = cleaned_data.get('horizontal')
 
-       
+        # ensure that an accidental white space does not cause issues with product ID
+        sanitizedPartNumber = self.cleaned_data.get('product_ID', None) 
+        # strip() removes leading and trailing whitespace
+        if sanitizedPartNumber is not None:
+            cleaned_data['product_ID'] = sanitizedPartNumber.strip()
+        # ensure that an accidental white space does not cause issues with manufacturer barcode
+        sanitizedManufacturerBarcode = self.cleaned_data.get('manufacturer_barcode', None) 
+        # strip() removes leading and trailing whitespace
+        if sanitizedManufacturerBarcode is not None:
+            cleaned_data['manufacturer_barcode'] = sanitizedManufacturerBarcode.strip()
 
-    
 
         # Compose the location_ID
         location_id = f"{section}-{level}-{vertical}-{horizontal}"
@@ -160,7 +168,7 @@ class ProductForm(forms.ModelForm):
             })
             self.fields['product_ID'].widget.attrs.update({
                 'class': 'form-control',
-                'placeholder': 'Enter part number',
+                'placeholder': 'Enter Part # or Secondary Identifier',
                 'rows': 1,
                 'cols': 40,
                 'style': 'resize:none;'
@@ -243,7 +251,17 @@ SORT_CHOICES = [
 class SearchForm1(forms.Form):
     product_name = forms.CharField(label='Product Name', required=False)
     product_ID = forms.CharField(label='Part Number', required=False)
-    location_ID = forms.CharField(label='Location ID', required=False)
+
+    # construct location_ID from section, level, vertical, horizontal
+    SECTION_CHOICES = [('', '---')] + [('HW', 'HW')] + [(val, val) for val in ProductForm.generate_section_pairs()]
+    LEVEL_CHOICES = [('', '---')] + [(val, val) for val in ProductForm.generate_level_pairs()]
+    DIGIT_CHOICES = [('', '---')] + [(f"{i:02}", f"{i:02}") for i in range(100)]
+    section = forms.ChoiceField(choices=SECTION_CHOICES, required=False, label="Section")
+    level = forms.ChoiceField(choices=LEVEL_CHOICES, required=False, label="Level")
+    vertical = forms.ChoiceField(choices=DIGIT_CHOICES, required=False, label="Vertical")
+    horizontal = forms.ChoiceField(choices=DIGIT_CHOICES, required=False, label="Horizontal")
+
+    # location_ID = forms.CharField(label='Location ID', required=False)
     vendor = forms.CharField(label='Vendor', required=False)
     
     sort_order = forms.ChoiceField(choices=SORT_CHOICES, required=False, label='Sort By')
@@ -267,7 +285,11 @@ class SearchForm1(forms.Form):
     def clean(self):
         cleaned_data = super().clean()
         show_all = cleaned_data.get('show_all')
-        search_fields = any(cleaned_data.get(field) for field in ['product_name', 'product_ID', 'location_ID', 'vendor'])
+            
+        search_fields = any(
+            cleaned_data.get(field)
+            for field in ['product_name', 'product_ID', 'vendor', 'section', 'level', 'vertical', 'horizontal']
+     )
 
         if not show_all and not search_fields:
             raise forms.ValidationError("Please enter at least one field to search, or check 'Show All'.")
