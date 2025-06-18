@@ -8,7 +8,7 @@ from django.core.validators import MinValueValidator
 class Product(models.Model):
     title = models.CharField(max_length=200)
     location_ID = models.CharField(max_length=11, unique=True)
-    product_ID = models.CharField(max_length=191, blank=True, null=True) # Part Number
+    product_ID = models.CharField(max_length=191, unique=True, blank=True, null=True) # Part Number
 
     quantity = models.PositiveIntegerField()
     min_quantity = models.PositiveIntegerField(default=0, validators=[MinValueValidator(0)])
