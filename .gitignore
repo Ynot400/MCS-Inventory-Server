@@ -3,6 +3,9 @@ __pycache__/
 *.py[cod]
 *$py.class
 
+# Ignore migration files
+**/migrations/*.py
+!**/migrations/__init__.py
 # Ignore Mac file meta data
 .DS_Store
 .DS_Store?
