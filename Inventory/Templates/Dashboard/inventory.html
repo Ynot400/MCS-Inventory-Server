@@ -20,27 +20,40 @@
 		</div>
 	{% endif %}
 	<div class="row">
-		<div class="col-md-10 col-12 mx-auto mt-5">
+		<div class="col-md-11 col-12 mx-auto mt-5">
 			<div class="card p-3 shadow-sm">
 				<form method="POST" id="searchForm">
 					{% csrf_token %}
-	
+
 					<!-- Grid for Inputs -->
 					<div class="row g-3 mb-3">
-						<div class="col-md-2 col-12 position-relative">
+						<div class="col-md-3 col-12 position-relative">
 							<label for="id_product_name" class="form-label">Product Name: </label>
 							{{ form.product_name }}
 							<div id="productSuggestionsGlobal" class="list-group position-absolute w-100 z-3" style="max-height: 200px; overflow-y: auto;"></div>
 						</div>						
-						<div class="col-md-2 col-12">
+						<div class="col-md-3 col-12">
 							<label for="id_product_ID" class="form-label">Part Number: </label>
 							{{ form.product_ID }}
 						</div>
-						<div class="col-md-2 col-12">
-							<label for="id_location_ID" class="form-label">Location ID: </label>
-							{{ form.location_ID }}
-						</div>
-						<div class="col-md-2 col-12">
+						<div class="col-md-3 col-12 d-flex gap-1">
+							<label class="form-label d-block">Location ID:</label>
+							{% comment %} <div class="d-flex gap-1"> {% endcomment %}
+									<div class="flex-fill">
+											{{ form.section}}
+									</div>
+									<div class="flex-fill">
+											{{ form.level }}
+									</div>
+									<div class="flex-fill">
+											{{ form.vertical }}
+									</div>
+									<div class="flex-fill">
+											{{ form.horizontal }}
+									</div>
+							{% comment %} </div> {% endcomment %}
+					</div>
+						<div class="col-md-3 col-12">
 							<label for="id_vendor" class="form-label">Vendor Name: </label>
 							{{ form.vendor }}
 						</div>
@@ -138,7 +151,7 @@
 		document.addEventListener("DOMContentLoaded", function () {
 			const toggleFields = () => {
 				const isShowAll = document.getElementById("id_show_all").checked;
-				["id_product_name", "id_product_ID", "id_location_ID", "id_vendor"].forEach(id => {
+				["id_product_name", "id_product_ID", "id_location_ID", "id_vendor", 'id_section', 'id_level', 'id_vertical', 'id_horizontal'].forEach(id => {
 					const field = document.getElementById(id);
 					if (field) {
 						field.disabled = isShowAll;
@@ -146,13 +159,13 @@
 					}
 				});
 			};
-	
+
 			document.getElementById("id_show_all").addEventListener("change", toggleFields);
 			toggleFields(); // Initial load
 		});
 	
 		function clearSearchForm() {
-			["id_product_name", "id_product_ID", "id_location_ID", "id_vendor"].forEach(id => {
+			["id_product_name", "id_product_ID", "id_location_ID", "id_vendor",'id_section', 'id_level', 'id_vertical', 'id_horizontal'].forEach(id => {
 				const field = document.getElementById(id);
 				if (field) field.value = "";
 			});
