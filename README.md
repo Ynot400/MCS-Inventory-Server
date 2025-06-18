@@ -6,4 +6,3 @@ To run the program, the pip dependencies must be installed, as well as some brew
 
 This code may not be downloaded or used by anyone except the company and the creator of the program.
 
-(The static files folder could not be included due to the file size being too large.)
