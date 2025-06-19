@@ -10,7 +10,25 @@ from django.db.models.functions import Substr
 
 def product_autocomplete(request):
     query = request.GET.get('q', '')
-    matches = Product.objects.filter(title__istartswith=query).values('id', 'title')[:10]
+    matches = (
+        Product.objects
+        .filter(title__istartswith=query)
+        .values_list('title', flat=True)
+        .distinct()
+        [:10]
+    )
+    return JsonResponse({'results': list(matches)})
+
+
+def partNumber_autocomplete(request):
+    query = request.GET.get('q', '')
+    matches = (
+        Product.objects
+        .filter(product_ID__istartswith=query)
+        .values_list('product_ID', flat=True)
+        .distinct()
+        [:10]
+    )
     return JsonResponse({'results': list(matches)})
 
 
