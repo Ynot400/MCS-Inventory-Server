@@ -3,18 +3,10 @@
 
 {% block content %}
 <div class="container">
-
-    <div class="row justify-content-center">
+   
+    <div class="row justify-content-center">         
         <div class="col-md-10 col-12 mt-5">
-            <h2 class="marine-text">Select the product to update a Manufacturer Barcode for.</h2>
-
-            <div class="form-container" style="margin-bottom: 10px;">
-                <form method="POST" class="horizontal-form" id="searchForm">
-                    {% csrf_token %}
-                    {{ form|crispy }}
-                    <button type="submit" class="btn btn-primary">Submit</button>
-                </form>
-                {% if messages %}
+            {% if messages %}
                 <div class="messages">
                     {% for message in messages %}
                         <div class="alert 
@@ -26,7 +18,16 @@
                         </div>
                     {% endfor %}
                 </div>
-            {% endif %}            
+            {% endif %}   
+            <h2 class="marine-text">Select the product to update a Manufacturer Barcode for.</h2>
+
+            <div class="form-container" style="margin-bottom: 10px;">
+                <form method="POST" class="horizontal-form" id="searchForm">
+                    {% csrf_token %}
+                    {{ form|crispy }}
+                    <button type="submit" class="btn btn-primary">Submit</button>
+                </form>
+                
             </div>
             <div class="table-responsive">
                 <table class="table table-hover table-striped">

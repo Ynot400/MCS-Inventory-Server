@@ -34,16 +34,24 @@ class LogReportView(UserPassesTestMixin, View):
         end_date = request.GET.get('end_date', '')
         selected_user = request.GET.get('user')
         selected_product = request.GET.get('product', '')
+        selected_part_number = request.GET.get('part_number', '')
+
 
 
         logs = LogEntry.objects.all().order_by('-timestamp')
 
-
+        # Filter logs based on the selected product and part number
         if selected_product and selected_product.strip():
             logs = logs.filter(
                 Q(product__title__icontains=selected_product) |
                 Q(product_name__icontains=selected_product) 
             )
+        if selected_part_number and selected_part_number.strip():
+            logs = logs.filter(
+                Q(product__product_ID__icontains=selected_part_number) |
+                Q(part_number__icontains=selected_part_number)
+            )
+
 
 
         if start_date:
@@ -68,6 +76,7 @@ class LogReportView(UserPassesTestMixin, View):
             'start_date': start_date,
             'end_date': end_date,
             'selected_product': selected_product,
+            'selected_part_number': selected_part_number,
         }
         return render(request, self.template_name, context)
 
@@ -78,16 +87,24 @@ def excel_log_creation(request):
     end_date = request.GET.get('end_date', '')
     selected_user = request.GET.get('user')
     selected_product = request.GET.get('product', '')
+    selected_part_number = request.GET.get('part_number', '')
 
 
     logs = LogEntry.objects.all().order_by('-timestamp')
 
 
+    # Filter logs based on the selected product and part number
     if selected_product and selected_product.strip():
         logs = logs.filter(
             Q(product__title__icontains=selected_product) |
             Q(product_name__icontains=selected_product) 
         )
+    if selected_part_number and selected_part_number.strip():
+        logs = logs.filter(
+            Q(product__product_ID__icontains=selected_part_number) |
+            Q(part_number__icontains=selected_part_number)
+        )
+
 
 
     if start_date:
@@ -96,14 +113,10 @@ def excel_log_creation(request):
         end = make_aware(datetime.strptime(end_date, '%Y-%m-%d')) + timedelta(days=1)
         logs = logs.filter(timestamp__lt=end)
 
+    # Filter by selected user if specified
+    # If "all" is selected, we do not filter by user
     if selected_user and selected_user != "all":
         logs = logs.filter(username_snapshot=selected_user)
-
-    all_usernames = (
-        list(User.objects.values_list('username', flat=True)) +
-        list(LogEntry.objects.exclude(username_snapshot__isnull=True).values_list('username_snapshot', flat=True))
-    )
-    all_usernames = sorted(set(all_usernames))
 
     # Create in-memory Excel file
     output = io.BytesIO()
@@ -125,11 +138,14 @@ def excel_log_creation(request):
     sheet_updates = workbook.add_worksheet("Updates")
     sheet_updates.set_column("A:H", 25)
 
+    # Count update entries
+    update_count = 0
+
     headers_update = ["Timestamp", "Username", "Action", "Product", "Part Number", "Reason", "Field", "Old Value", "New Value"]
     for col_num, header in enumerate(headers_update):
-        sheet_updates.write(0, col_num, header, header_format)
+        sheet_updates.write(1, col_num, header, header_format)
 
-    row_u = 1
+    row_u = 2
     for log in logs:
         if log.action_category != "UPDATE" or not isinstance(log.changed_fields, dict):
             continue
@@ -151,6 +167,9 @@ def excel_log_creation(request):
             sheet_updates.write(row_u, 7, str(values.get("old_value")), cell_top)
             sheet_updates.write(row_u, 8, str(values.get("new_value")), cell_top)
             row_u += 1
+            update_count += 1
+    # Write update count
+    sheet_updates.write(0, 0, f"Update Count ->  {update_count}", header_format)
 
     # === SHEET 2: Creates & Deletes ===
     sheet_other = workbook.add_worksheet("Creates & Deletes")
@@ -158,9 +177,22 @@ def excel_log_creation(request):
 
     headers_other = ["Timestamp", "Username", "Action", "Product", "Part Number", "Product Information"]
     for col_num, header in enumerate(headers_other):
-        sheet_other.write(0, col_num, header, header_format)
+        sheet_other.write(1, col_num, header, header_format)
+    
+    create_count = sum(
+    1 for log in logs
+    if log.action_category == "CREATE" and isinstance(log.changed_fields, dict)
+    )
+    delete_count = sum(
+        1 for log in logs
+        if log.action_category == "DELETE" and isinstance(log.changed_fields, dict)
+    )
 
-    row_cd = 1
+    sheet_other.write(0, 0, f"Create Count ->  {create_count}", header_format)
+    sheet_other.write(0, 1, f"Delete Count ->  {delete_count}", header_format)
+
+
+    row_cd = 2
     for log in logs:
         if log.action_category not in ["CREATE", "DELETE"] or not isinstance(log.changed_fields, dict):
             continue
@@ -197,6 +229,10 @@ def excel_log_creation(request):
         selected_product = sanitize_filename(selected_product)
         if selected_product:
             filename_parts.append(f"product_{selected_product.replace(' ', '_')}")
+    if selected_part_number:
+        selected_part_number = sanitize_filename(selected_part_number)
+        if selected_part_number:
+            filename_parts.append(f"partNumber_{selected_part_number.replace(' ', '_')}")
 
     filename = "_".join(filename_parts) + ".xlsx"
     response = HttpResponse(output.read(), content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
