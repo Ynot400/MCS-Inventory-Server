@@ -23,8 +23,10 @@ class LogEntry(models.Model):
     # Product reference is optional, but we don’t store product metadata
     product = models.ForeignKey(Product, on_delete=models.SET_NULL, null=True, blank=True)
     product_name = models.CharField(max_length=200, blank=True, null=True)
+    part_number = models.CharField(max_length=191, blank=True, null=True)  # Part Number
 
-    # Only used on UPDATEs
+
+    # This field will store the changes made to the product in a JSON format
     changed_fields = models.JSONField(blank=True, null=True)
 
     def save(self, *args, **kwargs):
