@@ -27,9 +27,17 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = config('SECRET_KEY')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
-ALLOWED_HOSTS = ['192.168.88.111', '0.0.0.0', '192.168.88.80', '127.0.0.1']
+ALLOWED_HOSTS = ['192.168.88.111', '0.0.0.0', '192.168.88.80', '127.0.0.1', '192.168.88.152']
 
 
+# Timeout duration in seconds (e.g., 15 minutes = 900 seconds)
+SESSION_COOKIE_AGE = 900
+
+# Refresh session expiry time with every request
+SESSION_SAVE_EVERY_REQUEST = True
+
+# Ensure session is cleared on browser close 
+SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 
 
 

@@ -48,8 +48,9 @@ urlpatterns = [
     path('add-barcode/<int:pk>', AddBarcode.as_view(), name='add-barcode'),
     path('barcode_hub/', AddBarcodeHub.as_view(), name='barcode-hub'),
     path('dashboard/eou-report/', LogReportView.as_view(), name='eou-report'),
-    path('search-products/', product_autocomplete, name='product-autocomplete'),
+    path("autocomplete/", product_autocomplete, name="generic_autocomplete"),
     path('dashboard/eou-report/download/', excel_log_creation, name='excel-log-creation'),
+    
 
 
     # path('pdf-logging', report_pdf, name='pdf-logging')

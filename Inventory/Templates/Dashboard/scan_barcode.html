@@ -120,7 +120,7 @@
 
       event.preventDefault();
       if (event.key === "Enter") {
-        if (scannedData.length > 10) {
+        if (scannedData.length > 0) {
           document.getElementById("scannedDataInput").value = scannedData;
           document.getElementById("scannedDataForm").submit();
         }

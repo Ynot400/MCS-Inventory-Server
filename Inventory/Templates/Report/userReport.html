@@ -11,21 +11,21 @@
   
   <form method="get" class="row g-3 mb-4 align-items-end">
     <!-- Start Date -->
-    <div class="col-sm-6 col-md-3">
+    <div class="col-sm-6 col-md-2">
       <label class="form-label">Start Date</label>
-      <input type="date" class="form-control" name="start_date" value="{{ start_date }}">
+      <input type="date" class="form-control" id="startDate" name="start_date" value="{{ start_date }}">
     </div>
   
     <!-- End Date -->
-    <div class="col-sm-6 col-md-3">
+    <div class="col-sm-6 col-md-2">
       <label class="form-label">End Date</label>
-      <input type="date" class="form-control" name="end_date" value="{{ end_date }}">
+      <input type="date" class="form-control" id="endDate" name="end_date" value="{{ end_date }}">
     </div>
   
     <!-- User -->
-    <div class="col-sm-6 col-md-3">
+    <div class="col-sm-6 col-md-2">
       <label class="form-label">User</label>
-      <select class="form-select" name="user">
+      <select class="form-select" id="userSelect" name="user">
         <option value="all">All Users</option>
         {% for username in usernames %}
           <option value="{{ username }}" {% if username == selected_user %}selected{% endif %}>{{ username }}</option>
@@ -40,13 +40,19 @@
       <div id="productSuggestions" class="list-group position-absolute w-100 z-3" style="max-height: 200px; overflow-y: auto;"></div>
     </div>
 
+    <!-- Part Number -->
+    <div class="col-sm-6 col-md-3 position-relative">
+      <label class="form-label">Part Number</label>
+      <input type="text" class="form-control" id="partNumber" autocomplete="off" name="part_number" value="{{ selected_part_number }}">
+      <div id="partNumberSuggestions" class="list-group position-absolute w-100 z-3" style="max-height: 200px; overflow-y: auto;"></div>
+    </div>
     
 
   
     <!-- Submit Button (always bottom-right on desktop) -->
     <div class="col-12 d-flex justify-content-md-end justify-content-center">
       <button type="submit" class="btn btn-primary px-4 ">Filter Logs</button>
-      <a href="{% url 'excel-log-creation' %}?start_date={{ start_date }}&end_date={{ end_date }}&user={{ selected_user }}&product={{ selected_product }}" class="btn btn-success ms-2">Download Excel</a>
+      <button type="button" id="downloadExcelBtn" class="btn btn-success ms-2">Download Excel</button>
     </div>
   </form>
   
@@ -106,14 +112,14 @@
   document.addEventListener("DOMContentLoaded", function() {
     const input = document.getElementById("productSearch");
     const suggestionBox = document.getElementById("productSuggestions");
-  
+
     input.addEventListener("input", function() {
       const query = input.value;
       if (query.length === 0) {
         suggestionBox.innerHTML = "";
         return;
       }
-  
+
       fetch(`/search-products/?q=${encodeURIComponent(query)}`)
         .then(res => res.json())
         .then(data => {
@@ -121,23 +127,77 @@
           data.results.forEach(product => {
             const item = document.createElement("div");
             item.classList.add("list-group-item", "list-group-item-action");
-            item.textContent = product.title;
+            item.textContent = product;
             item.addEventListener("click", () => {
-              input.value = product.title;
+              input.value = product;
               suggestionBox.innerHTML = "";
             });
             suggestionBox.appendChild(item);
           });
         });
     });
-  
-    // Close dropdown when clicking outside
+
+    const partInput = document.getElementById("partNumber");
+    const partSuggestionBox = document.getElementById("partNumberSuggestions");
+
+    partInput.addEventListener("input", function () {
+      const query = partInput.value;
+      if (query.length === 0) {
+        partSuggestionBox.innerHTML = "";
+        return;
+      }
+
+      fetch(`/search-part-numbers/?q=${encodeURIComponent(query)}`)
+        .then(res => res.json())
+        .then(data => {
+          partSuggestionBox.innerHTML = "";
+          data.results.forEach(partNum => {
+            const item = document.createElement("div");
+            item.classList.add("list-group-item", "list-group-item-action");
+            item.textContent = partNum;
+            item.addEventListener("click", () => {
+              partInput.value = partNum;
+              partSuggestionBox.innerHTML = "";
+            });
+            partSuggestionBox.appendChild(item);
+          });
+        });
+    });
+
+    // Close dropdown when clicking outside (product)
     document.addEventListener("click", (e) => {
       if (!input.contains(e.target) && !suggestionBox.contains(e.target)) {
         suggestionBox.innerHTML = "";
       }
     });
+
+    // Close dropdown when clicking outside (part number)
+    document.addEventListener("click", (e) => {
+      if (!partInput.contains(e.target) && !partSuggestionBox.contains(e.target)) {
+        partSuggestionBox.innerHTML = "";
+      }
+    });
+
+    document.getElementById("downloadExcelBtn").addEventListener("click", function() {
+      const startDate = document.getElementById("startDate").value;
+      const endDate = document.getElementById("endDate").value;
+      const user = document.getElementById("userSelect").value || "all";
+      const product = document.getElementById("productSearch").value;
+      const partNumber = document.getElementById("partNumber").value;
+
+      const params = new URLSearchParams();
+      if (startDate) params.append("start_date", startDate);
+      if (endDate) params.append("end_date", endDate);
+      params.append("user", user || "all");
+      if (product) params.append("product", product);
+      if (partNumber) params.append("part_number", partNumber);
+
+      const downloadUrl = `{% url 'excel-log-creation' %}?` + params.toString();
+
+      // Trigger download
+      window.location.href = downloadUrl;
+    });
   });
-  </script>
-  
+</script>
+
 {% endblock %}

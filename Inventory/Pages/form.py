@@ -99,7 +99,7 @@ class ProductForm(forms.ModelForm):
     level = forms.ChoiceField(choices=LEVEL_CHOICES, label="Level")
     vertical = forms.ChoiceField(choices=DIGIT_CHOICES, label="Vertical")
     horizontal = forms.ChoiceField(choices=DIGIT_CHOICES, label="Horizontal")
-    
+   
     class Meta:
         model = Product
         fields = ['title', 'description', 'product_ID', 'manufacturer_barcode', 'quantity', 'min_quantity', 'max_quantity', 'vendor', 'high_priority', 'admin_field_price1', 'admin_field_price2']
@@ -145,10 +145,12 @@ class ProductForm(forms.ModelForm):
                 self.fields['admin_field_price1'].widget.attrs.update({
                     'class': 'form-control',
                     'placeholder': 'Enter retail price',
+                    'onwheel': 'this.blur()',
                 })
                 self.fields['admin_field_price2'].widget.attrs.update({
                     'class': 'form-control',
                     'placeholder': 'Enter cost price',
+                    'onwheel': 'this.blur()',
                 })
 
             self.fields['description'].widget.attrs['placeholder'] = 'Enter product description and/or overstock information here.'
@@ -159,13 +161,22 @@ class ProductForm(forms.ModelForm):
                 'style': 'resize:none;',
                 'placeholder': 'Enter product name'
             })
+            # retrieve the unique vendor names that have been created
+            unique_vendors = Product.objects.exclude(vendor__isnull=True).exclude(vendor='') \
+                .values_list('vendor', flat=True).distinct()
+            
             self.fields['vendor'].widget.attrs.update({
                 'class': 'form-control',
-                'placeholder': 'Enter vendor name',
-                'rows': 1,
-                'cols': 40,
-                'style': 'resize:none;'
+                'list': 'vendor-options',
+                'placeholder': 'Select Vendor or Create New',
+                # 'rows': 1,
+                # 'cols': 40,
+                # 'style': 'resize:none;'
             })
+
+            self.vendor_datalist = sorted(unique_vendors)
+            print("Loaded vendors:", list(unique_vendors))
+
             self.fields['product_ID'].widget.attrs.update({
                 'class': 'form-control',
                 'placeholder': 'Enter Part # or Secondary Identifier',
@@ -176,15 +187,24 @@ class ProductForm(forms.ModelForm):
 
             self.fields['min_quantity'].widget.attrs.update({
                 'class': 'form-control',
+                'onwheel': 'this.blur()',
                 'placeholder': 'Minimum stock level',
             })
 
             self.fields['max_quantity'].widget.attrs.update({
                 'class': 'form-control',
+                'onwheel': 'this.blur()',
                 'placeholder': 'Maximum stock level',
+            })
+            self.fields['quantity'].widget.attrs.update({
+                'class': 'form-control',
+                'onwheel': 'this.blur()',
+                'placeholder': 'Current stock level',
             })
             self.fields['max_quantity'].initial = ''
             self.fields['min_quantity'].initial = ''
+
+
 
 
 
@@ -278,6 +298,24 @@ class SearchForm1(forms.Form):
 
         self.fields['product_name'].widget.attrs.update({
             'autocomplete': 'off',
+        })
+        self.fields['product_ID'].widget.attrs.update({
+            'autocomplete': 'off',
+        })
+        self.fields['vendor'].widget.attrs.update({
+            'autocomplete': 'off',
+        })
+        self.fields['section'].widget.attrs.update({
+            'style': 'height: 30px; width: 48px;'
+        })
+        self.fields['level'].widget.attrs.update({
+            'style': 'height: 30px; width: 48px;'
+        })
+        self.fields['vertical'].widget.attrs.update({
+            'style': 'height: 30px; width: 40px;'
+        })
+        self.fields['horizontal'].widget.attrs.update({
+            'style': 'height: 30px; width: 40px;'
         })
 
 

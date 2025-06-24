@@ -32,30 +32,24 @@
 							{{ form.product_name }}
 							<div id="productSuggestionsGlobal" class="list-group position-absolute w-100 z-3" style="max-height: 200px; overflow-y: auto;"></div>
 						</div>						
-						<div class="col-md-3 col-12">
+						<div class="col-md-3 col-12 position-relative">
 							<label for="id_product_ID" class="form-label">Part Number: </label>
 							{{ form.product_ID }}
+							<div id="partNumberSuggestions" class="list-group position-absolute w-100 z-3" style="max-height: 200px; overflow-y: auto;"></div>
 						</div>
-						<div class="col-md-3 col-12 d-flex gap-1">
-							<label class="form-label d-block">Location ID:</label>
-							{% comment %} <div class="d-flex gap-1"> {% endcomment %}
-									<div class="flex-fill">
-											{{ form.section}}
-									</div>
-									<div class="flex-fill">
-											{{ form.level }}
-									</div>
-									<div class="flex-fill">
-											{{ form.vertical }}
-									</div>
-									<div class="flex-fill">
-											{{ form.horizontal }}
-									</div>
-							{% comment %} </div> {% endcomment %}
-					</div>
 						<div class="col-md-3 col-12">
 							<label for="id_vendor" class="form-label">Vendor Name: </label>
 							{{ form.vendor }}
+							<div id="vendorSuggestions" class="list-group position-absolute w-100 z-3" style="max-height: 200px; overflow-y: auto;"></div>
+						</div>
+						<div class="col-md-3 col-12 d-flex flex-wrap">
+								<label class="form-label me-2">Location:</label>
+								<div class="d-flex flex-wrap gap-1">
+										<div>{{ form.section }}</div><strong>—</strong>
+										<div>{{ form.level }}</div><strong>—</strong>
+										<div>{{ form.vertical }}</div><strong>—</strong>
+										<div>{{ form.horizontal }}</div>
+								</div>
 						</div>
 					</div>
 	
@@ -146,7 +140,53 @@
 			</table>
 		</div>
 	</div>
+	{% comment %} This is the script for the autocompletion on the three fields {% endcomment %}
+	<script>
+		document.addEventListener("DOMContentLoaded", function () {
+			const fields = [
+				{ id: "id_product_name", suggestionBoxId: "productSuggestionsGlobal", field: "title" },
+				{ id: "id_product_ID", suggestionBoxId: "partNumberSuggestions", field: "product_ID" },
+				{ id: "id_vendor", suggestionBoxId: "vendorSuggestions", field: "vendor" },
+			];
 
+			fields.forEach(({ id, suggestionBoxId, field }) => {
+				const input = document.getElementById(id);
+				const box = document.getElementById(suggestionBoxId);
+
+				input.addEventListener("input", () => {
+					const query = input.value.trim();
+					if (!query) {
+						box.innerHTML = "";
+						return;
+					}
+
+					fetch(`/autocomplete/?q=${encodeURIComponent(query)}&field=${encodeURIComponent(field)}`)
+						.then((res) => res.json())
+						.then((data) => {
+							box.innerHTML = "";
+							data.results.forEach((itemText) => {
+								const item = document.createElement("div");
+								item.className = "list-group-item list-group-item-action";
+								item.textContent = itemText;
+								item.addEventListener("click", () => {
+									input.value = itemText;
+									box.innerHTML = "";
+								});
+								box.appendChild(item);
+							});
+						});
+				});
+
+				// Dismiss on outside click
+				document.addEventListener("click", (e) => {
+					if (!input.contains(e.target) && !box.contains(e.target)) {
+						box.innerHTML = "";
+					}
+				});
+			});
+		});
+	</script>
+ {% comment %} Other search form logic  {% endcomment %}
 	<script>
 		document.addEventListener("DOMContentLoaded", function () {
 			const toggleFields = () => {
@@ -173,42 +213,6 @@
 			document.getElementById("id_show_all").checked = false;
 			document.getElementById("id_show_all").dispatchEvent(new Event("change")); // Re-enable fields
 		}
-
-		document.addEventListener("DOMContentLoaded", function () {
-			const input = document.getElementById("id_product_name");
-			const suggestions = document.getElementById("productSuggestionsGlobal");
-		
-		
-			input.addEventListener("input", function () {
-				const query = input.value.trim();
-				if (query.length === 0) {
-					suggestions.innerHTML = "";
-					return;
-				}
-		
-				fetch("{% url 'product-autocomplete' %}?q=" + encodeURIComponent(query))
-					.then(res => res.json())
-					.then(data => {
-						suggestions.innerHTML = "";
-						data.results.forEach(product => {
-							const item = document.createElement("div");
-							item.classList.add("list-group-item", "list-group-item-action");
-							item.textContent = product.title;
-							item.addEventListener("click", () => {
-								input.value = product.title;
-								suggestions.innerHTML = "";
-							});
-							suggestions.appendChild(item);
-						});
-					});
-			});
-		
-			document.addEventListener("click", (e) => {
-				if (!input.contains(e.target) && !suggestions.contains(e.target)) {
-					suggestions.innerHTML = "";
-				}
-			});
-		});
 	</script>
 	
 {% endblock content %}

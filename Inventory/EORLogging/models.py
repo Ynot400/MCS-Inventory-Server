@@ -25,7 +25,6 @@ class LogEntry(models.Model):
     product_name = models.CharField(max_length=200, blank=True, null=True)
     part_number = models.CharField(max_length=191, blank=True, null=True)  # Part Number
 
-
     # This field will store the changes made to the product in a JSON format
     changed_fields = models.JSONField(blank=True, null=True)
 

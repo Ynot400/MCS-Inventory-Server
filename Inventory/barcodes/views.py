@@ -9,9 +9,10 @@ from utils.generate_barcode import generate_barcode_and_save
 from utils.generate_qrcode import generateQR
 from utils.print_barcode import print_barcode
 import re
-from uuid import uuid4
 from utils.tokens import create_submission_token
 from django.contrib import messages
+from utils.searchFormProductFilter import filter_products
+
 
 class CreateBarcode(UserPassesTestMixin, View):
     def test_func(self):
@@ -70,9 +71,9 @@ class PrintBarcode(UserPassesTestMixin, View):
     def post(self, request):
         # Handle AJAX barcode printing
         if 'printBarcode' in request.POST:
-            product_id = request.POST.get('product_ID')
+            id = request.POST.get('id')
             try:
-                product = Product.objects.get(pk=product_id)
+                product = Product.objects.get(pk=id)
                 # print(f'Printing barcode for {product.title}')
                 print_barcode(product.title, product.product_ID, product.location_ID)
                 product.printed = True
@@ -97,34 +98,11 @@ class PrintBarcode(UserPassesTestMixin, View):
             'items': items,
             'printAll': printAll
                 })
+        
+        # Check if the form is valid and filter products accordingly
+        items = filter_products(form)
 
 
-        if form.is_valid():
-            show_all = form.cleaned_data.get('show_all')
-            sort_order = form.cleaned_data.get('sort_order')
-            filters = {}
-
-            if not show_all:
-            
-              if form.cleaned_data.get('product_name'):
-                  filters['title__icontains'] = form.cleaned_data['product_name']
-              if form.cleaned_data.get('product_ID'):
-                  filters['product_ID__icontains'] = form.cleaned_data['product_ID']
-              if form.cleaned_data.get('location_ID'):
-                  filters['location_ID__icontains'] = form.cleaned_data['location_ID']
-              if form.cleaned_data.get('vendor'):
-                  filters['vendor__icontains'] = form.cleaned_data['vendor']
-
-              items = Product.objects.filter(**filters)
-            else:
-                items = Product.objects.all()
-
-            if sort_order == 'recent':
-              items = items.order_by('-date_created')
-            elif sort_order == 'oldest':
-              items = items.order_by('date_created')
-            elif sort_order == 'alphabetical':
-              items = items.order_by('title')
 
         return render(request, self.template_name, {
             'form': form,
@@ -158,7 +136,7 @@ class ProductFinder(UserPassesTestMixin, View):
       return render(request, 'Dashboard/scan_barcode.html')
   def post(self, request):
     barcode_input = request.POST.get('scannedData', '').strip()
-    # print(f"Scanned barcode: {barcode_input}")
+    print(f"Scanned barcode: {barcode_input}")
    
 
     # General validation

@@ -6,13 +6,31 @@ from .form import UserRegisterForm, SearchForm1
 from Products.models import Product
 from django.contrib.auth.mixins import UserPassesTestMixin
 from django.db.models.functions import Substr
+from utils.searchFormProductFilter import filter_products
 
 
 def product_autocomplete(request):
-    query = request.GET.get('q', '')
-    matches = Product.objects.filter(title__istartswith=query).values('id', 'title')[:10]
-    return JsonResponse({'results': list(matches)})
+    query = request.GET.get("q", "").strip()
+    field = request.GET.get("field", "").strip()
 
+    allowed_fields = {
+        "title": "title__istartswith",
+        "product_ID": "product_ID__istartswith",
+        "vendor": "vendor__istartswith",
+    }
+
+    if field not in allowed_fields or not query:
+        return JsonResponse({"results": []})
+
+    filter_kwargs = {allowed_fields[field]: query}
+    results = (
+        Product.objects.filter(**filter_kwargs)
+        .values_list(field, flat=True)
+        .distinct()
+        [:10]
+    )
+
+    return JsonResponse({"results": list(results)})
 
 
 class Dashboard(UserPassesTestMixin, View):
@@ -44,52 +62,9 @@ class DashboardInventory(UserPassesTestMixin, View):
       return render(request, 'Dashboard/inventory.html', {'items':items, 'form': form, 'is_inventory_technician': is_inventory_technician})
    def post(self, request):
     form = SearchForm1(request.POST)
-    if form.is_valid():
-        cd = form.cleaned_data
-
-        if cd['show_all']:
-            items = Product.objects.all()
-        else:
-            filters = {}
-            if cd['product_name']:
-                filters['title__icontains'] = cd['product_name']
-            if cd['product_ID']:
-                filters['product_ID__icontains'] = cd['product_ID']
-            if cd['vendor']:
-                filters['vendor__icontains'] = cd['vendor']
-
-            # Begin with location annotations for partial filtering
-            items = Product.objects.annotate(
-                loc_section=Substr('location_ID', 1, 2),
-                loc_level=Substr('location_ID', 4, 2),
-                loc_vertical=Substr('location_ID', 7, 2),
-                loc_horizontal=Substr('location_ID', 10, 2)
-            )
-
-            # Apply partial location filters
-            if cd.get('section'):
-                items = items.filter(loc_section=cd['section'])
-            if cd.get('level'):
-                items = items.filter(loc_level=cd['level'])
-            if cd.get('vertical'):
-                items = items.filter(loc_vertical=cd['vertical'])
-            if cd.get('horizontal'):
-                items = items.filter(loc_horizontal=cd['horizontal'])
-
-            # Apply other filters (product name, vendor, etc.)
-            items = items.filter(**filters)
-
-        # Apply sorting
-        sort_order = cd.get('sort_order')
-        if sort_order == 'recent':
-            items = items.order_by('-date_created')
-        elif sort_order == 'oldest':
-            items = items.order_by('date_created')
-        elif sort_order == 'alphabetical':
-            items = items.order_by('title')
-    else:
-        items = Product.objects.none()
-
+    # Check if the form is valid and filter products accordingly
+    items = filter_products(form)
+   
     is_inventory_technician = request.user.groups.filter(name='Inventory Technician').exists()
     return render(request, 'Dashboard/inventory.html', {
         'items': items,
