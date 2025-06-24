@@ -109,75 +109,51 @@
 </div>
 
 <script>
+  document.addEventListener("DOMContentLoaded", function () {
+    const fields = [
+      { id: "productSearch", suggestionBoxId: "productSuggestions", field: "title" },
+      { id: "partNumber", suggestionBoxId: "partNumberSuggestions", field: "product_ID" },
+    ];
+
+    fields.forEach(({ id, suggestionBoxId, field }) => {
+      const input = document.getElementById(id);
+      const box = document.getElementById(suggestionBoxId);
+
+      input.addEventListener("input", () => {
+        const query = input.value.trim();
+        if (!query) {
+          box.innerHTML = "";
+          return;
+        }
+
+        fetch(`/autocomplete/?q=${encodeURIComponent(query)}&field=${encodeURIComponent(field)}`)
+          .then((res) => res.json())
+          .then((data) => {
+            box.innerHTML = "";
+            data.results.forEach((itemText) => {
+              const item = document.createElement("div");
+              item.className = "list-group-item list-group-item-action";
+              item.textContent = itemText;
+              item.addEventListener("click", () => {
+                input.value = itemText;
+                box.innerHTML = "";
+              });
+              box.appendChild(item);
+            });
+          });
+      });
+
+      // Dismiss on outside click
+      document.addEventListener("click", (e) => {
+        if (!input.contains(e.target) && !box.contains(e.target)) {
+          box.innerHTML = "";
+        }
+      });
+    });
+  });
+</script>
+<script>
   document.addEventListener("DOMContentLoaded", function() {
-    const input = document.getElementById("productSearch");
-    const suggestionBox = document.getElementById("productSuggestions");
-
-    input.addEventListener("input", function() {
-      const query = input.value;
-      if (query.length === 0) {
-        suggestionBox.innerHTML = "";
-        return;
-      }
-
-      fetch(`/search-products/?q=${encodeURIComponent(query)}`)
-        .then(res => res.json())
-        .then(data => {
-          suggestionBox.innerHTML = "";
-          data.results.forEach(product => {
-            const item = document.createElement("div");
-            item.classList.add("list-group-item", "list-group-item-action");
-            item.textContent = product;
-            item.addEventListener("click", () => {
-              input.value = product;
-              suggestionBox.innerHTML = "";
-            });
-            suggestionBox.appendChild(item);
-          });
-        });
-    });
-
-    const partInput = document.getElementById("partNumber");
-    const partSuggestionBox = document.getElementById("partNumberSuggestions");
-
-    partInput.addEventListener("input", function () {
-      const query = partInput.value;
-      if (query.length === 0) {
-        partSuggestionBox.innerHTML = "";
-        return;
-      }
-
-      fetch(`/search-part-numbers/?q=${encodeURIComponent(query)}`)
-        .then(res => res.json())
-        .then(data => {
-          partSuggestionBox.innerHTML = "";
-          data.results.forEach(partNum => {
-            const item = document.createElement("div");
-            item.classList.add("list-group-item", "list-group-item-action");
-            item.textContent = partNum;
-            item.addEventListener("click", () => {
-              partInput.value = partNum;
-              partSuggestionBox.innerHTML = "";
-            });
-            partSuggestionBox.appendChild(item);
-          });
-        });
-    });
-
-    // Close dropdown when clicking outside (product)
-    document.addEventListener("click", (e) => {
-      if (!input.contains(e.target) && !suggestionBox.contains(e.target)) {
-        suggestionBox.innerHTML = "";
-      }
-    });
-
-    // Close dropdown when clicking outside (part number)
-    document.addEventListener("click", (e) => {
-      if (!partInput.contains(e.target) && !partSuggestionBox.contains(e.target)) {
-        partSuggestionBox.innerHTML = "";
-      }
-    });
-
     document.getElementById("downloadExcelBtn").addEventListener("click", function() {
       const startDate = document.getElementById("startDate").value;
       const endDate = document.getElementById("endDate").value;
