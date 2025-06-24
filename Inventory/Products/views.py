@@ -9,13 +9,14 @@ from utils.generate_barcode import generate_barcode_and_save
 from django.contrib import messages
 from django.core.mail import send_mail
 from datetime import datetime
-from EORLogging.models import LogEntry
 import re
 from django.db import transaction, IntegrityError
 from Pages.models import SubmissionToken
 from utils.tokens import create_submission_token
 from utils.log_generator import log_product_action
 from decimal import Decimal
+from utils.searchFormProductFilter import filter_products
+
 
 
 # logger = logging.getLogger('main')
@@ -33,7 +34,7 @@ class AddProduct(UserPassesTestMixin, View):
     def get(self, request, *args, **kwargs):
         form = ProductForm(user=request.user)
         token = create_submission_token()
-        return render(request, self.template_name, {'form': form, 'submission_token': token})
+        return render(request, self.template_name, {'form': form, 'submission_token': token, 'vendor_list': form.vendor_datalist})
     
     def post(self, request, *args, **kwargs):
         # used to fix the decimal issue with json
@@ -157,7 +158,7 @@ class EditProduct(UserPassesTestMixin, View):
         request.session['originalLocation'] = product.location_ID
         request.session['originalProductID'] = product.product_ID
 
-        return render(request, self.template_name, {'form': form, 'submission_token': token})
+        return render(request, self.template_name, {'form': form, 'submission_token': token, 'vendor_list': form.vendor_datalist})
 
     def post(self, request, *args, **kwargs):
 
@@ -330,32 +331,8 @@ class AddBarcodeHub(UserPassesTestMixin, View):
 
     def post(self, request):
         form = SearchForm1(request.POST)
-        items = Product.objects.none()
-
-        if form.is_valid():
-            sort_order = form.cleaned_data.get('sort_order')
-
-            if form.cleaned_data['show_all']:
-                items = Product.objects.all()
-            else:
-                filters = {}
-                if form.cleaned_data.get('product_name'):
-                    filters['title__icontains'] = form.cleaned_data['product_name']
-                if form.cleaned_data.get('product_ID'):
-                    filters['product_ID__icontains'] = form.cleaned_data['product_ID']
-                if form.cleaned_data.get('location_ID'):
-                    filters['location_ID__icontains'] = form.cleaned_data['location_ID']
-                if form.cleaned_data.get('vendor'):
-                    filters['vendor__icontains'] = form.cleaned_data['vendor']
-                    
-                items = Product.objects.filter(**filters)
-
-            if sort_order == 'recent':
-                items = items.order_by('-date_created')
-            elif sort_order == 'oldest':
-                items = items.order_by('date_created')
-            elif sort_order == 'alphabetical':
-                items = items.order_by('title')
+        # Check if the form is valid and filter products accordingly
+        items =  filter_products(form)
 
         return render(request, self.template_name, {'form': form, 'items': items})
     

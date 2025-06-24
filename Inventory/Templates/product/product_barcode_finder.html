@@ -2,96 +2,204 @@
 {% load crispy_forms_tags %}
 
 {% block content %}
-<div class="container">
-   
-    <div class="row justify-content-center">         
-        <div class="col-md-10 col-12 mt-5">
-            {% if messages %}
-                <div class="messages">
-                    {% for message in messages %}
-                        <div class="alert 
-                                    {% if message.tags == 'error' %}alert-danger
-                                    {% elif message.tags == 'success' %}alert-success
-                                    {% elif message.tags == 'info' %}alert-info
-                                    {% else %}alert-secondary{% endif %}">
-                            {{ message }}
-                        </div>
-                    {% endfor %}
-                </div>
-            {% endif %}   
-            <h2 class="marine-text">Select the product to update a Manufacturer Barcode for.</h2>
+<div class="container px-md-5 px-3">
+  <div class="row">
+    <div class="col-12 mt-4">
 
-            <div class="form-container" style="margin-bottom: 10px;">
-                <form method="POST" class="horizontal-form" id="searchForm">
-                    {% csrf_token %}
-                    {{ form|crispy }}
-                    <button type="submit" class="btn btn-primary">Submit</button>
-                </form>
-                
-            </div>
-            <div class="table-responsive">
-                <table class="table table-hover table-striped">
-                    <thead> 
-                        <tr>
-                            <th scope="col">Product</th>
-                            <th scope="col">Part Number</th>
-                            <th scope="col">Vendor</th>
-                            <th scope="col"></th>
-                            <th scope="col"></th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% if items|length == 0 %}
-                        <tr>
-                            <th scope="row">-</th>
-                            <td>-</td>
-                            <td>-</td>
-                            <td></td>
-                        </tr>
-                        {% endif %}
-                        {% for item in items %}
-                        <tr>
-                            <th scope="row">{{ item.title }}</th>
-                            <td>{{ item.product_ID }}</td>
-                            <td>{{ item.vendor }}</td>
-                            <td><a href="{% url 'add-barcode' item.id %}" class="btn btn-outline-secondary">Update Manufacturer Barcode</a></td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
+      {% if messages %}
+      <div class="messages mb-3">
+        {% for message in messages %}
+        <div class="alert 
+          {% if message.tags == 'error' %}alert-danger
+          {% elif message.tags == 'success' %}alert-success
+          {% elif message.tags == 'info' %}alert-info
+          {% else %}alert-secondary{% endif %}">
+          {{ message }}
         </div>
-    </div>
-</div>
+        {% endfor %}
+      </div>
+      {% endif %}
 
+      <h4 class="marine-text text-center mb-3">Update Manufacturer Barcode</h4>
+
+      <div class="card p-3 shadow-sm">
+        <form method="POST" id="searchForm">
+          {% csrf_token %}
+
+          <!-- Grid for Inputs -->
+          <div class="row g-3 mb-3">
+            <div class="col-md-6 col-12 position-relative">
+              <label for="id_product_name" class="form-label">Product Name:</label>
+              {{ form.product_name }}
+              <div id="productSuggestionsGlobal"
+                class="list-group position-absolute w-100 z-3"
+                style="max-height: 120px; overflow-y: auto;"></div>
+            </div>
+
+            <div class="col-md-6 col-12 position-relative">
+              <label for="id_product_ID" class="form-label">Part Number:</label>
+              {{ form.product_ID }}
+              <div id="partNumberSuggestions"
+                class="list-group position-absolute w-100 z-3"
+                style="max-height: 120px; overflow-y: auto;"></div>
+            </div>
+
+            <div class="col-md-6 col-12">
+              <label for="id_vendor" class="form-label">Vendor Name:</label>
+              {{ form.vendor }}
+              <div id="vendorSuggestions" class="list-group position-absolute w-100 z-3" style="max-height: 200px; overflow-y: auto;"></div>
+            </div>
+
+            <div class="col-md-6 col-12">
+              <label class="form-label d-block">Location ID:</label>
+              <div class="d-flex flex-wrap gap-2">
+                {{ form.section }}<strong>—</strong>
+                {{ form.level }}<strong>—</strong>
+                {{ form.vertical }}<strong>—</strong>
+                {{ form.horizontal }}
+              </div>
+            </div>
+          </div>
+
+          <!-- Sorting + Buttons -->
+          <div class="row g-3 align-items-end">
+            <div class="col-md-6 col-12">
+              <label for="id_sort_by" class="form-label">Sort By</label>
+              {{ form.sort_order }}
+            </div>
+            <div class="col-md-6 col-12 d-flex align-items-center">
+              {{ form.show_all }}
+              <label class="ms-2 mb-0">Show All</label>
+            </div>
+            <div class="col-12 d-flex flex-wrap justify-content-end gap-2 mt-3">
+              <button type="submit" class="btn btn-primary">Submit</button>
+              <button type="button" class="btn btn-secondary" onclick="clearSearchForm()">Clear</button>
+            </div>
+          </div>
+        </form>
+      </div>
+
+      <div class="table-responsive mt-4">
+        <table class="table table-hover table-striped">
+          <thead>
+            <tr>
+              <th scope="col">Product</th>
+              <th scope="col">Part Number</th>
+              <th scope="col">Vendor</th>
+              <th scope="col"></th>
+            </tr>
+          </thead>
+          <tbody>
+            {% if items|length == 0 %}
+            <tr>
+              <td colspan="4" class="text-center">No results found.</td>
+            </tr>
+            {% endif %}
+            {% for item in items %}
+            <tr>
+              <td>{{ item.title }}</td>
+              <td>{{ item.product_ID }}</td>
+              <td>{{ item.vendor }}</td>
+              <td>
+                <a href="{% url 'add-barcode' item.id %}" class="btn btn-outline-secondary btn-sm">
+                  Update Barcode
+                </a>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+    </div>
+  </div>
+</div>
+<!-- Scripts -->
 <script>
-    document.addEventListener("DOMContentLoaded", function () {
-      const showAllCheckbox = document.querySelector('input[name="show_all"]');
-      const fieldsToToggle = [
-        'input[name="product_name"]',
-        'input[name="product_ID"]',
-        'input[name="location_ID"]',
-        'input[name="vendor"]'
-      ];
-  
-      function toggleSearchFields() {
-        const shouldDisable = showAllCheckbox?.checked;
-        fieldsToToggle.forEach(selector => {
-          const field = document.querySelector(selector);
-          if (field) {
-            field.disabled = shouldDisable;
-            field.classList.toggle('bg-light', shouldDisable);
-            field.classList.toggle('text-muted', shouldDisable);
-          }
-        });
-      }
-  
-      if (showAllCheckbox) {
-        toggleSearchFields(); // initial state
-        showAllCheckbox.addEventListener('change', toggleSearchFields);
-      }
+  function clearSearchForm() {
+    ["id_product_name", "id_product_ID", "id_location_ID", "id_vendor",'id_section', 'id_level', 'id_vertical', 'id_horizontal'].forEach(id => {
+      const field = document.getElementById(id);
+      if (field) field.value = "";
     });
+    document.getElementById("id_sort_by").selectedIndex = 0;
+    document.getElementById("id_show_all").checked = false;
+    document.getElementById("id_show_all").dispatchEvent(new Event("change")); // Re-enable fields
+		}
+  document.addEventListener("DOMContentLoaded", function () {
+    // Toggle search fields when Show All is checked
+    const showAllCheckbox = document.querySelector('input[name="show_all"]');
+    const fieldsToToggle = [
+      '#id_product_name',
+      '#id_product_ID',
+      '#id_vendor',
+      '#id_section',
+      '#id_level',
+      '#id_vertical',
+      '#id_horizontal'
+    ];
+
+
+    function toggleSearchFields() {
+      const shouldDisable = showAllCheckbox?.checked;
+      fieldsToToggle.forEach(selector => {
+        const field = document.querySelector(selector);
+        if (field) {
+          field.disabled = shouldDisable;
+          field.classList.toggle('bg-light', shouldDisable);
+          field.classList.toggle('text-muted', shouldDisable);
+        }
+      });
+    }
+
+    showAllCheckbox?.addEventListener('change', toggleSearchFields);
+    toggleSearchFields();
+  });
 </script>
-  
-      
+{% comment %} This is the script for the autocompletion on the three fields {% endcomment %}
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    const fields = [
+      { id: "id_product_name", suggestionBoxId: "productSuggestionsGlobal", field: "title" },
+      { id: "id_product_ID", suggestionBoxId: "partNumberSuggestions", field: "product_ID" },
+      { id: "id_vendor", suggestionBoxId: "vendorSuggestions", field: "vendor" },
+    ];
+
+    fields.forEach(({ id, suggestionBoxId, field }) => {
+      const input = document.getElementById(id);
+      const box = document.getElementById(suggestionBoxId);
+
+      input.addEventListener("input", () => {
+        const query = input.value.trim();
+        if (!query) {
+          box.innerHTML = "";
+          return;
+        }
+
+        fetch(`/autocomplete/?q=${encodeURIComponent(query)}&field=${encodeURIComponent(field)}`)
+          .then((res) => res.json())
+          .then((data) => {
+            box.innerHTML = "";
+            data.results.forEach((itemText) => {
+              const item = document.createElement("div");
+              item.className = "list-group-item list-group-item-action";
+              item.textContent = itemText;
+              item.addEventListener("click", () => {
+                input.value = itemText;
+                box.innerHTML = "";
+              });
+              box.appendChild(item);
+            });
+          });
+      });
+
+      // Dismiss on outside click
+      document.addEventListener("click", (e) => {
+        if (!input.contains(e.target) && !box.contains(e.target)) {
+          box.innerHTML = "";
+        }
+      });
+    });
+  });
+</script>
+
 {% endblock content %}

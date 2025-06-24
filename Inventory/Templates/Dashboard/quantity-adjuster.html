@@ -62,7 +62,7 @@
       <div class="input-group-prepend">
         <button class="btn-yellow btn-wide" type="button" style="width: 120px; height:136px; font-size: 5rem; border: 2px solid #000;" id="decrementButton">-</button>
       </div>
-      <input type="text" class="form-control text-center" value="0" id="integerDisplay" readonly style="width: 113px; font-size: 3rem; border: 2px solid #000;">
+      <input type="text" class="form-control text-center" value="0" id="integerDisplay" readonly style="font-size: 3rem; border: 2px solid #000;">
       <div class="input-group-append">
         <button class=" marine-color btn-wide" type="button" style="width: 120px; height: 136px; font-size: 5rem; border: 2px solid #000;" id="incrementButton">+</button>
       </div>
@@ -125,11 +125,35 @@
 
     // Function to update the display with the current value
     function updateDisplay() {
-      document.getElementById("integerDisplay").value = currentValue;
-      document.getElementById("hiddenIntegerDisplay").value = currentValue;
-      document.getElementById("previewQuantity").textContent = productQuantity + currentValue;
+      const input = document.getElementById("integerDisplay");
+      const hiddenInput = document.getElementById("hiddenIntegerDisplay");
 
+      input.value = currentValue;
+      hiddenInput.value = currentValue;
+
+      
+      // Dynamically resize font based on width of input and number of characters
+      const inputWidth = input.offsetWidth; // in pixels
+      let charCount = Math.abs(currentValue).toString().length || 1;
+
+      // Char count increases by 1 if the value is Negative
+      if (currentValue < 0) charCount += 1; // account for negative sign
+
+      // Define a rough average width per character in pixels
+      const avgCharPixelWidth = 18; // this is a safe estimate for 3rem font
+
+      // Calculate ideal font size
+      let newFontSize = inputWidth / (charCount * 0.7); 
+
+      // Clamp to a min and max
+      newFontSize = Math.min(Math.max(newFontSize, remToPx(1.2)), 48); // clamp between 1.2rem and 3rem
+      input.style.fontSize = `${newFontSize}px`;
     };
+
+    // Helper to convert rem to pixels (assumes root font size is 16px)
+    function remToPx(rem) {
+      return rem * parseFloat(getComputedStyle(document.documentElement).fontSize);
+    }
 
     function animateButton(button) {
       button.classList.add('pulse-animation');
@@ -144,6 +168,7 @@
       animateButton(this); // trigger pulse
       updateDisplay();
       updatePreview();
+
       if (currentValue + productQuantity < 0){
         document.getElementById("warningMessage").textContent = "WARNING: Cannot decrement inventory beyond the current quantity available.";
       }

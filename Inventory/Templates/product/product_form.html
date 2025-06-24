@@ -36,7 +36,13 @@
         {{ form.quantity|as_crispy_field }}
         {{ form.min_quantity|as_crispy_field }}
         {{ form.max_quantity|as_crispy_field }}
-        {{ form.vendor|as_crispy_field }}
+        {{ form.vendor|as_crispy_field}}
+        <datalist id="vendor-options">
+          {% for vendor in vendor_list %}
+            <option value="{{ vendor }}">
+          {% endfor %}
+        </datalist>
+
     
         <label class="mt-3">Location ID</label>
         <div class="d-flex gap-2">

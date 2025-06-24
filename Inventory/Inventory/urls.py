@@ -16,7 +16,7 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
-from Pages.views import home_View, DashboardInventory, Dashboard, ScanBarcode, QRCodeLogin, product_autocomplete, partNumber_autocomplete
+from Pages.views import home_View, DashboardInventory, Dashboard, ScanBarcode, QRCodeLogin, product_autocomplete
 from Products.views import AddProduct, EditProduct, DeleteProduct, update_quantity, AddBarcode, AddBarcodeHub
 from django.contrib.auth import views as auth_views
 from django.conf import settings
@@ -48,8 +48,7 @@ urlpatterns = [
     path('add-barcode/<int:pk>', AddBarcode.as_view(), name='add-barcode'),
     path('barcode_hub/', AddBarcodeHub.as_view(), name='barcode-hub'),
     path('dashboard/eou-report/', LogReportView.as_view(), name='eou-report'),
-    path('search-products/', product_autocomplete, name='product-autocomplete'),
-    path('search-part-numbers/', partNumber_autocomplete, name='partNumber-autocomplete'),
+    path("autocomplete/", product_autocomplete, name="generic_autocomplete"),
     path('dashboard/eou-report/download/', excel_log_creation, name='excel-log-creation'),
     
 
