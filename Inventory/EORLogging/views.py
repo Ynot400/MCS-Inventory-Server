@@ -7,7 +7,7 @@ from datetime import datetime, timedelta
 from django.http import HttpResponse
 from Products.models import Product
 from django.utils.timezone import localtime
-
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from EORLogging.models import LogEntry
 from django.db.models import Q
 import io
@@ -63,6 +63,18 @@ class LogReportView(UserPassesTestMixin, View):
         if selected_user and selected_user != "all":
             logs = logs.filter(username_snapshot=selected_user)
 
+        
+        # Paginate results
+        paginator = Paginator(logs, 15)  # 15 logs per page
+        page = request.GET.get('page')
+
+        try:
+            paginated_logs = paginator.page(page)
+        except PageNotAnInteger:
+            paginated_logs = paginator.page(1)
+        except EmptyPage:
+            paginated_logs = paginator.page(paginator.num_pages)
+
         all_usernames = (
             list(User.objects.values_list('username', flat=True)) +
             list(LogEntry.objects.exclude(username_snapshot__isnull=True).values_list('username_snapshot', flat=True))
@@ -70,7 +82,7 @@ class LogReportView(UserPassesTestMixin, View):
         all_usernames = sorted(set(all_usernames))
 
         context = {
-            'logs': logs,
+            'logs': paginated_logs,
             'usernames': all_usernames,
             'selected_user': selected_user,
             'start_date': start_date,

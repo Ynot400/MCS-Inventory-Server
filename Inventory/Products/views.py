@@ -16,6 +16,7 @@ from utils.tokens import create_submission_token
 from utils.log_generator import log_product_action
 from decimal import Decimal
 from utils.searchFormProductFilter import filter_products
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 
 
 
@@ -158,7 +159,10 @@ class EditProduct(UserPassesTestMixin, View):
         request.session['originalLocation'] = product.location_ID
         request.session['originalProductID'] = product.product_ID
 
-        return render(request, self.template_name, {'form': form, 'submission_token': token, 'vendor_list': form.vendor_datalist})
+        # Check if the form has a vendor datalist
+        vendor_list = form.vendor_datalist if hasattr(form, 'vendor_datalist') else None
+
+        return render(request, self.template_name, {'form': form, 'submission_token': token, 'vendor_list': vendor_list})
 
     def post(self, request, *args, **kwargs):
 
@@ -314,7 +318,6 @@ class EditProduct(UserPassesTestMixin, View):
 
         return render(request, self.template_name, {'form': form, 'submission_token': token_from_form})
 
-
 class AddBarcodeHub(UserPassesTestMixin, View):
     template_name = 'product/product_barcode_finder.html'
 
@@ -325,16 +328,27 @@ class AddBarcodeHub(UserPassesTestMixin, View):
         return redirect('home')
 
     def get(self, request):
-        form = SearchForm1(initial={'show_all': True})
-        items = Product.objects.order_by('title')  # Default display
-        return render(request, self.template_name, {'form': form, 'items': items})
+        form = SearchForm1(request.GET or None)
+        items = None
+        paginated_items = None
 
-    def post(self, request):
-        form = SearchForm1(request.POST)
-        # Check if the form is valid and filter products accordingly
-        items =  filter_products(form)
+        if form.is_valid() and any(form.cleaned_data.values()):
+            items = filter_products(form)
+            paginator = Paginator(items, 25)
+            page = request.GET.get('page')
 
-        return render(request, self.template_name, {'form': form, 'items': items})
+            try:
+                paginated_items = paginator.page(page)
+            except PageNotAnInteger:
+                paginated_items = paginator.page(1)
+            except EmptyPage:
+                paginated_items = paginator.page(paginator.num_pages)
+
+        return render(request, self.template_name, {
+            'form': form,
+            'items': paginated_items,
+        })
+
     
 class AddBarcode(UserPassesTestMixin, View):
     template_name = 'product/append_barcode.html'

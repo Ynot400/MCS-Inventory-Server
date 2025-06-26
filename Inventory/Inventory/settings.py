@@ -26,7 +26,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = config('SECRET_KEY')
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 ALLOWED_HOSTS = ['192.168.88.111', '0.0.0.0', '192.168.88.80', '127.0.0.1', '192.168.88.152']
 
 
@@ -42,39 +42,31 @@ SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 
 
 
-
 LOGGING = {
-  'version': 1,
-  'disable_existing_loggers': False,
-
-  
-  'formatters': {
-    'standard': {
-      'format': '%(asctime)s %(levelname)s -- %(message)s',
+    'version': 1,
+    'disable_existing_loggers': False,  # Keeps Django’s default logs
+    'formatters': {
+        'detailed': {
+            'format': '[{asctime}] {levelname} {name} {message}',
+            'style': '{',
+        },
     },
-  },
-  'handlers': {
-    'console': {
-      'class': 'logging.StreamHandler',
-      'level': 'INFO',
-      'formatter': 'standard',
-      'filters': [],
+    'handlers': {
+        'server_file': {
+            'level': 'ERROR',
+            'class': 'logging.FileHandler',
+            'filename': BASE_DIR / 'server_errors.log',  # <-- This is your log file path
+            'formatter': 'detailed',
+        },
     },
-    'file': {
-      'class': 'logging.FileHandler',
-      'formatter': 'standard',
-      'filename': 'inventory.log',
-    },
-  },
-  'loggers': {
-    'main': {
-      'handlers': ['file', 'console'],
-      'propagate': True,
-      'level': 'INFO',
-    },
-  },
-}
-
+    'loggers': {
+        'server': {
+            'handlers': ['server_file'],
+            'level': 'ERROR',
+            'propagate': False,
+        },
+    }
+  }
 
 
 

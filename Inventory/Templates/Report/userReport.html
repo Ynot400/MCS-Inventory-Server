@@ -106,6 +106,25 @@
   {% else %}
     <div class="alert alert-info text-center">No logs found for this filter.</div>
   {% endif %}
+  <nav aria-label="Pagination">
+    <ul class="pagination justify-content-center">
+      {% if logs.has_previous %}
+        <li class="page-item">
+          <a class="page-link" href="?{% for key, val in request.GET.items %}{% if key != 'page' %}{{ key }}={{ val|urlencode }}&{% endif %}{% endfor %}page={{ logs.previous_page_number }}">Previous</a>
+        </li>
+      {% endif %}
+
+      <li class="page-item disabled">
+        <span class="page-link">Page {{ logs.number }} of {{ logs.paginator.num_pages }}</span>
+      </li>
+
+      {% if logs.has_next %}
+        <li class="page-item">
+          <a class="page-link" href="?{% for key, val in request.GET.items %}{% if key != 'page' %}{{ key }}={{ val|urlencode }}&{% endif %}{% endfor %}page={{ logs.next_page_number }}">Next</a>
+        </li>
+      {% endif %}
+    </ul>
+  </nav>
 </div>
 
 <script>

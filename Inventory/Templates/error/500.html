@@ -1,0 +1,13 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<div class="container mt-5">
+    <div class="text-center">
+        <h1 class="display-4 text-danger">500 Internal Server Error</h1>
+        <p class="lead">Something went wrong on our end. Please try again!</p>
+        <p class="text-muted">(If the problem persists, please contact Gena.)</p>
+        <a href="{% url 'dashboard' %}" class="btn btn-primary">Go to Dashboard</a>
+    </div>
+</div>
+
+{% endblock content %}

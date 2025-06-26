@@ -175,7 +175,7 @@ class ProductForm(forms.ModelForm):
             })
 
             self.vendor_datalist = sorted(unique_vendors)
-            print("Loaded vendors:", list(unique_vendors))
+            # print("Loaded vendors:", list(unique_vendors))
 
             self.fields['product_ID'].widget.attrs.update({
                 'class': 'form-control',
@@ -289,9 +289,7 @@ class SearchForm1(forms.Form):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # This sets it as checked by default only when no POST data is submitted
-        if not self.is_bound:
-            self.fields['show_all'].initial = True
+       
         self.fields['sort_order'].widget.attrs.update({
             'onchange': 'document.getElementById("searchForm").submit();'
         })
@@ -327,7 +325,9 @@ class SearchForm1(forms.Form):
         search_fields = any(
             cleaned_data.get(field)
             for field in ['product_name', 'product_ID', 'vendor', 'section', 'level', 'vertical', 'horizontal']
-     )
+        )
+
+        # if show_all is None:
 
         if not show_all and not search_fields:
             raise forms.ValidationError("Please enter at least one field to search, or check 'Show All'.")
