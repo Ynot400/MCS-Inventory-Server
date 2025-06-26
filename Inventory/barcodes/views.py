@@ -12,6 +12,7 @@ import re
 from utils.tokens import create_submission_token
 from django.contrib import messages
 from utils.searchFormProductFilter import filter_products
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 
 
 class CreateBarcode(UserPassesTestMixin, View):
@@ -62,11 +63,32 @@ class PrintBarcode(UserPassesTestMixin, View):
 
     def handle_no_permission(self):
         return redirect('home')
-
+    
     def get(self, request):
-        form = SearchForm1(initial={'show_all': True})
-        items = Product.objects.order_by('title')
-        return render(request, self.template_name, {'form': form, 'items': items})
+        form = SearchForm1(request.GET or None)
+        items = None
+        paginated_items = None
+
+        if form.is_valid() and any(form.cleaned_data.values()):
+            print("Form is valid, filtering products")
+            items = filter_products(form)
+
+            paginator = Paginator(items, 25)
+            page = request.GET.get('page')
+
+            try:
+                paginated_items = paginator.page(page)
+            except PageNotAnInteger:
+                paginated_items = paginator.page(1)
+            except EmptyPage:
+                paginated_items = paginator.page(paginator.num_pages)
+
+        return render(request, self.template_name, {
+            'form': form,
+            'items': paginated_items,
+            'printAll': False
+        })
+
 
     def post(self, request):
         # Handle AJAX barcode printing
@@ -84,31 +106,20 @@ class PrintBarcode(UserPassesTestMixin, View):
             except Exception as e:
                 return JsonResponse({'status': 'error', 'message': f'Error printing barcode: {str(e)}'})
 
-        # Handle form submission
-        form = SearchForm1(request.POST)
-        items = Product.objects.none()
-        printAll = False
+       
 
-         #  Check for "Not Yet Printed" manually via POST flag
+        #  Check for "Not Yet Printed" manually via POST flag
         if request.POST.get('printed') == 'true':
             items = Product.objects.filter(printed=False).order_by('title')
-            printAll = True
             return render(request, self.template_name, {
             'form': SearchForm1(),
             'items': items,
-            'printAll': printAll
+            'printAll': True
                 })
-        
-        # Check if the form is valid and filter products accordingly
-        items = filter_products(form)
+    
 
-
-
-        return render(request, self.template_name, {
-            'form': form,
-            'items': items,
-            'printAll': printAll
-        })
+        # If no specific action, redirect to print-barcode
+        return redirect('print-barcode')
 
 
 class CreateQRCode(UserPassesTestMixin, View):
@@ -136,7 +147,7 @@ class ProductFinder(UserPassesTestMixin, View):
       return render(request, 'Dashboard/scan_barcode.html')
   def post(self, request):
     barcode_input = request.POST.get('scannedData', '').strip()
-    print(f"Scanned barcode: {barcode_input}")
+    # print(f"Scanned barcode: {barcode_input}")
    
 
     # General validation
@@ -181,4 +192,50 @@ class ProductFinder(UserPassesTestMixin, View):
     # If no product found, return an error message
     messages.error(request, "Product does not exist or barcode is invalid.")
     return redirect('barcode-quantity')
+
+
+class ProductFinderManufacturer(UserPassesTestMixin, View):
+  def test_func(self):
+      return self.request.user.is_staff
+  def handle_no_permission(self):
+      return redirect('home')
+  def get(self, request):
+      return render(request, 'product/manufacturer_scanning.html')
+  def post(self, request):
+    barcode_input = request.POST.get('scannedData', '').strip()
+    # print(f"Scanned barcode: {barcode_input}")
+   
+    # General validation
+    if len(barcode_input) > 64:
+        messages.error(request, "Barcode is too long to be valid.")
+        return redirect('manufacturer-scan')
+
+    if not re.match(r'^[\w\-]+$', barcode_input): # this regex will accept any barcode that contains alphanumeric characters, underscores, or hyphens -- anything else will be considered invalid
+        messages.error(request, "Invalid characters in barcode.")
+        return redirect('manufacturer-scan')
+
+    # First: try to find product using manufacturer_barcode (alphanumeric allowed)
+    try:
+        product = Product.objects.get(manufacturer_barcode=barcode_input)
+        return redirect('add-barcode', pk=product.pk)
+
+    except Product.DoesNotExist:
+        pass  # Fall back to internal barcode
+
+    # If not found, try parsing internal barcode (must be numeric)
+    if barcode_input.isdigit():
+        try:
+            internal_barcode = int(barcode_input) // 10
+            product = Product.objects.get(barcode=internal_barcode)
+            return redirect('add-barcode', pk=product.pk)
+
+        except Product.DoesNotExist:
+            pass
+        except ValueError:
+            # This should never hit if isdigit() passed, but keep just in case
+            messages.error(request, "Internal barcode is not a valid number.")
+            return redirect('manufacturer-scan')
+    # If no product found, return an error message
+    messages.error(request, "Product does not exist or barcode is invalid.")
+    return redirect('manufacturer-scan')
    

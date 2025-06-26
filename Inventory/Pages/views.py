@@ -1,36 +1,65 @@
-from django.http import JsonResponse
+from django.http import JsonResponse, FileResponse
 from django.shortcuts import render, redirect
-from django.views.generic import TemplateView, View
+from django.views.generic import View
 from django.contrib.auth import authenticate, login
 from .form import UserRegisterForm, SearchForm1
 from Products.models import Product
 from django.contrib.auth.mixins import UserPassesTestMixin
-from django.db.models.functions import Substr
 from utils.searchFormProductFilter import filter_products
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+import logging
+import traceback
 
+logger = logging.getLogger("server")
+
+def error_500(request):
+    # Construct a message with useful context
+    error_message = f"""
+    [SERVER ERROR] Path: {request.path}
+    Method: {request.method}
+    User: {request.user if request.user.is_authenticated else "Anonymous"}
+    Traceback:
+    {traceback.format_exc()}
+    """
+    logger.error(error_message)
+    return render(request, 'error/500.html', status=500)
 
 def product_autocomplete(request):
     query = request.GET.get("q", "").strip()
     field = request.GET.get("field", "").strip()
 
     allowed_fields = {
-        "title": "title__istartswith",
-        "product_ID": "product_ID__istartswith",
-        "vendor": "vendor__istartswith",
+        "title": "title",
+        "product_ID": "product_ID",
+        "vendor": "vendor",
     }
 
     if field not in allowed_fields or not query:
         return JsonResponse({"results": []})
 
-    filter_kwargs = {allowed_fields[field]: query}
+    field_name = allowed_fields[field]
+
+    # Try istartswith first
+    startswith_filter = {f"{field_name}__istartswith": query}
     results = (
-        Product.objects.filter(**filter_kwargs)
-        .values_list(field, flat=True)
+        Product.objects.filter(**startswith_filter)
+        .values_list(field_name, flat=True)
         .distinct()
         [:10]
     )
 
+    # Fallback if no startswith results
+    if not results:
+      contains_filter = {f"{field_name}__icontains": query}
+      results = (
+          Product.objects.filter(**contains_filter)
+          .values_list(field_name, flat=True)
+          .distinct()
+          [:10]
+      )
+
     return JsonResponse({"results": list(results)})
+
 
 
 class Dashboard(UserPassesTestMixin, View):
@@ -50,27 +79,39 @@ class Dashboard(UserPassesTestMixin, View):
 
 
 class DashboardInventory(UserPassesTestMixin, View):
-   def test_func(self):
+  def test_func(self):
         return self.request.user.groups.filter(name='Inventory Technician').exists() or self.request.user.is_superuser
-   def handle_no_permission(self):
+  def handle_no_permission(self):
         return redirect('home')
-   items = None
-   def get(self, request):
-      form = SearchForm1()
-      items = Product.objects.order_by('title')
+  items = None
+  def get(self, request):
+      form = SearchForm1(request.GET or None) # Either the search form was populated with GET data or it is empty
+      # print("Form data:", form.data)
+
+      if form.is_valid() and any(form.cleaned_data.values()):
+          # print("Form goes here")
+          items = filter_products(form)
+
+
+          paginator = Paginator(items, 25)
+          page = request.GET.get('page')
+
+          try:
+              paginated_items = paginator.page(page)
+          except PageNotAnInteger:
+              paginated_items = paginator.page(1)
+          except EmptyPage:
+              paginated_items = paginator.page(paginator.num_pages)
+      else:
+          paginated_items = None
+
       is_inventory_technician = request.user.groups.filter(name='Inventory Technician').exists()
-      return render(request, 'Dashboard/inventory.html', {'items':items, 'form': form, 'is_inventory_technician': is_inventory_technician})
-   def post(self, request):
-    form = SearchForm1(request.POST)
-    # Check if the form is valid and filter products accordingly
-    items = filter_products(form)
-   
-    is_inventory_technician = request.user.groups.filter(name='Inventory Technician').exists()
-    return render(request, 'Dashboard/inventory.html', {
-        'items': items,
-        'form': form,
-        'is_inventory_technician': is_inventory_technician
-    })
+
+      return render(request, 'Dashboard/inventory.html', {
+          'items': paginated_items,
+          'form': form,
+          'is_inventory_technician': is_inventory_technician
+      })
 
 
 class QRCodeLogin(View):

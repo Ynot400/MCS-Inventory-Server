@@ -19,23 +19,36 @@
     }
 
     tr.tablePrintColorChange td {
-      background-color: #01acca !important; /* Light green background */
-      color: #fff !important; /* Dark green text */
+      background-color: #01acca !important; 
+      color: #fff !important; 
     }
 
     .textColorChange {
-      color: #fff !important; /* Dark green text */
+      color: #fff !important; 
     }
   </style>
 
 	<div class="row">
 		<div class="col-md-11 col-12 mx-auto mt-5">
 			<div class="card p-3 shadow-sm">
-				<form method="POST" id="searchForm">
-					{% csrf_token %}
-
+				<form method="GET" id="searchForm">
 					<!-- Grid for Inputs -->
 					<div class="row g-3 mb-3">
+          {% if form.errors %}
+            <div class="alert alert-danger">
+              <strong>Please fix the following errors:</strong>
+              <ul class="mb-0">
+                {% for field in form %}
+                  {% for error in field.errors %}
+                    <li><strong>{{ field.label }}:</strong> {{ error }}</li>
+                  {% endfor %}
+                {% endfor %}
+                {% for error in form.non_field_errors %}
+                  <li>{{ error }}</li>
+                {% endfor %}
+              </ul>
+            </div>
+          {% endif %}
 						<div class="col-md-3 col-12 position-relative">
 							<label for="id_product_name" class="form-label">Product Name: </label>
 							{{ form.product_name }}
@@ -134,6 +147,29 @@
         {% endfor %}
       </tbody>
     </table>
+    {% if items %}
+      <nav aria-label="Pagination">
+        <ul class="pagination justify-content-center">
+          {% if items.has_previous %}
+            <li class="page-item">
+              <a class="page-link" href="?{% for key, val in request.GET.items %}{% if key != 'page' %}{{ key }}={{ val|urlencode }}&{% endif %}{% endfor %}page={{ items.previous_page_number }}">Previous</a>
+            </li>
+          {% endif %}
+
+          <li class="page-item disabled">
+            <span class="page-link">
+              Page {{ items.number }} of {{ items.paginator.num_pages }}
+            </span>
+          </li>
+
+          {% if items.has_next %}
+            <li class="page-item">
+              <a class="page-link" href="?{% for key, val in request.GET.items %}{% if key != 'page' %}{{ key }}={{ val|urlencode }}&{% endif %}{% endfor %}page={{ items.next_page_number }}">Next</a>
+            </li>
+          {% endif %}
+        </ul>
+      </nav>
+    {% endif %}
   </div>
 
 <!-- Scripts -->

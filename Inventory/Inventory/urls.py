@@ -21,7 +21,7 @@ from Products.views import AddProduct, EditProduct, DeleteProduct, update_quanti
 from django.contrib.auth import views as auth_views
 from django.conf import settings
 from django.conf.urls.static import static
-from barcodes.views import CreateBarcode, CreateQRCode, ProductFinder, PrintBarcode
+from barcodes.views import CreateBarcode, CreateQRCode, ProductFinder, PrintBarcode, ProductFinderManufacturer
 from EORLogging.views import LogReportView, excel_log_creation
 
 
@@ -50,9 +50,12 @@ urlpatterns = [
     path('dashboard/eou-report/', LogReportView.as_view(), name='eou-report'),
     path("autocomplete/", product_autocomplete, name="generic_autocomplete"),
     path('dashboard/eou-report/download/', excel_log_creation, name='excel-log-creation'),
+    path('dashboard/manufacturer-scan/', ProductFinderManufacturer.as_view(), name='manufacturer-scan'),
     
 
 
     # path('pdf-logging', report_pdf, name='pdf-logging')
    #path('detail/', )
 ] 
+
+handler500 = 'Pages.views.error_500'

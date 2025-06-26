@@ -70,16 +70,6 @@
   }
 </style>
 
-{% if messages %}
-  <div class="mt-2">
-    {% for message in messages %}
-      <div class="alert alert-danger text-center" style="font-size: 1.2rem;" role="alert">
-        {{ message }}
-      </div>
-    {% endfor %}
-  </div>
-{% endif %}
-
 
 <a href="{% url 'barcode-hub' %}" class="btn btn-outline-primary mb-3">← Go Back</a>
 
@@ -91,6 +81,16 @@
   <p class="scan-subtitle">Scan or enter the manufacturer's barcode for the product below.</p>
 
   <input type="text" id="barcodeInput" class="barcode-input" placeholder="Scan or type barcode" autofocus>
+
+  {% if messages %}
+  <div class="mt-2">
+    {% for message in messages %}
+      <div class="alert alert-danger text-center" style="font-size: 1.2rem;" role="alert">
+        {{ message }}
+      </div>
+    {% endfor %}
+  </div>
+  {% endif %}
 
   <form method="POST" id="form" class="confirm-section">
     {% csrf_token %}
