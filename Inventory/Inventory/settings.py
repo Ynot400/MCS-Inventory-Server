@@ -100,6 +100,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'Inventory.middlewares.AjaxMiddleware',
+    'Inventory.middlewares.HandleDatabaseErrorMiddleware',
 ]
 
 ROOT_URLCONF = 'Inventory.urls'

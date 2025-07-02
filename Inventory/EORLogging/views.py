@@ -9,8 +9,11 @@ from Products.models import Product
 from django.utils.timezone import localtime
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from EORLogging.models import LogEntry
-from django.db.models import Q
+from django.db.models import Q, F, ExpressionWrapper, DecimalField, Value
+from django.db.models.functions import Coalesce, Greatest
 import io
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+
 import xlsxwriter
 
 
@@ -91,6 +94,89 @@ class LogReportView(UserPassesTestMixin, View):
             'selected_part_number': selected_part_number,
         }
         return render(request, self.template_name, context)
+
+
+class MinReportView(UserPassesTestMixin, View):
+    template_name = 'Report/minReport.html'
+    warningMargin = 3
+
+    def test_func(self):
+        return self.request.user.is_superuser
+
+    def handle_no_permission(self):
+        return redirect('home')
+
+    def get(self, request):
+        mode = request.GET.get('filter_mode', 'below')  # 'below' or 'warning'
+        sort_by = request.GET.get('sort_by', '')
+        vendor_filter = request.GET.get('vendor', '').strip()
+        threshold_val = request.GET.get('threshold', '2')
+
+        # Annotate will create three additional fields:
+        # - threshold: the span of the warning margin above the minimum quantity
+        # - restock_qty: how many items need to be restocked
+        # - restock_cost: the cost of restocking the items (if applicable)
+
+        if mode == 'below':
+            queryset = Product.objects.annotate(
+                restock_qty=ExpressionWrapper(
+                    Greatest(F('min_quantity') - F('quantity'), Value(0)),
+                    output_field=DecimalField()
+                ),
+                restock_cost=ExpressionWrapper(
+                    Greatest(F('min_quantity') - F('quantity'), Value(0)) * Coalesce(F('admin_field_price1'), Value(0)),
+                    output_field=DecimalField()
+                )
+            ).filter(quantity__lt=F('min_quantity'))
+
+            if vendor_filter:
+                queryset = queryset.filter(vendor__iexact=vendor_filter)
+
+            if sort_by == 'cost':
+                products = queryset.order_by('-restock_cost')
+            else:
+                products = queryset.order_by('quantity')  # default sort by quantity ascending
+
+        elif mode == 'warning':
+            try:
+                threshold_margin = int(threshold_val)
+            except (ValueError, TypeError):
+                threshold_margin = self.warningMargin
+
+            threshold = F('min_quantity') + Value(threshold_margin)
+            queryset = Product.objects.annotate(
+                threshold=threshold
+            ).filter(
+                quantity__gte=F('min_quantity'),
+                quantity__lte=F('threshold')
+            )
+
+            if vendor_filter:
+                queryset = queryset.filter(vendor__iexact=vendor_filter)
+
+            if sort_by == 'cost':
+                products = queryset.order_by('-admin_field_price1')
+            else:
+                products = queryset.order_by('quantity')  # default sort by quantity ascending
+
+        else:
+            products = Product.objects.none()
+        
+        # Paginate results
+        paginator = Paginator(products, 15)  # 15 products per page
+        page_obj = paginator.get_page(request.GET.get('page'))
+
+
+        context = {
+            'products': page_obj.object_list,
+            'page_obj': page_obj,
+            'filter_mode': mode,
+            'sort_by': sort_by,
+            'vendor_filter': vendor_filter,
+            'threshold_val': threshold_val,
+        }
+        return render(request, self.template_name, context)
+
 
 
 

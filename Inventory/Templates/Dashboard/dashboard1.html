@@ -171,6 +171,16 @@
       <img src="{% static 'images/barcode-solid.svg' %}" class="dashboard-icon" alt="barcode icon">
     </a>
   </div>
+
+  <div class="dashboard-card">
+    <a href="{% url 'minimum-stock' %}">
+      <div class="dashboard-text">
+        <strong>Low Stock</strong><br>
+        <strong>Checker</strong>
+      </div>
+      <img src="{% static 'images/graphDown.svg' %}" class="dashboard-icon" alt="scanner icon">
+    </a>
+  </div>
 </div>
 
 {% endblock %}

@@ -1,3 +1,4 @@
+from urllib import request
 from django.shortcuts import render, get_object_or_404, redirect
 from .models import Product
 from django.contrib.auth.mixins import UserPassesTestMixin
@@ -17,10 +18,11 @@ from utils.log_generator import log_product_action
 from decimal import Decimal
 from utils.searchFormProductFilter import filter_products
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+import logging
 
 
 
-# logger = logging.getLogger('main')
+logger = logging.getLogger('server')
 
 class AddProduct(UserPassesTestMixin, View):
     template_name = 'product/product_form.html'
@@ -58,7 +60,6 @@ class AddProduct(UserPassesTestMixin, View):
             return redirect("inventory")
 
        
-        
         if form.is_valid():
             manufacturer_barcode = None
 
@@ -126,6 +127,7 @@ class AddProduct(UserPassesTestMixin, View):
                 form.add_error(None, f"A problem occurred while saving. One or more fields may already exist in another product. Please check for duplicates and try again. {e}")
                 return render(request, self.template_name, {'form': form, 'submission_token': token_from_form})
         else:
+            # print("Form is not valid:", form.errors)
             return render(request, self.template_name, {'form': form, 'submission_token': token_from_form})
 
 
@@ -235,8 +237,10 @@ class EditProduct(UserPassesTestMixin, View):
                         title_changed = request.session.get('originalProduct') != form.cleaned_data['title']
                         id_changed = request.session.get('originalProductID') != form.cleaned_data['product_ID']
 
-                    loc_changed = request.session.get('originalLocation') != form.cleaned_data['location_ID']
-                    
+                    form_location_id = f"{form.cleaned_data['section']}-{form.cleaned_data['level']}-{form.cleaned_data['vertical'] or 'XX'}-{form.cleaned_data['horizontal'] or 'XX'}"
+                    loc_changed = request.session.get('originalLocation') != form_location_id
+
+                                        
 
                     # resets the printed status
                     if request.user.is_superuser:
@@ -258,8 +262,12 @@ class EditProduct(UserPassesTestMixin, View):
 
 
                     for field in tracked_fields:
-                        oldVal = getattr(oldProduct, field)
-                        newVal = getattr(product, field)
+                        if field == 'location_ID':
+                            oldVal = oldProduct.location_ID
+                            newVal = product.location_ID
+                        else:
+                            oldVal = getattr(oldProduct, field)
+                            newVal = getattr(product, field)
                         if oldVal != newVal:
                             fieldName = tracked_fields.get(field, field)  # fallback to raw field name if not labeled
                             changes[fieldName] = {
@@ -493,7 +501,7 @@ class update_quantity(UserPassesTestMixin, View):
         # Token verification using the model
         token_from_form = request.POST.get('submission_token')
         if not token_from_form:
-            print("Missing submission token.")
+            # print("Missing submission token.")
             return redirect("detect_barcodes")
 
     
@@ -525,7 +533,7 @@ class update_quantity(UserPassesTestMixin, View):
         
         token_used = SubmissionToken.objects.filter(token=token_from_form).delete()
         if token_used[0] == 0:
-            print("Invalid or already used submission token.")
+            # print("Invalid or already used submission token.")
             return redirect("detect_barcodes")
 
 
@@ -552,17 +560,17 @@ class update_quantity(UserPassesTestMixin, View):
         )
 
         # Email warnings
-        if product.quantity < 0:
+        if product.quantity <= 0:
             try:
                 send_mail(
-                    f"Negative Quantity for {product_name}",
-                    f"Product {product_name} has a negative quantity of {product.quantity} by {request.user.username} on {datetime.now().strftime("%m/%d/%Y, %H:%M:%S")}\nThe original quantity was {product_older_quantity}.\nReason: {text}",
+                    f"0 Quantity for {product_name}",
+                    f"Product {product_name} has 0 quantity by {request.user.username} on {datetime.now().strftime("%m/%d/%Y, %H:%M:%S")}\nThe original quantity was {product_older_quantity}.\nReason: {text}",
                     "MCSinventory@django.com",
                     ["kenny@marinecustomsolutions.com"],
-                    fail_silently=True,
+                    fail_silently=False,
                 )
             except Exception as e:
-                print(f"Error sending email: {e}")
+                logger.error(f"Failed to send 0 quantity warning email for '{product_name}': {e}")
         elif product.high_priority:
             try:
                 send_mail(
@@ -570,9 +578,9 @@ class update_quantity(UserPassesTestMixin, View):
                     f"Product {product_name} has been updated by {request.user.username} from {product_older_quantity} to {product.quantity} on {datetime.now().strftime("%m/%d/%Y, %H:%M:%S")}\nReason: {text}",
                     "MCSinventory@django.com",
                     ["kenny@marinecustomsolutions.com"],
-                    fail_silently=True,
+                    fail_silently=False,
                 )
             except Exception as e:
-                print(f"Error sending email: {e}")
+                logger.error(f"Failed to send high-priority quantity update email for '{product_name}': {e}")
 
         return redirect("detect_barcodes")

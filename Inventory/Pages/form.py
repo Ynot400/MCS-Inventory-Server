@@ -43,6 +43,14 @@ class ProductForm(forms.ModelForm):
         level = cleaned_data.get('level')
         vertical = cleaned_data.get('vertical')
         horizontal = cleaned_data.get('horizontal')
+        is_structured = cleaned_data.get('is_structured', True)
+
+        # Ensure that min and max quantities are logical
+        minQuantity = cleaned_data.get('min_quantity', 0)
+        maxQuantity = cleaned_data.get('max_quantity', 1)
+
+        if maxQuantity < minQuantity:
+            self.add_error('max_quantity', "Maximum quantity must be greater than minimum quantity.")
 
         # ensure that an accidental white space does not cause issues with product ID
         sanitizedPartNumber = self.cleaned_data.get('product_ID', None) 
@@ -56,20 +64,40 @@ class ProductForm(forms.ModelForm):
             cleaned_data['manufacturer_barcode'] = sanitizedManufacturerBarcode.strip()
 
 
-        # Compose the location_ID
-        location_id = f"{section}-{level}-{vertical}-{horizontal}"
+        # Validation based on is_structured
+        if is_structured:
+            if not vertical or not horizontal:
+                raise ValidationError("Structured (cubby) locations require vertical and horizontal fields.")
+        else:
+            vertical = horizontal = 'XX' # Default values for unstructured locations
 
-         # Uniqueness check for location ID
-        if Product.objects.filter(location_ID=location_id).exclude(pk=self.instance.pk).exists():
-            raise ValidationError({'This location ID is already assigned to another product.'})
-        
-        cleaned_data['location_ID'] = location_id
+        # Check uniqueness (only for structured positions)
+        if is_structured:
+            exists = Product.objects.filter(
+                section=section,
+                level=level,
+                vertical=vertical,
+                horizontal=horizontal,
+                is_structured=True
+            ).exclude(pk=self.instance.pk).exists()
+            if exists:
+                raise ValidationError(f"Cubby location {section}-{level}-{vertical}-{horizontal} is already assigned to another product.")
+
+        cleaned_data['vertical'] = vertical
+        cleaned_data['horizontal'] = horizontal
+        cleaned_data['is_structured'] = is_structured
 
         return cleaned_data
 
     def save(self, commit=True):
+        print("Saving product with location:", self.cleaned_data['section'], self.cleaned_data['level'], self.cleaned_data['vertical'], self.cleaned_data['horizontal'], self.cleaned_data['is_structured'])
         instance = super().save(commit=False)
-        instance.location_ID = self.cleaned_data['location_ID']
+        instance.section = self.cleaned_data['section']
+        instance.level = self.cleaned_data['level']
+        instance.vertical = self.cleaned_data['vertical']
+        instance.horizontal = self.cleaned_data['horizontal']
+        instance.is_structured = self.cleaned_data['is_structured']
+        print("Product location:", instance.section, instance.level, instance.vertical, instance.horizontal, instance.is_structured)
         if commit:
             instance.save()
         return instance
@@ -94,7 +122,7 @@ class ProductForm(forms.ModelForm):
 
     LEVEL_CHOICES = [(val, val) for val in generate_level_pairs()] 
 
-    DIGIT_CHOICES = [(f"{i:02}", f"{i:02}") for i in range(100)]
+    DIGIT_CHOICES = [('', 'XX')] + [(f"{i:02}", f"{i:02}") for i in range(1, 100)]
     section = forms.ChoiceField(choices=SECTION_CHOICES, label="Section")
     level = forms.ChoiceField(choices=LEVEL_CHOICES, label="Level")
     vertical = forms.ChoiceField(choices=DIGIT_CHOICES, label="Vertical")
@@ -102,7 +130,7 @@ class ProductForm(forms.ModelForm):
    
     class Meta:
         model = Product
-        fields = ['title', 'description', 'product_ID', 'manufacturer_barcode', 'quantity', 'min_quantity', 'max_quantity', 'vendor', 'high_priority', 'admin_field_price1', 'admin_field_price2']
+        fields = ['title', 'description', 'product_ID', 'manufacturer_barcode', 'quantity', 'min_quantity', 'max_quantity', 'vendor', 'high_priority', 'admin_field_price1', 'admin_field_price2', 'is_structured']
         labels = {
                 'title': 'Product Name',
                 'description': 'Description',
@@ -115,6 +143,7 @@ class ProductForm(forms.ModelForm):
                 'high_priority': 'Does this product have high priority?',
                 'admin_field_price1': 'Retail',
                 'admin_field_price2': 'Cost',
+                'is_structured': 'Is this product in a cubby?',
             }
     def __init__(self, *args, **kwargs):
             # Extract user from kwargs or provide a default
@@ -126,13 +155,16 @@ class ProductForm(forms.ModelForm):
 
             # Prepopulate location fields if editing existing product
             instance = kwargs.get('instance')
-            if instance and instance.location_ID:
-                parts = instance.location_ID.split('-')
-                if len(parts) == 4:
-                    self.fields['section'].initial = parts[0]
-                    self.fields['level'].initial = parts[1]
-                    self.fields['vertical'].initial = parts[2]
-                    self.fields['horizontal'].initial = parts[3]
+
+            # this will prepopulate the location_ID field if it exists
+            if instance:
+                self.fields['section'].initial = instance.section
+                self.fields['level'].initial = instance.level
+                self.fields['vertical'].initial = instance.vertical
+                self.fields['horizontal'].initial = instance.horizontal
+                self.fields['is_structured'].initial = instance.is_structured
+            else:
+                self.fields['is_structured'].initial = True  # Default to structured if not provided
 
 
             # Conditionally include admin fields based on user permissions
@@ -152,6 +184,16 @@ class ProductForm(forms.ModelForm):
                     'placeholder': 'Enter cost price',
                     'onwheel': 'this.blur()',
                 })
+
+
+                # if self.data.get('is_structured') != 'on':
+                #     # Shelf = unstructured: vertical/horizontal are not required
+                self.fields['vertical'].required = False
+                self.fields['horizontal'].required = False
+                # else:
+                #     # Cubby = structured: enforce required
+                #     self.fields['vertical'].required = True
+                #     self.fields['horizontal'].required = True
 
             self.fields['description'].widget.attrs['placeholder'] = 'Enter product description and/or overstock information here.'
 
@@ -212,7 +254,7 @@ class ProductForm(forms.ModelForm):
 class ProductForm2(forms.ModelForm):
     SECTION_CHOICES = [('HW', 'HW')] + [(val, val) for val in ProductForm.generate_section_pairs()]
     LEVEL_CHOICES = [(val, val) for val in ProductForm.generate_level_pairs()]
-    DIGIT_CHOICES = [(f"{i:02}", f"{i:02}") for i in range(100)]
+    DIGIT_CHOICES = [('', 'XX')] + [(f"{i:02}", f"{i:02}") for i in range(1, 100)]
 
     section = forms.ChoiceField(choices=SECTION_CHOICES, label="Section")
     level = forms.ChoiceField(choices=LEVEL_CHOICES, label="Level")
@@ -221,7 +263,11 @@ class ProductForm2(forms.ModelForm):
 
     class Meta:
         model = Product
-        fields = ['description']  # location_ID is constructed, not input directly
+        fields = ['description', 'is_structured']  # location_ID is constructed, not input directly
+        labels = {
+            'description': 'Description',
+            'is_structured': 'Is this product in a cubby or on a shelf?',
+        }
 
     def clean(self):
         cleaned_data = super().clean()
@@ -229,14 +275,40 @@ class ProductForm2(forms.ModelForm):
         level = cleaned_data.get('level')
         vertical = cleaned_data.get('vertical')
         horizontal = cleaned_data.get('horizontal')
+        is_structured = cleaned_data.get('is_structured', True)
 
-        location_id = f"{section}-{level}-{vertical}-{horizontal}"
-        cleaned_data['location_ID'] = location_id
+        # Validation based on is_structured
+        if is_structured:
+            if not vertical or not horizontal:
+                raise ValidationError("Structured (cubby) locations require vertical and horizontal fields.")
+        else:
+            vertical = horizontal = 'XX'
+
+        # Check uniqueness (only for structured positions)
+        if is_structured:
+            exists = Product.objects.filter(
+                section=section,
+                level=level,
+                vertical=vertical,
+                horizontal=horizontal,
+                is_structured=True
+            ).exclude(pk=self.instance.pk).exists()
+            if exists:
+                raise ValidationError(f"Cubby location {section}-{level}-{vertical}-{horizontal} is already assigned to another product.")
+
+        cleaned_data['vertical'] = vertical
+        cleaned_data['horizontal'] = horizontal
+        cleaned_data['is_structured'] = is_structured
+
         return cleaned_data
 
     def save(self, commit=True):
         instance = super().save(commit=False)
-        instance.location_ID = self.cleaned_data['location_ID']
+        instance.section = self.cleaned_data['section']
+        instance.level = self.cleaned_data['level']
+        instance.vertical = self.cleaned_data['vertical']
+        instance.horizontal = self.cleaned_data['horizontal']
+        instance.is_structured = self.cleaned_data['is_structured']
         if commit:
             instance.save()
         return instance
@@ -247,18 +319,21 @@ class ProductForm2(forms.ModelForm):
 
         # Prepopulate location fields if editing existing product
         instance = kwargs.get('instance')
-        if instance and instance.location_ID:
-            parts = instance.location_ID.split('-')
-            if len(parts) == 4:
-                self.fields['section'].initial = parts[0]
-                self.fields['level'].initial = parts[1]
-                self.fields['vertical'].initial = parts[2]
-                self.fields['horizontal'].initial = parts[3]
+        # this will prepopulate the location_ID field if it exists
+        if instance:
+            self.fields['section'].initial = instance.section
+            self.fields['level'].initial = instance.level
+            self.fields['vertical'].initial = instance.vertical
+            self.fields['horizontal'].initial = instance.horizontal
+            self.fields['is_structured'].initial = instance.is_structured
+        else:
+            self.fields['is_structured'].initial = True  # Default to structured if not provided
+
 
 
         self.fields['description'].widget.attrs.update({
             'class': 'form-control',
-            'placeholder': 'Enter description',
+            'placeholder': 'Enter product description and/or overstock information here.',
         })
 
 
