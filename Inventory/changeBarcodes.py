@@ -18,7 +18,8 @@ def regenerate_all_barcodes():
                 barcode_value=product.barcode,
                 product_title=product.title,
                 part_number=product.product_ID,
-                location=product.location_ID
+                location=product.location_ID,
+                vendor=product.vendor
             )
             print(f"✅ {product.title}")
         except Exception as e:
