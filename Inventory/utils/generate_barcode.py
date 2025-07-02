@@ -9,7 +9,7 @@ def sanitize_filename(filename):
         filename = filename.replace(char, '')
     return filename
 
-def generate_barcode_and_save(barcode_value, product_title, part_number, location):
+def generate_barcode_and_save(barcode_value, product_title, part_number, location, vendor=None):
     barcode_format = barcode.get_barcode_class('ean13')
    
     generated = barcode_format(str(barcode_value), no_checksum=False, writer=ImageWriter())
@@ -29,7 +29,11 @@ def generate_barcode_and_save(barcode_value, product_title, part_number, locatio
         # Generate the filename
         filename = f"barcode_{sanitized_title}_{sanitized_partNum}"
     else:
-        filename = f"barcode_{sanitized_title}_{location}"
+        if vendor is not None:
+            sanitized_vendor = sanitize_filename(vendor)
+            filename = f"barcode_{sanitized_title}_{sanitized_vendor}_{location}"
+        else:
+            filename = f"barcode_{sanitized_title}_{location}"
 
     # Define the full filepath
     filepath = os.path.join(folder_path, f"{filename}")
@@ -51,7 +55,7 @@ def generate_barcode_and_save(barcode_value, product_title, part_number, locatio
 
     # Define the text
     text1 = f"{product_title}"
-    text2 = f"{part_number}  {location}" if part_number else f"N/A  {location}"
+    text2 = f"{part_number}  {location}" if part_number else f"{sanitized_vendor}  {location}"
     # Get the width and height of the image
     img_width = padded_img.width
     # Define the maximum width and height of the text

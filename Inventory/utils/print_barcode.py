@@ -9,13 +9,17 @@ def sanitize_filename(filename):
     return filename
 
 
-def print_barcode(product_name, part_number, location,  num_copies=1):
+def print_barcode(product_name, part_number, location, vendor=None, num_copies=1):
     product_name = sanitize_filename(product_name)
     if part_number is not None:
         part_num = sanitize_filename(part_number)
         image_file_name = f"barcode_{product_name}_{part_num}.png"
     else:
-        image_file_name = f"barcode_{product_name}_{location}.png"
+        if vendor is not None:
+            sanitized_vendor = sanitize_filename(vendor)
+            image_file_name = f"barcode_{product_name}_{sanitized_vendor}_{location}.png"
+        else:
+            image_file_name = f"barcode_{product_name}_{location}.png"
     file_path = os.path.join(os.path.expanduser('~'), 'Desktop', 'barcodes', image_file_name)
     # img = Image.open(file_path)
     
