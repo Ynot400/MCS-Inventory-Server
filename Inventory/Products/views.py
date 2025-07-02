@@ -161,6 +161,7 @@ class EditProduct(UserPassesTestMixin, View):
         request.session['originalProduct'] = product.title
         request.session['originalLocation'] = product.location_ID
         request.session['originalProductID'] = product.product_ID
+        request.session['originalVendor'] = product.vendor
 
         # Check if the form has a vendor datalist
         vendor_list = form.vendor_datalist if hasattr(form, 'vendor_datalist') else None
@@ -237,6 +238,7 @@ class EditProduct(UserPassesTestMixin, View):
                     if not request.user.groups.filter(name='Inventory Technician').exists() and request.user.is_superuser:
                         title_changed = request.session.get('originalProduct') != form.cleaned_data['title']
                         id_changed = request.session.get('originalProductID') != form.cleaned_data['product_ID']
+                        vendor_changed = request.session.get('originalVendor') != form.cleaned_data['vendor']
 
                     form_location_id = f"{form.cleaned_data['section']}-{form.cleaned_data['level']}-{form.cleaned_data['vertical'] or 'XX'}-{form.cleaned_data['horizontal'] or 'XX'}"
                     loc_changed = request.session.get('originalLocation') != form_location_id
@@ -245,7 +247,7 @@ class EditProduct(UserPassesTestMixin, View):
 
                     # resets the printed status
                     if request.user.is_superuser:
-                        if title_changed or loc_changed or id_changed:
+                        if title_changed or loc_changed or id_changed or vendor_changed:
                             # print("Changes detected, resetting printed status.")
                             product.printed = False
                     else:
@@ -291,7 +293,7 @@ class EditProduct(UserPassesTestMixin, View):
                     request.session.pop('originalProduct', None)
                     request.session.pop('originalLocation', None)
                     request.session.pop('originalProductID', None)
-
+                    request.session.pop('originalVendor', None)
                     
                 # Only delete token **after** save succeeded
                 SubmissionToken.objects.filter(token=token_from_form).delete()
