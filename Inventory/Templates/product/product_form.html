@@ -43,7 +43,7 @@
           {% endfor %}
         </datalist>
 
-    
+        {{ form.is_structured|as_crispy_field }}
         <label class="mt-3">Location ID</label>
         <div class="d-flex gap-2">
           {{ form.section|as_crispy_field }}
@@ -77,5 +77,31 @@
       </div>
     </form>
   </div>    
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const isStructuredCheckbox = document.getElementById('id_is_structured');
+    const verticalField = document.getElementById('id_vertical');
+    const horizontalField = document.getElementById('id_horizontal');
+
+    function toggleStructuredFields() {
+        const isStructured = isStructuredCheckbox.checked;
+        verticalField.parentElement.style.display = isStructured ? 'block' : 'none';
+        horizontalField.parentElement.style.display = isStructured ? 'block' : 'none';
+
+        if (!isStructured) {
+            // Clear values when switching to unstructured (shelf)
+            verticalField.value = '';
+            horizontalField.value = '';
+        }
+    }
+
+    // Initial toggle on page load
+    toggleStructuredFields();
+
+    // Toggle on change
+    isStructuredCheckbox.addEventListener('change', toggleStructuredFields);
+});
+</script>
 
 {% endblock content %}
