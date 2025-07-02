@@ -113,11 +113,12 @@ class AddProduct(UserPassesTestMixin, View):
                     product.barcode,
                     product.title,
                     product.product_ID,
-                    product.location_ID
+                    product.location_ID,
+                    product.vendor
                 )
 
                 if request.POST.get('printBarcode'):
-                    print_barcode(product.title, product.product_ID, product.location_ID)
+                    print_barcode(product.title, product.product_ID, product.location_ID, product.vendor)
                     product.printed = True
                     product.save()
 
@@ -302,7 +303,8 @@ class EditProduct(UserPassesTestMixin, View):
                             product.barcode,
                             product.title,
                             product.product_ID,
-                            product.location_ID
+                            product.location_ID,
+                            product.vendor
                         )
                 else:
                     if loc_changed:
@@ -310,11 +312,12 @@ class EditProduct(UserPassesTestMixin, View):
                             product.barcode,
                             product.title,
                             product.product_ID,
-                            product.location_ID
+                            product.location_ID,
+                            product.vendor
                         )
 
                 if print_b:
-                    print_barcode(product.title, product.product_ID, product.location_ID)
+                    print_barcode(product.title, product.product_ID, product.location_ID, product.vendor)
                     product.printed = True
                     product.save()
 

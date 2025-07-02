@@ -97,7 +97,7 @@ class PrintBarcode(UserPassesTestMixin, View):
             try:
                 product = Product.objects.get(pk=id)
                 # print(f'Printing barcode for {product.title}')
-                print_barcode(product.title, product.product_ID, product.location_ID)
+                print_barcode(product.title, product.product_ID, product.location_ID, product.vendor)
                 product.printed = True
                 product.save()
                 return JsonResponse({'status': 'success'})
