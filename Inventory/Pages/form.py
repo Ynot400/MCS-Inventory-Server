@@ -4,6 +4,7 @@ from django.contrib.auth.forms import UserCreationForm, AdminPasswordChangeForm
 from Products.models import Product 
 from Pages.models import Search
 from django.core.exceptions import ValidationError
+from jobtickets.models import JobTicket
 
 class UserRegistrationAdminForm(UserCreationForm):
     class Meta:
@@ -406,4 +407,32 @@ class SearchForm1(forms.Form):
 
         if not show_all and not search_fields:
             raise forms.ValidationError("Please enter at least one field to search, or check 'Show All'.")
+        return cleaned_data
+    
+
+class JobTicketForm(forms.ModelForm):
+    class Meta:
+        model = JobTicket
+        fields = [
+            'status',
+            'genre',
+            'custom_genre',
+            'customer_name',
+            'boat_name',
+        ]
+        widgets = {
+            'status': forms.Select(attrs={'class': 'form-control'}),
+            'genre': forms.Select(attrs={'class': 'form-control', 'onchange': 'toggleCustomGenreField(this);'}),
+            'custom_genre': forms.TextInput(attrs={'class': 'form-control'}),
+            'customer_name': forms.TextInput(attrs={'class': 'form-control'}),
+            'boat_name': forms.TextInput(attrs={'class': 'form-control'}),
+        }
+
+    def clean(self):
+        cleaned_data = super().clean()
+        genre = cleaned_data.get('genre')
+        custom_genre = cleaned_data.get('custom_genre')
+
+        if genre == 'Custom' and not custom_genre:
+            self.add_error('custom_genre', "Please enter a custom genre.")
         return cleaned_data

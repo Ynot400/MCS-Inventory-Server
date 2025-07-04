@@ -23,6 +23,7 @@ from django.conf import settings
 from django.conf.urls.static import static
 from barcodes.views import CreateBarcode, CreateQRCode, ProductFinder, PrintBarcode, ProductFinderManufacturer
 from EORLogging.views import LogReportView, excel_log_creation, MinReportView
+from django.urls import include
 
 
 urlpatterns = [
@@ -52,6 +53,7 @@ urlpatterns = [
     path('dashboard/eou-report/download/', excel_log_creation, name='excel-log-creation'),
     path('dashboard/manufacturer-scan/', ProductFinderManufacturer.as_view(), name='manufacturer-scan'),
     path('dashboard/minimum-stock/', MinReportView.as_view(), name='minimum-stock'),
+    path('job-tickets/', include('jobtickets.urls'))
     
 
     # path('pdf-logging', report_pdf, name='pdf-logging')

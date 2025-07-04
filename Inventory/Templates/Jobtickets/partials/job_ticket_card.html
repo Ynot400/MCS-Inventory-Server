@@ -1,0 +1,24 @@
+<div class="col-md-6 col-lg-4 mb-4" data-ticket-id="{{ ticket.id }}">
+  <div class="card shadow-sm border-0 h-100">
+    <div class="card-body">
+      <h5 class="card-title fw-semibold">{{ ticket.title }}</h5>
+      <p class="mb-1"><strong>Customer:</strong> {{ ticket.customer_name }}</p>
+      <p class="mb-1"><strong>Boat:</strong> {{ ticket.boat_name }}</p>
+      <p class="mb-1"><strong>Genre:</strong> {{ ticket.effective_genre }}</p>
+      <p class="mb-1"><strong>Status:</strong> 
+        <span class="badge {% if ticket.status == 'InProgress' %}bg-warning text-dark{% else %}bg-success{% endif %}">
+          {{ ticket.status }}
+        </span>
+      </p>
+      <p class="text-muted mt-2 mb-1" style="font-size: 0.85rem;">
+        Created: {{ ticket.created_at|date:"M d, Y H:i" }}
+      </p>
+
+      <div class="d-flex justify-content-between mt-3">
+        <button class="btn btn-sm btn-outline-secondary" onclick="showEditModal({{ ticket.id }})">Edit</button>
+        <button class="btn btn-sm btn-outline-info">Add Parts</button>
+        <button class="btn btn-sm btn-outline-danger">Delete</button>
+      </div>
+    </div>
+  </div>
+</div>
