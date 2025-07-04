@@ -87,7 +87,8 @@ INSTALLED_APPS = [
     'EORLogging',
     'crispy_forms',
     'crispy_bootstrap5',
-    'barcodes'
+    'barcodes',
+    'jobtickets'
 ]
 
 MIDDLEWARE = [

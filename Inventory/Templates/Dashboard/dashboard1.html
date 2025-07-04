@@ -181,6 +181,16 @@
       <img src="{% static 'images/graphDown.svg' %}" class="dashboard-icon" alt="scanner icon">
     </a>
   </div>
+
+  <div class="dashboard-card">
+    <a href="{% url 'jobticket-dashboard' %}">
+      <div class="dashboard-text">
+        <strong>Job Ticket</strong><br>
+        <strong>Hub</strong>
+      </div>
+      <img src="{% static 'images/jobTicket2.svg' %}" class="dashboard-icon" alt="job ticket icon">
+    </a>
+  </div>
 </div>
 
 {% endblock %}

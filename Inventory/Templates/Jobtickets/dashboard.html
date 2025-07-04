@@ -1,0 +1,279 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container mt-5 position-relative">
+
+  <!-- Header and Add Button -->
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="fw-bold">Job Ticket Dashboard</h2>
+    <button class="btn btn-primary" onclick="showModal()">+ Add Job Ticket</button>
+  </div>
+
+  <!-- Job Ticket Cards -->
+  <div class="row" id="ticketContainer">
+    {% for ticket in tickets %}
+    <div class="col-md-6 col-lg-4 mb-4" data-ticket-id="{{ ticket.id }}">
+      <div class="card shadow-sm border-0 h-100">
+        <div class="card-body">
+          <h5 class="card-title fw-semibold">{{ ticket.title }}</h5>
+          <p class="mb-1"><strong>Customer:</strong> {{ ticket.customer_name }}</p>
+          <p class="mb-1"><strong>Boat:</strong> {{ ticket.boat_name }}</p>
+          <p class="mb-1"><strong>Genre:</strong> {{ ticket.effective_genre }}</p>
+          <p class="mb-1"><strong>Status:</strong> 
+            <span class="badge {% if ticket.status == 'InProgress' %}bg-warning text-dark{% else %}bg-success{% endif %}">
+              {{ ticket.status }}
+            </span>
+          </p>
+          <p class="text-muted mt-2 mb-1" style="font-size: 0.85rem;">
+            Created: {{ ticket.created_at|date:"M d, Y H:i" }}
+          </p>
+
+          <!-- Future: Edit / Add Parts / Delete buttons -->
+          <div class="d-flex justify-content-between mt-3">
+            <button class="btn btn-sm btn-outline-secondary" onclick="showEditModal({{ ticket.id }})">Edit</button>
+            <button class="btn btn-sm btn-outline-info">Add Parts</button>
+            <button class="btn btn-sm btn-outline-danger">Delete</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    {% empty %}
+    <div class="col-12 text-muted text-center py-5">
+      No job tickets yet. Add your first one!
+    </div>
+    {% endfor %}
+  </div>
+</div>
+
+<!-- Add Job Ticket Modal -->
+<div id="addModalBackdrop" class="modal-backdrop-custom" onclick="hideModal()"></div>
+
+<div id="jobTicketModal" class="modal-custom">
+  <div class="modal-content">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <h4 class="mb-0">New Job Ticket</h4>
+      <button type="button" class="btn-close" onclick="hideModal()"></button>
+    </div>
+
+    <div id="jobTicketFormContainer">
+      {% include 'Jobtickets/partials/job_ticket_form.html' %}
+    </div>
+  </div>
+</div>
+
+<!-- Edit Modal -->
+<div id="editModalBackdrop" class="modal-backdrop-custom" onclick="hideEditModal()"></div>
+
+<div id="editModal" class="modal-custom">
+  <div class="modal-content">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <h4 class="mb-0">Edit Job Ticket</h4>
+      <button type="button" class="btn-close" onclick="hideEditModal()"></button>
+    </div>
+    <div id="editModalBody"></div>
+  </div>
+</div>
+
+<style>
+  .modal-custom {
+    display: none;
+    position: fixed;
+    top: 10%;
+    left: 0;
+    right: 0;
+    z-index: 1055;
+    padding: 0 15px;
+  }
+
+  .modal-content {
+    background: white;
+    padding: 2rem;
+    border-radius: 0.5rem;
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+    max-width: 600px;
+    margin: 0 auto;
+  }
+
+  .modal-backdrop-custom {
+    display: none;
+    position: fixed;
+    top: 0; 
+    left: 0; 
+    right: 0; 
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.3);
+    backdrop-filter: blur(4px);
+    z-index: 1050;
+  }
+
+  body.modal-opened {
+    overflow: hidden;
+  }
+</style>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  initializeJobTicketForm();
+  initializeGenreToggle();
+});
+
+// Modal Management
+function showModal() {
+  document.getElementById("jobTicketModal").style.display = "block";
+  document.getElementById("addModalBackdrop").style.display = "block";
+  document.body.classList.add("modal-opened");
+}
+
+function hideModal() {
+  document.getElementById("jobTicketModal").style.display = "none";
+  document.getElementById("addModalBackdrop").style.display = "none";
+  document.body.classList.remove("modal-opened");
+}
+
+function showEditModal(ticketId) {
+  fetch(`/job-tickets/${ticketId}/edit/`, {
+    headers: { "X-Requested-With": "XMLHttpRequest" }
+  })
+  .then(res => {
+    if (!res.ok) {
+      throw new Error('Network response was not ok');
+    }
+    return res.json();
+  })
+  .then(data => {
+    document.getElementById("editModalBody").innerHTML = data.form_html;
+    document.getElementById("editModal").style.display = "block";
+    document.getElementById("editModalBackdrop").style.display = "block";
+    document.body.classList.add("modal-opened");
+    attachEditFormSubmit();
+  })
+  .catch(error => {
+    console.error("Error loading edit form:", error);
+  });
+}
+
+function hideEditModal() {
+  document.getElementById("editModal").style.display = "none";
+  document.getElementById("editModalBackdrop").style.display = "none";
+  document.body.classList.remove("modal-opened");
+}
+
+// Form Initialization
+function initializeJobTicketForm() {
+  const formContainer = document.getElementById("jobTicketFormContainer");
+  const formElement = formContainer.querySelector("form");
+
+  if (!formElement) return;
+
+  formElement.addEventListener("submit", function (e) {
+    e.preventDefault();
+    const formData = new FormData(formElement);
+
+    fetch("{% url 'create-jobticket' %}", {
+      method: "POST",
+      headers: {
+        "X-Requested-With": "XMLHttpRequest"
+      },
+      body: formData
+    })
+    .then(response => {
+      if (!response.ok) {
+        throw new Error('Network response was not ok');
+      }
+      return response.json();
+    })
+    .then(data => {
+      if (data.success) {
+        hideModal();
+        // Add the new card to the ticket container
+        const container = document.getElementById("ticketContainer");
+        container.insertAdjacentHTML('afterbegin', data.card_html);
+
+        // Reset form
+        formElement.reset();
+      } else {
+        formContainer.innerHTML = data.form_html;
+        initializeGenreToggle(); // Reinitialize genre toggle after form update
+      }
+    })
+    .catch(error => {
+      console.error("Error submitting form:", error);
+    });
+  });
+}
+
+function initializeGenreToggle() {
+  const genreSelect = document.getElementById("id_genre");
+  if (genreSelect) {
+    toggleCustomGenreField(genreSelect);
+    
+    // Add event listener for genre change
+    genreSelect.addEventListener("change", function() {
+      toggleCustomGenreField(this);
+    });
+  }
+}
+
+function toggleCustomGenreField(selectElement) {
+  const customGenreField = document.getElementById("id_custom_genre");
+
+  if (!customGenreField) return;
+
+  if (selectElement.value === "Custom") {
+    customGenreField.closest(".mb-3").style.display = "block";
+  } else {
+    customGenreField.closest(".mb-3").style.display = "none";
+    customGenreField.value = "";  // Clear value when hiding
+  }
+}
+
+// Edit Form Management
+function attachEditFormSubmit() {
+  const form = document.getElementById("editJobTicketForm");
+  
+  if (!form) return;
+
+  // Remove existing event listeners to prevent duplicates
+  const newForm = form.cloneNode(true);
+  form.parentNode.replaceChild(newForm, form);
+
+  newForm.addEventListener("submit", function (e) {
+    e.preventDefault();
+    const ticketId = newForm.dataset.ticketId;
+    const formData = new FormData(newForm);
+
+    fetch(`/job-tickets/${ticketId}/edit/`, {
+      method: "POST",
+      headers: {
+        "X-Requested-With": "XMLHttpRequest"
+      },
+      body: formData
+    })
+    .then(res => {
+      if (!res.ok) {
+        throw new Error('Network response was not ok');
+      }
+      return res.json();
+    })
+    .then(data => {
+      if (data.success) {
+        hideEditModal();
+        const wrapper = document.querySelector(`[data-ticket-id="${data.ticket_id}"]`);
+        if (wrapper) {
+          const tempDiv = document.createElement('div');
+          tempDiv.innerHTML = data.card_html;
+          wrapper.replaceWith(tempDiv.firstElementChild);
+        }
+      } else {
+        document.getElementById("editModalBody").innerHTML = data.form_html;
+        attachEditFormSubmit();  // reattach after rerender
+      }
+    })
+    .catch(error => {
+      console.error("Error updating ticket:", error);
+    });
+  });
+}
+</script>
+{% endblock %}
