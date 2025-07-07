@@ -24,7 +24,7 @@ class JobTicket(models.Model):
     custom_genre = models.CharField(max_length=100, blank=True, null=True)
 
     customer_name = models.CharField(max_length=200)
-    boat_name = models.CharField(max_length=200)
+    boat_name = models.CharField(max_length=200, blank=True, null=True)
 
     created_at = models.DateTimeField(auto_now_add=True)
     created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)

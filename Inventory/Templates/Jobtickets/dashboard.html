@@ -161,21 +161,43 @@
 
 <script>
 document.addEventListener("DOMContentLoaded", function () {
-  initializeJobTicketForm();
   initializeGenreToggle();
 });
 
 // Modal Management
 function showModal() {
-  document.getElementById("jobTicketModal").style.display = "block";
-  document.getElementById("addModalBackdrop").style.display = "block";
-  document.body.classList.add("modal-opened");
+  // Fetch the create form via AJAX
+  fetch('/job-tickets/create/', {
+    headers: { "X-Requested-With": "XMLHttpRequest" }
+  })
+  .then(res => {
+    if (!res.ok) {
+      throw new Error('Network response was not ok');
+    }
+    return res.json();
+  })
+  .then(data => {
+    document.getElementById("jobTicketFormContainer").innerHTML = data.form_html;
+    document.getElementById("jobTicketModal").style.display = "block";
+    document.getElementById("addModalBackdrop").style.display = "block";
+    document.body.classList.add("modal-opened");
+    
+    // Initialize the form after it's loaded
+    initializeJobTicketForm();
+    initializeGenreToggle();
+  })
+  .catch(error => {
+    console.error("Error loading create form:", error);
+    showErrorMessage("Could not load create form. Please try again.");
+  });
 }
 
 function hideModal() {
   document.getElementById("jobTicketModal").style.display = "none";
   document.getElementById("addModalBackdrop").style.display = "none";
   document.body.classList.remove("modal-opened");
+  // Clear the form container
+  document.getElementById("jobTicketFormContainer").innerHTML = "";
 }
 
 function showEditModal(ticketId) {
@@ -208,7 +230,7 @@ function hideEditModal() {
   document.body.classList.remove("modal-opened");
 }
 
-// Form Initialization
+// Form Initialization (called after AJAX load)
 function initializeJobTicketForm() {
   const formContainer = document.getElementById("jobTicketFormContainer");
   if (!formContainer) return;
@@ -234,9 +256,24 @@ function initializeJobTicketForm() {
       body: formData
     })
     .then(res => {
+      console.log('Response status:', res.status);
+      
       if (!res.ok) {
-        throw new Error('Network response was not ok');
+        return res.text().then(text => {
+          console.error('Response text:', text);
+          throw new Error(`HTTP ${res.status}: ${text.substring(0, 200)}...`);
+        });
       }
+      
+      // Check if response is JSON
+      const contentType = res.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        return res.text().then(text => {
+          console.error('Expected JSON but got:', text);
+          throw new Error('Expected JSON response but got HTML/text');
+        });
+      }
+      
       return res.json();
     })
     .then(data => {
@@ -258,24 +295,20 @@ function initializeJobTicketForm() {
             }
           }, 1500);
         }
-        
-        // Reset form
-        form.reset();
-        initializeGenreToggle(); // Reset genre toggle state
       } else {
-        // Handle form errors
+        // Handle form errors - update the form container with new form HTML
         if (data.form_html) {
           formContainer.innerHTML = data.form_html;
           initializeJobTicketForm(); // Re-attach listeners
           initializeGenreToggle(); // Re-attach genre toggle
         } else {
-          showErrorMessage('An error occurred. Please try again.');
+          showErrorMessage(data.error || 'An error occurred. Please try again.');
         }
       }
     })
     .catch(error => {
-      console.error("Error creating job ticket:", error);
-      showErrorMessage('Network error occurred. Please try again.');
+      console.error("Full error object:", error);
+      showErrorMessage(`Error creating job ticket: ${error.message}`);
     })
     .finally(() => {
       submitButton.disabled = false;

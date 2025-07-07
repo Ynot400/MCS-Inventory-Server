@@ -12,12 +12,10 @@ from django.core.exceptions import ValidationError
 from django.contrib import messages
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 
-
 class CreateJobTicketView(LoginRequiredMixin, UserPassesTestMixin, View):
     template_name = 'Jobtickets/create_job_ticket.html'
 
     def test_func(self):
-        # You can customize this check as needed
         return self.request.user.is_superuser
 
     def handle_no_permission(self):
@@ -26,18 +24,35 @@ class CreateJobTicketView(LoginRequiredMixin, UserPassesTestMixin, View):
     def get(self, request):
         form = JobTicketForm()
         token = create_submission_token()
-        return render(request, self.template_name, {'form': form, 'submission_token': token})
+        
+        # Handle AJAX request (from dashboard modal)
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            html = render_to_string('Jobtickets/partials/job_ticket_form.html', {
+                'form': form,
+                'submission_token': token
+            }, request=request)
+            return JsonResponse({'form_html': html})
+        
+        # Handle regular request (for standalone create page if needed)
+        return render(request, self.template_name, {
+            'form': form, 
+            'submission_token': token
+        })
 
     @transaction.atomic
     def post(self, request):
         # === Submission Token Verification ===
         token_from_form = request.POST.get('submission_token')
         if not token_from_form:
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse({'success': False, 'error': 'Request timeout. Please try again.'}, status=400)
             messages.error(request, "Request Timeout. Please try again.")
             return redirect("jobticket-dashboard")
 
         token_exists = SubmissionToken.objects.filter(token=token_from_form).exists()
         if not token_exists:
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse({'success': False, 'error': 'Invalid or expired token.'}, status=400)
             return redirect("jobticket-dashboard")
 
         try:
@@ -50,6 +65,7 @@ class CreateJobTicketView(LoginRequiredMixin, UserPassesTestMixin, View):
                 job_ticket.created_by = request.user
                 job_ticket.save()
 
+                # Handle AJAX request (from dashboard modal)
                 if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
                     card_html = render_to_string('Jobtickets/partials/job_ticket_card.html', {
                         'ticket': job_ticket
@@ -60,27 +76,50 @@ class CreateJobTicketView(LoginRequiredMixin, UserPassesTestMixin, View):
                         'ticket_id': job_ticket.id
                     })
                 else:
+                    # Handle regular form submission
                     messages.success(request, f'Job ticket "{job_ticket.customer_name}" created successfully.')
                     return redirect('jobticket-dashboard')
             else:
+                # Form has validation errors
                 if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                    # Generate new token for retry
+                    new_token = create_submission_token()
                     form_html = render_to_string('Jobtickets/partials/job_ticket_form.html', {
-                        'form': form
+                        'form': form,
+                        'submission_token': new_token
                     }, request=request)
                     return JsonResponse({'success': False, 'form_html': form_html}, status=400)
+                else:
+                    # For non-AJAX, render the create page with errors
+                    token = create_submission_token()
+                    return render(request, self.template_name, {
+                        'form': form,
+                        'submission_token': token
+                    })
 
         except ValidationError as e:
-            messages.error(request, f"Validation error creating job ticket: {e}")
+            error_msg = f"Validation error creating job ticket: {e}"
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse({'success': False, 'error': error_msg}, status=400)
+            messages.error(request, error_msg)
         except Exception as e:
-            messages.error(request, f"Unexpected error creating job ticket: {e}")
+            error_msg = f"Unexpected error creating job ticket: {e}"
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse({'success': False, 'error': error_msg}, status=500)
+            messages.error(request, error_msg)
 
-        # If we reach here, there was an error - regenerate token for retry
-        form = JobTicketForm(request.POST)
-        token = create_submission_token()
-        return render(request, self.template_name, {
-            'form': form,
-            'submission_token': token
-        })
+        # If we reach here, there was an error
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            # For AJAX errors, return a new form with token
+            new_token = create_submission_token()
+            form_html = render_to_string('Jobtickets/partials/job_ticket_form.html', {
+                'form': JobTicketForm(request.POST),
+                'submission_token': new_token
+            }, request=request)
+            return JsonResponse({'success': False, 'form_html': form_html}, status=400)
+        
+        # For non-AJAX requests, redirect to dashboard
+        return redirect("jobticket-dashboard")
     
 class EditJobTicketView(LoginRequiredMixin, UserPassesTestMixin, View):
     def test_func(self):
