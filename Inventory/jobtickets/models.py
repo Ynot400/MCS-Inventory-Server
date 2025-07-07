@@ -1,6 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import User
 from Products.models import Product  # Adjust to your app's actual product model path
+from django.core.exceptions import ValidationError
 
 
 class JobTicket(models.Model):
@@ -29,11 +30,19 @@ class JobTicket(models.Model):
     created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
 
     def __str__(self):
-        return f"{self.title} ({self.customer_name})"
+        return f"{self.customer_name} - {self.boat_name}" 
 
     @property
     def effective_genre(self):
         return self.custom_genre if self.genre == "Custom" else self.genre
+    
+    def clean(self):
+        if self.genre == 'Custom' and not self.custom_genre:
+            raise ValidationError({'custom_genre': 'Custom genre is required when genre is set to Custom.'})
+    
+    @property
+    def get_status_display(self):
+        return dict(self.STATUS_CHOICES).get(self.status, 'Unknown Status')
 
 class JobTicketItem(models.Model):
     
@@ -49,7 +58,19 @@ class JobTicketItem(models.Model):
 
     quantity_used = models.PositiveIntegerField()
     timestamp = models.DateTimeField(auto_now_add=True)
-    added_by = models.ForeignKey('auth.User', on_delete=models.SET_NULL, null=True, blank=True)
+    added_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+
+    def clean(self):
+        # Ensure either product OR custom part is specified, not both
+        has_product = self.product is not None
+        has_custom = bool(self.custom_part_name)
+        
+        if not has_product and not has_custom:
+            raise ValidationError('Either select a product or specify custom part details.')
+        
+        if has_product and has_custom:
+            raise ValidationError('Cannot specify both product and custom part details.')
+        
 
     def __str__(self):
         if self.product:
