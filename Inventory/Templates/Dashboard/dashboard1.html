@@ -102,6 +102,7 @@
 </div>
 
 <div class="dashboard-grid">
+  
   <div class="dashboard-card">
     <a href="{% url 'inventory' %}">
       <div class="dashboard-text">
@@ -109,6 +110,17 @@
         <strong>Inventory</strong>
       </div>
       <img src="{% static 'images/boxes.svg' %}" class="dashboard-icon" alt="inventory icon">
+    </a>
+  </div>
+
+
+  <div class="dashboard-card">
+    <a href="{% url 'jobticket-dashboard' %}">
+      <div class="dashboard-text">
+        <strong>Job Ticket</strong><br>
+        <strong>Hub</strong>
+      </div>
+      <img src="{% static 'images/jobTicket2.svg' %}" class="dashboard-icon" alt="job ticket icon">
     </a>
   </div>
 
@@ -182,15 +194,6 @@
     </a>
   </div>
 
-  <div class="dashboard-card">
-    <a href="{% url 'jobticket-dashboard' %}">
-      <div class="dashboard-text">
-        <strong>Job Ticket</strong><br>
-        <strong>Hub</strong>
-      </div>
-      <img src="{% static 'images/jobTicket2.svg' %}" class="dashboard-icon" alt="job ticket icon">
-    </a>
-  </div>
 </div>
 
 {% endblock %}

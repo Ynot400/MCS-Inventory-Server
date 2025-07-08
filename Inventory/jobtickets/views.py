@@ -12,6 +12,18 @@ from django.core.exceptions import ValidationError
 from django.contrib import messages
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 
+class GetSubmissionTokenView(LoginRequiredMixin, View):
+    """
+    Simple endpoint to get a fresh submission token for AJAX operations
+    """
+    def get(self, request):
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            token = create_submission_token()
+            return JsonResponse({'submission_token': token})
+        else:
+            # For non-AJAX requests, redirect to dashboard
+            return redirect('jobticket-dashboard')
+
 class CreateJobTicketView(LoginRequiredMixin, UserPassesTestMixin, View):
     template_name = 'Jobtickets/create_job_ticket.html'
 
@@ -215,7 +227,67 @@ class EditJobTicketView(LoginRequiredMixin, UserPassesTestMixin, View):
             'ticket': ticket,
             'submission_token': token
         })
+    
 
+class DeleteJobTicketView(LoginRequiredMixin, UserPassesTestMixin, View):
+    def test_func(self):
+        return self.request.user.is_superuser
+
+    def handle_no_permission(self):
+        return redirect('home')
+
+    @transaction.atomic
+    def post(self, request, pk):
+        # === Submission Token Verification ===
+        token_from_form = request.POST.get('submission_token')
+        if not token_from_form:
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse({'success': False, 'error': 'Request timeout. Please try again.'}, status=400)
+            messages.error(request, "Request Timeout. Please try again.")
+            return redirect("jobticket-dashboard")
+
+        token_exists = SubmissionToken.objects.filter(token=token_from_form).exists()
+        if not token_exists:
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse({'success': False, 'error': 'Invalid or expired token.'}, status=400)
+            return redirect("jobticket-dashboard")
+
+        try:
+            ticket = get_object_or_404(JobTicket, pk=pk)
+            ticket_customer_name = ticket.customer_name
+            ticket_boat_name = ticket.boat_name
+            
+            # Delete the token first to prevent reuse
+            SubmissionToken.objects.filter(token=token_from_form).delete()
+            
+            # Delete the job ticket
+            ticket.delete()
+
+            success_message = f'Job ticket for "{ticket_customer_name}" (Boat: {ticket_boat_name}) has been deleted successfully.'
+
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse({
+                    'success': True,
+                    'message': success_message,
+                    'ticket_id': pk
+                })
+            else:
+                messages.success(request, success_message)
+                return redirect('jobticket-dashboard')
+
+        except JobTicket.DoesNotExist:
+            error_msg = f"Job ticket with ID {pk} not found."
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse({'success': False, 'error': error_msg}, status=404)
+            messages.error(request, error_msg)
+        except Exception as e:
+            error_msg = f"Unexpected error deleting ticket {pk}: {e}"
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse({'success': False, 'error': error_msg}, status=500)
+            messages.error(request, error_msg)
+
+        # If we reach here, there was an error
+        return redirect("jobticket-dashboard")
 
 class JobTicketDashboardView(LoginRequiredMixin, UserPassesTestMixin, View):
     template_name = 'Jobtickets/dashboard.html'
