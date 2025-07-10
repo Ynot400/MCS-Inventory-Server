@@ -2,6 +2,10 @@ from django.db import models
 from django.contrib.auth.models import User
 from Products.models import Product  # Adjust to your app's actual product model path
 from django.core.exceptions import ValidationError
+from django.db.models import Sum, F
+from django.db.models.fields import DecimalField
+from decimal import Decimal
+
 
 
 class JobTicket(models.Model):
@@ -31,18 +35,80 @@ class JobTicket(models.Model):
 
     def __str__(self):
         return f"{self.customer_name} - {self.boat_name}" 
+       
+    def clean(self):
+        if self.genre == 'Custom' and not self.custom_genre:
+            raise ValidationError({'custom_genre': 'Custom genre is required when genre is set to Custom.'})
 
     @property
     def effective_genre(self):
         return self.custom_genre if self.genre == "Custom" else self.genre
     
-    def clean(self):
-        if self.genre == 'Custom' and not self.custom_genre:
-            raise ValidationError({'custom_genre': 'Custom genre is required when genre is set to Custom.'})
-    
     @property
     def get_status_display(self):
         return dict(self.STATUS_CHOICES).get(self.status, 'Unknown Status')
+    # Add these methods to your JobTicket model
+  
+    @property
+    def total_custom_parts_cost(self):
+        """Calculate total cost of custom parts using database aggregation"""
+        result = self.items.filter(
+            product__isnull=True,
+            custom_part_cost__isnull=False
+        ).aggregate(
+            total=Sum(
+                F('quantity_used') * F('custom_part_cost'),
+                output_field=DecimalField(max_digits=12, decimal_places=2)
+            )
+        )['total']
+        return result or Decimal('0.00')
+
+    @property 
+    def total_inventory_cost(self):
+        """Calculate total cost of inventory items using admin_field_price2 (cost price)"""
+        result = self.items.filter(
+            product__isnull=False,
+            product__admin_field_price1__isnull=False
+        ).aggregate(
+            total=Sum(
+                F('quantity_used') * F('product__admin_field_price2'),
+                output_field=DecimalField(max_digits=12, decimal_places=2)
+            )
+        )['total']
+        return result or Decimal('0.00')
+
+    @property
+    def total_cost(self):
+        """Calculate total cost of all parts (custom + inventory cost)"""
+        return self.total_custom_parts_cost + self.total_inventory_cost
+    @property
+    def custom_parts_count(self):
+        """Count of custom parts associated with this job ticket"""
+        return self.items.filter(product__isnull=True).count()
+
+    @property
+    def inventory_items_count(self):
+        """Count of inventory items associated with this job ticket"""
+        return self.items.filter(product__isnull=False).count()
+    
+    @property
+    def total_items_count(self):
+        """Total count of all items (custom + inventory) associated with this job ticket"""
+        return self.items.count()
+
+    @property
+    def total_quantity_used(self):
+        """Total quantity of all items used in this job ticket"""
+        return sum(item.quantity_used for item in self.items.all())
+
+    def get_items_by_type(self):
+        """Return items separated by type"""
+        all_items = self.items.all().order_by('-timestamp')
+        return {
+            'custom_parts': [item for item in all_items if item.is_custom_part()],
+            'inventory_items': [item for item in all_items if item.product],
+            'all_items': all_items
+        }
 
 class JobTicketItem(models.Model):
     

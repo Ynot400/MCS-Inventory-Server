@@ -4,7 +4,7 @@ from django.contrib.auth.forms import UserCreationForm, AdminPasswordChangeForm
 from Products.models import Product 
 from Pages.models import Search
 from django.core.exceptions import ValidationError
-from jobtickets.models import JobTicket
+from jobtickets.models import JobTicket, JobTicketItem
 
 class UserRegistrationAdminForm(UserCreationForm):
     class Meta:
@@ -339,9 +339,9 @@ class ProductForm2(forms.ModelForm):
 
 
 SORT_CHOICES = [
-    ('alphabetical', 'Product Order'),
     ('recent', 'Recently Added'),
-    ('oldest', 'Oldest')
+    ('oldest', 'Oldest'),
+    ('alphabetical', 'Product Order'),
 ]
 
 class SearchForm1(forms.Form):
@@ -431,8 +431,66 @@ class JobTicketForm(forms.ModelForm):
     def clean(self):
         cleaned_data = super().clean()
         genre = cleaned_data.get('genre')
-        custom_genre = cleaned_data.get('custom_genre')
+        custom_genre = cleaned_data.get('custom_genre', None)
 
         if genre == 'Custom' and not custom_genre:
             self.add_error('custom_genre', "Please enter a custom genre.")
         return cleaned_data
+    
+    # Add this to your jobtickets/views.py or create a forms.py file in jobtickets
+
+
+class CustomPartForm(forms.ModelForm):
+    class Meta:
+        model = JobTicketItem
+        fields = ['custom_part_name', 'custom_part_description', 'custom_part_cost', 'quantity_used']
+        widgets = {
+            'custom_part_name': forms.TextInput(attrs={
+                'class': 'form-control', 
+                'placeholder': 'Enter part name',
+                'required': True
+            }),
+            'custom_part_description': forms.Textarea(attrs={
+                'class': 'form-control', 
+                'rows': 3, 
+                'placeholder': 'Enter part description (optional)'
+            }),
+            'custom_part_cost': forms.NumberInput(attrs={
+                'class': 'form-control', 
+                'step': '0.01', 
+                'placeholder': '0.00',
+                'min': '0'
+            }),
+            'quantity_used': forms.NumberInput(attrs={
+                'class': 'form-control', 
+                'min': '1', 
+                'value': '1'
+            }),
+        }
+        labels = {
+            'custom_part_name': 'Part Name',
+            'custom_part_description': 'Description',
+            'custom_part_cost': 'Cost per Unit ($)',
+            'quantity_used': 'Quantity',
+        }
+
+    def clean(self):
+        cleaned_data = super().clean()
+        custom_part_name = cleaned_data.get('custom_part_name')
+        
+        if not custom_part_name or not custom_part_name.strip():
+            raise forms.ValidationError("Part name is required for custom parts.")
+        
+        return cleaned_data
+
+    def clean_custom_part_cost(self):
+        cost = self.cleaned_data.get('custom_part_cost')
+        if cost is not None and cost < 0:
+            raise forms.ValidationError("Cost cannot be negative.")
+        return cost
+
+    def clean_quantity_used(self):
+        quantity = self.cleaned_data.get('quantity_used')
+        if quantity <= 0:
+            raise forms.ValidationError("Quantity must be at least 1.")
+        return quantity

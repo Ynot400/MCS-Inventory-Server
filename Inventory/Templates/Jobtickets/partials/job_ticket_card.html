@@ -15,8 +15,9 @@
 
       <div class="d-flex justify-content-between mt-3">
         <button class="btn btn-sm btn-outline-secondary" onclick="showEditModal({{ ticket.id }})">Edit</button>
-        <button class="btn btn-sm btn-outline-info">Add Parts</button>
-        <button class="btn btn-sm btn-outline-danger">Delete</button>
+        <a href="{% url 'add-custom-parts' ticket.id %}" class="btn btn-sm btn-outline-primary">Add Custom Parts</a>
+        <button class="btn btn-sm btn-outline-info" onclick="showDetailsModal({{ ticket.id }})">Details</button>
+        <button class="btn btn-sm btn-outline-danger" onclick="deleteJobTicket({{ ticket.id }})">Delete</button>
       </div>
     </div>
   </div>

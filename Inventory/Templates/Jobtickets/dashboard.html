@@ -17,6 +17,18 @@
   </div>
   {% endif %}
 
+  <!-- Filter Dropdown -->
+  <div class="mb-3">
+    <label for="statusFilter" class="form-label fw-semibold">Filter by Status:</label>
+    <select id="statusFilter" class="form-select w-auto d-inline-block"
+            onchange="filterByStatus(this.value)">
+      <option value="">All</option>
+      <option value="InProgress" {% if request.GET.status == 'InProgress' %}selected{% endif %}>In Progress</option>
+      <option value="Complete" {% if request.GET.status == 'Complete' %}selected{% endif %}>Completed</option>
+    </select>
+  </div>
+
+
   <!-- Job Ticket Cards -->
   <div class="row" id="ticketContainer">
     {% for ticket in tickets %}
@@ -38,7 +50,8 @@
           <!-- Future: Edit / Add Parts / Delete buttons -->
           <div class="d-flex justify-content-between mt-3">
             <button class="btn btn-sm btn-outline-secondary" onclick="showEditModal({{ ticket.id }})">Edit</button>
-            <button class="btn btn-sm btn-outline-info">Add Parts</button>
+            <a href="{% url 'add-custom-parts' ticket.id %}" class="btn btn-sm btn-outline-primary">Add Custom Parts</a>
+            <button class="btn btn-sm btn-outline-info" onclick="showDetailsModal({{ ticket.id }})">Details</button>
             <button class="btn btn-sm btn-outline-danger" onclick="deleteJobTicket({{ ticket.id }})">Delete</button>
           </div>
         </div>
@@ -57,7 +70,7 @@
     <ul class="pagination justify-content-center">
       {% if tickets.has_previous %}
         <li class="page-item">
-          <a class="page-link" href="?page={{ tickets.previous_page_number }}">Previous</a>
+         <a class="page-link" href="?page={{ tickets.previous_page_number }}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}">Previous</a>
         </li>
       {% endif %}
 
@@ -69,11 +82,11 @@
           </li>
         {% elif page_num > tickets.number|add:'-3' and page_num < tickets.number|add:'3' %}
           <li class="page-item">
-            <a class="page-link" href="?page={{ page_num }}">{{ page_num }}</a>
+            <a class="page-link" href="?page={{ page_num }}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}">{{ page_num }}</a>
           </li>
         {% elif page_num == 1 or page_num == tickets.paginator.num_pages %}
           <li class="page-item">
-            <a class="page-link" href="?page={{ page_num }}">{{ page_num }}</a>
+            <a class="page-link" href="?page={{ page_num }}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}">{{ page_num }}</a>
           </li>
         {% elif page_num == tickets.number|add:'-4' or page_num == tickets.number|add:'4' %}
           <li class="page-item disabled">
@@ -84,13 +97,26 @@
 
       {% if tickets.has_next %}
         <li class="page-item">
-          <a class="page-link" href="?page={{ tickets.next_page_number }}">Next</a>
+          <a class="page-link" href="?page={{ tickets.next_page_number }}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}">Next</a>
         </li>
       {% endif %}
     </ul>
   </nav>
   {% endif %}
 
+</div>
+
+<!-- Details Modal -->
+<div id="detailsModalBackdrop" class="modal-backdrop-custom" onclick="hideDetailsModal()"></div>
+
+<div id="detailsModal" class="modal-custom modal-large">
+  <div class="modal-content">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <h4 class="mb-0">Job Ticket Details</h4>
+      <button type="button" class="btn-close" onclick="hideDetailsModal()"></button>
+    </div>
+    <div id="detailsModalBody"></div>
+  </div>
 </div>
 
 <!-- Add Job Ticket Modal -->
@@ -157,12 +183,37 @@
   body.modal-opened {
     overflow: hidden;
   }
+
+  .modal-large .modal-content {
+  max-width: 800px;
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+  @media (max-width: 768px) {
+    .modal-large .modal-content {
+      max-width: 95vw;
+      max-height: 90vh;
+    }
+  }
 </style>
 
 <script>
 document.addEventListener("DOMContentLoaded", function () {
   initializeGenreToggle();
 });
+
+// Utility Functions
+function filterByStatus(status) {
+  const urlParams = new URLSearchParams(window.location.search);
+  if (status) {
+    urlParams.set('status', status);
+  } else {
+    urlParams.delete('status');
+  }
+  urlParams.delete('page');  // Reset to page 1 when filtering
+  window.location.search = urlParams.toString();
+}
 
 // Modal Management
 function showModal() {
@@ -198,6 +249,98 @@ function hideModal() {
   document.body.classList.remove("modal-opened");
   // Clear the form container
   document.getElementById("jobTicketFormContainer").innerHTML = "";
+}
+
+// Details Modal Management
+function showDetailsModal(ticketId) {
+  // Show loading state
+  document.getElementById("detailsModalBody").innerHTML = `
+    <div class="text-center py-5">
+      <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Loading...</span>
+      </div>
+      <p class="mt-2 text-muted">Loading job ticket details...</p>
+    </div>
+  `;
+  
+  // Show modal immediately with loading state
+  document.getElementById("detailsModal").style.display = "block";
+  document.getElementById("detailsModalBackdrop").style.display = "block";
+  document.body.classList.add("modal-opened");
+
+  // Fetch the details via AJAX
+  fetch(`/job-tickets/${ticketId}/details/`, {
+    headers: { 
+      "X-Requested-With": "XMLHttpRequest",
+      "Cache-Control": "no-cache"
+    }
+  })
+  .then(res => {
+    if (!res.ok) {
+      return res.text().then(text => {
+        console.error('Details response text:', text);
+        throw new Error(`HTTP ${res.status}: Failed to load details`);
+      });
+    }
+    
+    // Check if response is JSON
+    const contentType = res.headers.get('content-type');
+    if (!contentType || !contentType.includes('application/json')) {
+      return res.text().then(text => {
+        console.error('Expected JSON but got:', text.substring(0, 200));
+        throw new Error('Expected JSON response but got HTML/text');
+      });
+    }
+    
+    return res.json();
+  })
+  .then(data => {
+    if (data.details_html) {
+      // Replace loading content with actual details
+      document.getElementById("detailsModalBody").innerHTML = data.details_html;
+      
+      // Optional: Add smooth transition effect
+      const modalBody = document.getElementById("detailsModalBody");
+      modalBody.style.opacity = '0';
+      setTimeout(() => {
+        modalBody.style.transition = 'opacity 0.3s ease';
+        modalBody.style.opacity = '1';
+      }, 50);
+      
+    } else {
+      throw new Error('No details HTML in response');
+    }
+  })
+  .catch(error => {
+    console.error("Error loading job ticket details:", error);
+    
+    // Show error message in modal
+    document.getElementById("detailsModalBody").innerHTML = `
+      <div class="alert alert-danger text-center" role="alert">
+        <i class="fas fa-exclamation-triangle fa-2x mb-2"></i>
+        <h5>Error Loading Details</h5>
+        <p class="mb-2">${error.message}</p>
+        <button type="button" class="btn btn-outline-danger" onclick="hideDetailsModal()">
+          Close
+        </button>
+      </div>
+    `;
+    
+    // Also show toast notification
+    showErrorMessage("Could not load job ticket details. Please try again.");
+  });
+}
+
+function hideDetailsModal() {
+  document.getElementById("detailsModal").style.display = "none";
+  document.getElementById("detailsModalBackdrop").style.display = "none";
+  document.body.classList.remove("modal-opened");
+  
+  // Clear the details container and reset any transitions
+  const modalBody = document.getElementById("detailsModalBody");
+  modalBody.innerHTML = "";
+  modalBody.style.opacity = '';
+  modalBody.style.transition = '';
 }
 
 function showEditModal(ticketId) {
@@ -554,6 +697,7 @@ document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') {
     hideModal();
     hideEditModal();
+    hideDetailsModal();
   }
 });
 </script>
