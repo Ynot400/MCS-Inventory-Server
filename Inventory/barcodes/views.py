@@ -13,6 +13,9 @@ from utils.tokens import create_submission_token
 from django.contrib import messages
 from utils.searchFormProductFilter import filter_products
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+from jobtickets.models import JobTicket
+from django.utils import timezone
+from datetime import timedelta
 
 
 class CreateBarcode(UserPassesTestMixin, View):
@@ -139,59 +142,63 @@ class CreateQRCode(UserPassesTestMixin, View):
          return render(request, 'Dashboard/create-qr.html')
       
 class ProductFinder(UserPassesTestMixin, View):
-  def test_func(self):
+    def test_func(self):
       return self.request.user.is_staff
-  def handle_no_permission(self):
+    def handle_no_permission(self):
       return redirect('home')
-  def get(self, request):
+    def get(self, request):
       return render(request, 'Dashboard/scan_barcode.html')
-  def post(self, request):
-    barcode_input = request.POST.get('scannedData', '').strip()
-    # print(f"Scanned barcode: {barcode_input}")
-   
+    def post(self, request):
+        barcode_input = request.POST.get('scannedData', '').strip()
+        # print(f"Scanned barcode: {barcode_input}")
+  
+        # General validation
+        if len(barcode_input) > 64:
+            messages.error(request, "Barcode is too long to be valid.")
+            return redirect('barcode-quantity')
 
-    # General validation
-    if len(barcode_input) > 64:
-        messages.error(request, "Barcode is too long to be valid.")
+        if not re.match(r'^[\w\-]+$', barcode_input): # this regex will accept any barcode that contains alphanumeric characters, underscores, or hyphens -- anything else will be considered invalid
+            messages.error(request, "Invalid characters in barcode.")
+            return redirect('barcode-quantity')
+
+        # First: try to find product using manufacturer_barcode (alphanumeric allowed)
+        try:
+            product = Product.objects.get(manufacturer_barcode=barcode_input)
+            # Generate the submission token and store it in the session
+            return self._render_quantity_adjuster(request, product)
+        except Product.DoesNotExist:
+            pass  # Fall back to internal barcode
+
+        # If not found, try parsing internal barcode (must be numeric)
+        if barcode_input.isdigit():
+            try:
+                internal_barcode = int(barcode_input) // 10
+                product = Product.objects.get(barcode=internal_barcode)
+                # Generate the submission token and store it in the session
+                return self._render_quantity_adjuster(request, product)
+            except Product.DoesNotExist:
+                pass
+            except ValueError:
+                # This should never hit if isdigit() passed, but keep just in case
+                messages.error(request, "Internal barcode is not a valid number.")
+                return redirect('barcode-quantity')
+        # If no product found, return an error message
+        messages.error(request, "Product does not exist or barcode is invalid.")
         return redirect('barcode-quantity')
-
-    if not re.match(r'^[\w\-]+$', barcode_input): # this regex will accept any barcode that contains alphanumeric characters, underscores, or hyphens -- anything else will be considered invalid
-        messages.error(request, "Invalid characters in barcode.")
-        return redirect('barcode-quantity')
-
-    # First: try to find product using manufacturer_barcode (alphanumeric allowed)
-    try:
-        product = Product.objects.get(manufacturer_barcode=barcode_input)
-        # Generate the submission token and store it in the session
+    
+    def _render_quantity_adjuster(self, request, product):
+        """Render the quantity adjuster with job ticket integration"""
         token = create_submission_token()
+        job_tickets = JobTicket.objects.filter( status='InProgress',
+                                                created_at__gte=timezone.now() - timedelta(days=100)  # Extended time window
+                                                ).order_by('customer_name')
+
         return render(request, 'Dashboard/quantity-adjuster.html', {
             'product': product,
-            'submission_token': token
-
+            'submission_token': token,
+            'job_tickets': job_tickets,
         })
-    except Product.DoesNotExist:
-        pass  # Fall back to internal barcode
 
-    # If not found, try parsing internal barcode (must be numeric)
-    if barcode_input.isdigit():
-        try:
-            internal_barcode = int(barcode_input) // 10
-            product = Product.objects.get(barcode=internal_barcode)
-            # Generate the submission token and store it in the session
-            token = create_submission_token()
-            return render(request, 'Dashboard/quantity-adjuster.html', {
-                'product': product,
-                'submission_token': token
-            })
-        except Product.DoesNotExist:
-            pass
-        except ValueError:
-            # This should never hit if isdigit() passed, but keep just in case
-            messages.error(request, "Internal barcode is not a valid number.")
-            return redirect('barcode-quantity')
-    # If no product found, return an error message
-    messages.error(request, "Product does not exist or barcode is invalid.")
-    return redirect('barcode-quantity')
 
 
 class ProductFinderManufacturer(UserPassesTestMixin, View):

@@ -65,13 +65,13 @@ class JobTicket(models.Model):
 
     @property 
     def total_inventory_cost(self):
-        """Calculate total cost of inventory items using admin_field_price2 (cost price)"""
+        """Calculate total cost of inventory items using admin_field_price1 (cost price)"""
         result = self.items.filter(
             product__isnull=False,
             product__admin_field_price1__isnull=False
         ).aggregate(
             total=Sum(
-                F('quantity_used') * F('product__admin_field_price2'),
+                F('quantity_used') * F('product__admin_field_price1'),
                 output_field=DecimalField(max_digits=12, decimal_places=2)
             )
         )['total']

@@ -629,7 +629,6 @@ function addTicketToContainer(cardHtml) {
   const currentCards = container.querySelectorAll('[data-ticket-id]').length;
   if (currentCards >= 6) {
     // Page is full, just show success message and refresh
-    showSuccessMessage('Job ticket created successfully! Page refreshing to show updated pagination...');
     setTimeout(() => {
       window.location.reload();
     }, 1500);
@@ -689,7 +688,7 @@ function showToast(message, type) {
   
   setTimeout(() => {
     toast.remove();
-  }, 3000);
+  }, 5000);
 }
 
 // Close modals on escape key

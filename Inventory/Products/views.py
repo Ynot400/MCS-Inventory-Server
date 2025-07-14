@@ -485,8 +485,6 @@ class DeleteProduct(UserPassesTestMixin, View):
             messages.error(request, f"Error deleting product: {e}")
 
         return redirect('inventory')
-
-
 class update_quantity(UserPassesTestMixin, View):
     def test_func(self):
         return self.request.user.is_staff
@@ -502,19 +500,19 @@ class update_quantity(UserPassesTestMixin, View):
         quantity_value = int(request.POST.get('integerDisplay', 0))
         product_ID = request.POST.get('product_id', None)
         text = request.POST.get('textInput', "No message given")
+        usage_type = request.POST.get('usage_type', 'shop_use')
+        job_ticket_id = request.POST.get('job_ticket_id', '')
+        shop_use_reason = request.POST.get('shop_use_reason', '')
 
-        # Token verification using the model
+        # Token verification
         token_from_form = request.POST.get('submission_token')
         if not token_from_form:
-            # print("Missing submission token.")
             return redirect("detect_barcodes")
 
-    
         # Lock the product row first
         try:
-            # print(f"Attempting to lock product with ID {product_ID} for update")
             product = Product.objects.select_for_update().get(id=product_ID)
-        except Product.DoesNotExist as e:
+        except Product.DoesNotExist:
             return redirect("detect_barcodes")
         except Exception:
             return redirect("detect_barcodes")
@@ -522,54 +520,184 @@ class update_quantity(UserPassesTestMixin, View):
         product_name = product.title
         product_older_quantity = product.quantity
 
-        # Reject if resulting quantity would go negative
-        if product_older_quantity + quantity_value < 0:
-            messages.error(request, f"Cannot adjust quantity for by {quantity_value}. Resulting quantity would be negative.")
-            return render(request, 'Dashboard/quantity-adjuster.html', {
-                'product': product,
-                'submission_token': token_from_form
-            })
-        elif quantity_value == 0:
-            messages.error(request, "Submit a valid quantity change.")
-            return render(request, 'Dashboard/quantity-adjuster.html', {
-                'product': product,
-                'submission_token': token_from_form
-            })
+        # Get job tickets for error page context (last 100 days)
+        from jobtickets.models import JobTicket
+        from django.utils import timezone
+        from datetime import timedelta
         
+        cutoff_date = timezone.now() - timedelta(days=100)
+        job_tickets = JobTicket.objects.filter(
+            status='InProgress',
+            created_at__gte=cutoff_date
+        ).order_by('customer_name')
+
+        # Helper function to render error page with full context
+        def render_error_page(new_token=None):
+            token = new_token or create_submission_token()
+            return render(request, 'Dashboard/quantity-adjuster.html', {
+                'product': product,
+                'submission_token': token,
+                'job_tickets': job_tickets
+            })
+
+        # Basic validation
+        if quantity_value == 0:
+            messages.error(request, "Submit a valid quantity change.")
+            return render_error_page()
+
+        # Check if resulting quantity would go negative
+        if product_older_quantity + quantity_value < 0:
+            messages.error(request, f"Cannot adjust quantity by {quantity_value}. Resulting quantity would be negative.")
+            return render_error_page()
+
+        # Validate token (after quantity checks to preserve user input)
         token_used = SubmissionToken.objects.filter(token=token_from_form).delete()
         if token_used[0] == 0:
-            # print("Invalid or already used submission token.")
             return redirect("detect_barcodes")
 
+        # Handle based on usage type
+        if usage_type == 'shop_use':
+            # Simple shop use - just adjust quantity and log
+            if not shop_use_reason.strip():
+                messages.error(request, "Please provide a reason for shop use.")
+                return render_error_page()
+            
+            product.quantity += quantity_value
+            product.save()
+            product.refresh_from_db()
 
-        # print(f"Updating product {product.title} with quantity {quantity_value} by {request.user.username}")
-
-        product_name = product.title
-        product.quantity += quantity_value
-        
-        product.save()
-        product.refresh_from_db()
-
-        # Log the action
-        log_product_action(
-            user=request.user,
-            action_category='UPDATE',
-            product=product,
-            summary=f"{text}",
-            changes={
-                'quantity': {
-                    'old_value': product_older_quantity,
-                    'new_value': product.quantity
+            # Log the shop use action
+            log_product_action(
+                user=request.user,
+                action_category='UPDATE',
+                product=product,
+                summary=f"Shop Use: {shop_use_reason.strip()}. {text}",
+                changes={
+                    'quantity': {
+                        'old_value': product_older_quantity,
+                        'new_value': product.quantity
+                    }
                 }
-            }
-        )
+            )
 
-        # Email warnings
+        elif usage_type == 'job_ticket':
+            # Job ticket use - more complex logic
+            if not job_ticket_id:
+                messages.error(request, "Please select a job ticket.")
+                return render_error_page()
+
+            try:
+                from jobtickets.models import JobTicket, JobTicketItem
+                job_ticket = JobTicket.objects.get(id=job_ticket_id)
+                
+                # Check if job ticket is completed
+                if job_ticket.status == 'Complete':
+                    messages.error(request, f"Cannot modify items for completed job ticket #{job_ticket.id}.")
+                    return render_error_page()
+
+                if quantity_value < 0:
+                    # REMOVING from inventory (assigning to job ticket)
+                    abs_quantity = abs(quantity_value)
+                    
+                    # Check if we have enough inventory
+                    if product_older_quantity < abs_quantity:
+                        messages.error(request, f"Cannot assign {abs_quantity} units to job ticket. Only {product_older_quantity} units available in inventory.")
+                        return render_error_page()
+                    
+                    # Find or create JobTicketItem
+                    job_ticket_item, created = JobTicketItem.objects.get_or_create(
+                        job_ticket=job_ticket,
+                        product=product,
+                        defaults={
+                            'quantity_used': 0,
+                            'added_by': request.user
+                        }
+                    )
+                    
+                    # Update quantities
+                    job_ticket_item.quantity_used += abs_quantity
+                    job_ticket_item.save()
+                    product.quantity -= abs_quantity
+                    product.save()
+                    product.refresh_from_db()
+
+                    # Log the action
+                    action_text = f"Assigned to Job Ticket #{job_ticket.id} ({job_ticket.customer_name} - {job_ticket.boat_name or 'No Boat'}). {text}"
+                    log_product_action(
+                        user=request.user,
+                        action_category='UPDATE',
+                        product=product,
+                        summary=action_text,
+                        changes={
+                            'quantity': {
+                                'old_value': product_older_quantity,
+                                'new_value': product.quantity
+                            }
+                        }
+                    )
+
+                else:
+                    # RETURNING to inventory (removing from job ticket)
+                    return_quantity = quantity_value
+                    
+                    # Find existing JobTicketItem
+                    try:
+                        job_ticket_item = JobTicketItem.objects.get(
+                            job_ticket=job_ticket,
+                            product=product
+                        )
+                    except JobTicketItem.DoesNotExist:
+                        messages.error(request, f"No items found for this product on job ticket #{job_ticket.id}. Cannot return items that weren't assigned.")
+                        return render_error_page()
+                    
+                    # Check if trying to return more than was used
+                    if return_quantity > job_ticket_item.quantity_used:
+                        messages.error(request, f"Cannot return {return_quantity} units. Only {job_ticket_item.quantity_used} units were assigned to this job ticket.")
+                        return render_error_page()
+                    
+                    # Update quantities
+                    job_ticket_item.quantity_used -= return_quantity
+                    
+                    # Delete item if quantity becomes 0
+                    if job_ticket_item.quantity_used == 0:
+                        job_ticket_item.delete()
+                        item_status = f"Part(s) returned to inventory. Part(s) removed from Job Ticket #{job_ticket.id} ({job_ticket.customer_name} - {job_ticket.boat_name or 'No Boat'})."
+                    else:
+                        job_ticket_item.save()
+                        item_status = f"Part(s) returned to inventory. Job Ticket #{job_ticket.id} ({job_ticket.customer_name} - {job_ticket.boat_name or 'No Boat'}). Remaining quantity on job ticket: {job_ticket_item.quantity_used}."
+                    product.quantity += return_quantity
+                    product.save()
+                    product.refresh_from_db()
+
+                    # Log the action
+                    action_text = f"{item_status} || Additional Staff Notes: {text if text else 'None'}"
+                    log_product_action(
+                        user=request.user,
+                        action_category='UPDATE',
+                        product=product,
+                        summary=action_text,
+                        changes={
+                            'quantity': {
+                                'old_value': product_older_quantity,
+                                'new_value': product.quantity
+                            }
+                        }
+                    )
+
+            except JobTicket.DoesNotExist:
+                messages.error(request, f"Job ticket #{job_ticket_id} not found.")
+                return render_error_page()
+            except Exception as e:
+                logger.error(f"Error processing job ticket operation: {e}")
+                messages.error(request, "An error occurred while processing the job ticket operation.")
+                return render_error_page()
+
+        # Email notifications (existing logic)
         if product.quantity <= 0:
             try:
                 send_mail(
                     f"0 Quantity for {product_name}",
-                    f"Product {product_name} has 0 quantity by {request.user.username} on {datetime.now().strftime("%m/%d/%Y, %H:%M:%S")}\nThe original quantity was {product_older_quantity}.\nReason: {text}",
+                    f"Product {product_name} has 0 quantity by {request.user.username} on {datetime.now().strftime('%m/%d/%Y, %H:%M:%S')}\nThe original quantity was {product_older_quantity}.\nUsage: {usage_type}\nReason: {shop_use_reason or f'Job Ticket #{job_ticket_id}'}\nNotes: {text}",
                     "MCSinventory@django.com",
                     ["kenny@marinecustomsolutions.com"],
                     fail_silently=False,
@@ -580,7 +708,7 @@ class update_quantity(UserPassesTestMixin, View):
             try:
                 send_mail(
                     f"H.P. {product_name} Quantity Updated",
-                    f"Product {product_name} has been updated by {request.user.username} from {product_older_quantity} to {product.quantity} on {datetime.now().strftime("%m/%d/%Y, %H:%M:%S")}\nReason: {text}",
+                    f"Product {product_name} has been updated by {request.user.username} from {product_older_quantity} to {product.quantity} on {datetime.now().strftime('%m/%d/%Y, %H:%M:%S')}\nUsage: {usage_type}\nReason: {shop_use_reason or f'Job Ticket #{job_ticket_id}'}\nNotes: {text}",
                     "MCSinventory@django.com",
                     ["kenny@marinecustomsolutions.com"],
                     fail_silently=False,
