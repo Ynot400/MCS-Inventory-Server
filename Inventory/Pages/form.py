@@ -365,7 +365,11 @@ class SearchForm1(forms.Form):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-       
+        
+        # data = args[0] if args else kwargs.get('data')
+        # if not data:
+        #     self.fields['show_all'].initial = True
+
         self.fields['sort_order'].widget.attrs.update({
             'onchange': 'document.getElementById("searchForm").submit();'
         })

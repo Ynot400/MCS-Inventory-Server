@@ -62,7 +62,7 @@
       <div class="card shadow-sm mb-3">
         <div class="card-header d-flex justify-content-between align-items-center">
           <div>
-            <strong>Date:</strong> {{ log.timestamp|date:"Y-m-d H:i" }}
+            <strong>Date:</strong> {{ log.timestamp|date:"M d, Y g:i A" }}
           </div>
           <div>
             <strong>Product:</strong> {{ log.resolved_product_name }}   <span style="display: inline-block; width: 10px;"></span> <strong>Part Number:</strong> {{ log.resolved_part_number }}
