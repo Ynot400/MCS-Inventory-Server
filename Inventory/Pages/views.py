@@ -86,7 +86,6 @@ class DashboardInventory(UserPassesTestMixin, View):
   items = None
   def get(self, request):
       form = SearchForm1(request.GET or None) # Either the search form was populated with GET data or it is empty
-      # print("Form data:", form.data)
 
       if form.is_valid() and any(form.cleaned_data.values()):
           # print("Form goes here")

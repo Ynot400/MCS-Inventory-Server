@@ -211,6 +211,21 @@
  {% comment %} Other search form logic  {% endcomment %}
 	<script>
 		document.addEventListener("DOMContentLoaded", function () {
+			const urlParams = new URLSearchParams(window.location.search);
+			const hasParams = urlParams.toString().length > 0;
+			// Check if there are any search parameters
+			console.log("URL Params:", urlParams.toString());
+    
+			if (!hasParams) {
+					// Initial load - check "Show All" and submit form
+					const showAllCheckbox = document.getElementById("id_show_all");
+					if (showAllCheckbox && !showAllCheckbox.checked) {
+							showAllCheckbox.checked = true;
+							document.getElementById("searchForm").submit();
+							return; // Exit early since we're submitting
+					}
+			}
+
 			const toggleFields = () => {
 				const isShowAll = document.getElementById("id_show_all").checked;
 				["id_product_name", "id_product_ID", "id_location_ID", "id_vendor", 'id_section', 'id_level', 'id_vertical', 'id_horizontal'].forEach(id => {
