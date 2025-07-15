@@ -1,0 +1,152 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container mt-4">
+  <!-- Header -->
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h2>Add Custom Parts</h2>
+      <p class="text-muted mb-0">
+        <strong>Customer:</strong> {{ job_ticket.customer_name }} | 
+        <strong>Boat:</strong> {{ job_ticket.boat_name|default:"N/A" }}
+      </p>
+    </div>
+    <a href="{% url 'jobticket-dashboard' %}" class="btn btn-outline-secondary">
+      ← Back to Dashboard
+    </a>
+  </div>
+
+  <!-- Messages -->
+  {% if messages %}
+    {% for message in messages %}
+      <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+        {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+      </div>
+    {% endfor %}
+  {% endif %}
+
+  <div class="row">
+    <!-- Add New Part Form -->
+    <div class="col-md-6">
+      <div class="card">
+        <div class="card-header">
+          <h5 class="mb-0">Add New Custom Part</h5>
+        </div>
+        <div class="card-body">
+          <form method="POST">
+            {% csrf_token %}
+            <input type="hidden" name="submission_token" value="{{ submission_token }}">
+            
+            {% if form.errors %}
+              <div class="alert alert-danger">
+                <strong>Please fix the following errors:</strong>
+                <ul class="mb-0">
+                  {% for field in form %}
+                    {% for error in field.errors %}
+                      <li><strong>{{ field.label }}:</strong> {{ error }}</li>
+                    {% endfor %}
+                  {% endfor %}
+                  {% for error in form.non_field_errors %}
+                    <li>{{ error }}</li>
+                  {% endfor %}
+                </ul>
+              </div>
+            {% endif %}
+
+            {% for field in form %}
+              <div class="mb-3">
+                {{ field.label_tag }}
+                {{ field }}
+                {% if field.help_text %}
+                  <small class="form-text text-muted">{{ field.help_text }}</small>
+                {% endif %}
+              </div>
+            {% endfor %}
+
+            <button type="submit" class="btn btn-primary">Add Part</button>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- Existing Parts List -->
+    <div class="col-md-6">
+      <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <h5 class="mb-0">Custom Parts ({{ existing_parts.count }})</h5>
+          {% if existing_parts %}
+            <span class="badge bg-success">
+              Total: ${{ job_ticket.total_custom_parts_cost|floatformat:2 }}
+            </span>
+          {% endif %}
+        </div>
+        <div class="card-body">
+          {% if existing_parts %}
+            <div class="list-group">
+              {% for part in existing_parts %}
+                <div class="list-group-item">
+                  <div class="d-flex justify-content-between align-items-start">
+                    <div class="flex-grow-1">
+                      <h6 class="mb-1">{{ part.custom_part_name }}</h6>
+                      {% if part.custom_part_description %}
+                        <p class="mb-1 text-muted small">{{ part.custom_part_description }}</p>
+                      {% endif %}
+                      <div class="d-flex gap-3">
+                        <small class="text-muted">
+                          <strong>Qty:</strong> {{ part.quantity_used }}
+                        </small>
+                        {% if part.custom_part_cost %}
+                          <small class="text-muted">
+                            <strong>Unit Cost:</strong> ${{ part.custom_part_cost|floatformat:2 }}
+                          </small>
+                          <small class="text-success">
+                            <strong>Total:</strong> ${{ part.custom_part_total_cost|floatformat:2 }}
+                          </small>
+                        {% endif %}
+                      </div>
+                      <small class="text-muted">
+                        Added {{ part.timestamp|date:"M d, Y g:i A" }} by {{ part.added_by.username }}
+                      </small>
+                    </div>
+                    <form method="POST" class="ms-2" onsubmit="return confirm('Are you sure you want to delete this part?');">
+                      {% csrf_token %}
+                      <input type="hidden" name="delete_part" value="true">
+                      <input type="hidden" name="part_id" value="{{ part.id }}">
+                      <button type="submit" class="btn btn-outline-danger btn-sm">
+                        Delete
+                      </button>
+                    </form>
+                  </div>
+                </div>
+              {% endfor %}
+            </div>
+          {% else %}
+            <div class="text-center text-muted py-4">
+              <i class="fas fa-tools fa-2x mb-2"></i>
+              <p>No custom parts added yet.</p>
+              <p class="small">Use the form on the left to add custom parts for this job ticket.</p>
+            </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+.list-group-item {
+  border-left: 3px solid #01acca;
+}
+
+.list-group-item:hover {
+  background-color: #f8f9fa;
+}
+
+.card-header {
+  background-color: #f8f9fa;
+  border-bottom: 2px solid #dee2e6;
+}
+</style>
+{% endblock %}

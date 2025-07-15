@@ -10,19 +10,37 @@
     <button class="btn btn-primary" onclick="showModal()">+ Add Job Ticket</button>
   </div>
 
+  <!-- Pagination Info -->
+  {% if tickets.paginator.count > 0 %}
+  <div class="mb-3 text-muted">
+    Showing {{ tickets.start_index }} to {{ tickets.end_index }} of {{ tickets.paginator.count }} job tickets
+  </div>
+  {% endif %}
+
+  <!-- Filter Dropdown -->
+  <div class="mb-3">
+    <label for="statusFilter" class="form-label fw-semibold">Filter by Status:</label>
+    <select id="statusFilter" class="form-select w-auto d-inline-block"
+            onchange="filterByStatus(this.value)">
+      <option value="">All</option>
+      <option value="InProgress" {% if request.GET.status == 'InProgress' %}selected{% endif %}>In Progress</option>
+      <option value="Complete" {% if request.GET.status == 'Complete' %}selected{% endif %}>Completed</option>
+    </select>
+  </div>
+
+
   <!-- Job Ticket Cards -->
   <div class="row" id="ticketContainer">
     {% for ticket in tickets %}
     <div class="col-md-6 col-lg-4 mb-4" data-ticket-id="{{ ticket.id }}">
       <div class="card shadow-sm border-0 h-100">
         <div class="card-body">
-          <h5 class="card-title fw-semibold">{{ ticket.title }}</h5>
-          <p class="mb-1"><strong>Customer:</strong> {{ ticket.customer_name }}</p>
+          <h5 class="card-title fw-semibold">Customer: {{ ticket.customer_name }}</h5>
           <p class="mb-1"><strong>Boat:</strong> {{ ticket.boat_name }}</p>
           <p class="mb-1"><strong>Genre:</strong> {{ ticket.effective_genre }}</p>
           <p class="mb-1"><strong>Status:</strong> 
-            <span class="badge {% if ticket.status == 'InProgress' %}bg-warning text-dark{% else %}bg-success{% endif %}">
-              {{ ticket.status }}
+            <span class="badge {% if ticket.status == 'InProgress' %}bg-warning text-dark{% elif ticket.status == 'Complete' %}bg-success{% endif %}">
+              {{ ticket.get_status_display }}
             </span>
           </p>
           <p class="text-muted mt-2 mb-1" style="font-size: 0.85rem;">
@@ -32,8 +50,9 @@
           <!-- Future: Edit / Add Parts / Delete buttons -->
           <div class="d-flex justify-content-between mt-3">
             <button class="btn btn-sm btn-outline-secondary" onclick="showEditModal({{ ticket.id }})">Edit</button>
-            <button class="btn btn-sm btn-outline-info">Add Parts</button>
-            <button class="btn btn-sm btn-outline-danger">Delete</button>
+            <a href="{% url 'add-custom-parts' ticket.id %}" class="btn btn-sm btn-outline-primary">Add Custom Parts</a>
+            <button class="btn btn-sm btn-outline-info" onclick="showDetailsModal({{ ticket.id }})">Details</button>
+            <button class="btn btn-sm btn-outline-danger" onclick="deleteJobTicket({{ ticket.id }})">Delete</button>
           </div>
         </div>
       </div>
@@ -43,6 +62,60 @@
       No job tickets yet. Add your first one!
     </div>
     {% endfor %}
+  </div>
+
+  <!-- Pagination Controls -->
+  {% if tickets.paginator.num_pages > 1 %}
+  <nav aria-label="Job ticket pagination" class="mt-4">
+    <ul class="pagination justify-content-center">
+      {% if tickets.has_previous %}
+        <li class="page-item">
+         <a class="page-link" href="?page={{ tickets.previous_page_number }}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}">Previous</a>
+        </li>
+      {% endif %}
+
+      <!-- Page numbers -->
+      {% for page_num in tickets.paginator.page_range %}
+        {% if page_num == tickets.number %}
+          <li class="page-item active">
+            <span class="page-link">{{ page_num }}</span>
+          </li>
+        {% elif page_num > tickets.number|add:'-3' and page_num < tickets.number|add:'3' %}
+          <li class="page-item">
+            <a class="page-link" href="?page={{ page_num }}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}">{{ page_num }}</a>
+          </li>
+        {% elif page_num == 1 or page_num == tickets.paginator.num_pages %}
+          <li class="page-item">
+            <a class="page-link" href="?page={{ page_num }}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}">{{ page_num }}</a>
+          </li>
+        {% elif page_num == tickets.number|add:'-4' or page_num == tickets.number|add:'4' %}
+          <li class="page-item disabled">
+            <span class="page-link">...</span>
+          </li>
+        {% endif %}
+      {% endfor %}
+
+      {% if tickets.has_next %}
+        <li class="page-item">
+          <a class="page-link" href="?page={{ tickets.next_page_number }}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}">Next</a>
+        </li>
+      {% endif %}
+    </ul>
+  </nav>
+  {% endif %}
+
+</div>
+
+<!-- Details Modal -->
+<div id="detailsModalBackdrop" class="modal-backdrop-custom" onclick="hideDetailsModal()"></div>
+
+<div id="detailsModal" class="modal-custom modal-large">
+  <div class="modal-content">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <h4 class="mb-0">Job Ticket Details</h4>
+      <button type="button" class="btn-close" onclick="hideDetailsModal()"></button>
+    </div>
+    <div id="detailsModalBody"></div>
   </div>
 </div>
 
@@ -57,7 +130,7 @@
     </div>
 
     <div id="jobTicketFormContainer">
-      {% include 'Jobtickets/partials/job_ticket_form.html' %}
+      {% include 'jobtickets/partials/job_ticket_form.html' %}
     </div>
   </div>
 </div>
@@ -110,25 +183,164 @@
   body.modal-opened {
     overflow: hidden;
   }
+
+  .modal-large .modal-content {
+  max-width: 800px;
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+  @media (max-width: 768px) {
+    .modal-large .modal-content {
+      max-width: 95vw;
+      max-height: 90vh;
+    }
+  }
 </style>
 
 <script>
 document.addEventListener("DOMContentLoaded", function () {
-  initializeJobTicketForm();
   initializeGenreToggle();
 });
 
+// Utility Functions
+function filterByStatus(status) {
+  const urlParams = new URLSearchParams(window.location.search);
+  if (status) {
+    urlParams.set('status', status);
+  } else {
+    urlParams.delete('status');
+  }
+  urlParams.delete('page');  // Reset to page 1 when filtering
+  window.location.search = urlParams.toString();
+}
+
 // Modal Management
 function showModal() {
-  document.getElementById("jobTicketModal").style.display = "block";
-  document.getElementById("addModalBackdrop").style.display = "block";
-  document.body.classList.add("modal-opened");
+  // Fetch the create form via AJAX
+  fetch('/job-tickets/create/', {
+    headers: { "X-Requested-With": "XMLHttpRequest" }
+  })
+  .then(res => {
+    if (!res.ok) {
+      throw new Error('Network response was not ok');
+    }
+    return res.json();
+  })
+  .then(data => {
+    document.getElementById("jobTicketFormContainer").innerHTML = data.form_html;
+    document.getElementById("jobTicketModal").style.display = "block";
+    document.getElementById("addModalBackdrop").style.display = "block";
+    document.body.classList.add("modal-opened");
+    
+    // Initialize the form after it's loaded
+    initializeJobTicketForm();
+    initializeGenreToggle();
+  })
+  .catch(error => {
+    console.error("Error loading create form:", error);
+    showErrorMessage("Could not load create form. Please try again.");
+  });
 }
 
 function hideModal() {
   document.getElementById("jobTicketModal").style.display = "none";
   document.getElementById("addModalBackdrop").style.display = "none";
   document.body.classList.remove("modal-opened");
+  // Clear the form container
+  document.getElementById("jobTicketFormContainer").innerHTML = "";
+}
+
+// Details Modal Management
+function showDetailsModal(ticketId) {
+  // Show loading state
+  document.getElementById("detailsModalBody").innerHTML = `
+    <div class="text-center py-5">
+      <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Loading...</span>
+      </div>
+      <p class="mt-2 text-muted">Loading job ticket details...</p>
+    </div>
+  `;
+  
+  // Show modal immediately with loading state
+  document.getElementById("detailsModal").style.display = "block";
+  document.getElementById("detailsModalBackdrop").style.display = "block";
+  document.body.classList.add("modal-opened");
+
+  // Fetch the details via AJAX
+  fetch(`/job-tickets/${ticketId}/details/`, {
+    headers: { 
+      "X-Requested-With": "XMLHttpRequest",
+      "Cache-Control": "no-cache"
+    }
+  })
+  .then(res => {
+    if (!res.ok) {
+      return res.text().then(text => {
+        console.error('Details response text:', text);
+        throw new Error(`HTTP ${res.status}: Failed to load details`);
+      });
+    }
+    
+    // Check if response is JSON
+    const contentType = res.headers.get('content-type');
+    if (!contentType || !contentType.includes('application/json')) {
+      return res.text().then(text => {
+        console.error('Expected JSON but got:', text.substring(0, 200));
+        throw new Error('Expected JSON response but got HTML/text');
+      });
+    }
+    
+    return res.json();
+  })
+  .then(data => {
+    if (data.details_html) {
+      // Replace loading content with actual details
+      document.getElementById("detailsModalBody").innerHTML = data.details_html;
+      
+      // Optional: Add smooth transition effect
+      const modalBody = document.getElementById("detailsModalBody");
+      modalBody.style.opacity = '0';
+      setTimeout(() => {
+        modalBody.style.transition = 'opacity 0.3s ease';
+        modalBody.style.opacity = '1';
+      }, 50);
+      
+    } else {
+      throw new Error('No details HTML in response');
+    }
+  })
+  .catch(error => {
+    console.error("Error loading job ticket details:", error);
+    
+    // Show error message in modal
+    document.getElementById("detailsModalBody").innerHTML = `
+      <div class="alert alert-danger text-center" role="alert">
+        <i class="fas fa-exclamation-triangle fa-2x mb-2"></i>
+        <h5>Error Loading Details</h5>
+        <p class="mb-2">${error.message}</p>
+        <button type="button" class="btn btn-outline-danger" onclick="hideDetailsModal()">
+          Close
+        </button>
+      </div>
+    `;
+    
+    // Also show toast notification
+    showErrorMessage("Could not load job ticket details. Please try again.");
+  });
+}
+
+function hideDetailsModal() {
+  document.getElementById("detailsModal").style.display = "none";
+  document.getElementById("detailsModalBackdrop").style.display = "none";
+  document.body.classList.remove("modal-opened");
+  
+  // Clear the details container and reset any transitions
+  const modalBody = document.getElementById("detailsModalBody");
+  modalBody.innerHTML = "";
+  modalBody.style.opacity = '';
+  modalBody.style.transition = '';
 }
 
 function showEditModal(ticketId) {
@@ -147,9 +359,11 @@ function showEditModal(ticketId) {
     document.getElementById("editModalBackdrop").style.display = "block";
     document.body.classList.add("modal-opened");
     attachEditFormSubmit();
+    initializeGenreToggle(); // Re-initialize genre toggle for edit form
   })
   .catch(error => {
     console.error("Error loading edit form:", error);
+    showErrorMessage("Could not load edit form. Please try again.");
   });
 }
 
@@ -159,72 +373,116 @@ function hideEditModal() {
   document.body.classList.remove("modal-opened");
 }
 
-// Form Initialization
+// Form Initialization (called after AJAX load)
 function initializeJobTicketForm() {
   const formContainer = document.getElementById("jobTicketFormContainer");
-  const formElement = formContainer.querySelector("form");
+  if (!formContainer) return;
 
-  if (!formElement) return;
+  const form = formContainer.querySelector("#jobTicketForm");
+  if (!form) return;
 
-  formElement.addEventListener("submit", function (e) {
+  form.addEventListener("submit", function (e) {
     e.preventDefault();
-    const formData = new FormData(formElement);
+    const formData = new FormData(form);
+    const submitButton = form.querySelector('button[type="submit"]');
+    const originalText = submitButton.textContent;
 
-    fetch("{% url 'create-jobticket' %}", {
+    // Disable submit button to prevent double submission
+    submitButton.disabled = true;
+    submitButton.textContent = 'Creating...';
+
+    fetch("/job-tickets/create/", {
       method: "POST",
       headers: {
         "X-Requested-With": "XMLHttpRequest"
       },
       body: formData
     })
-    .then(response => {
-      if (!response.ok) {
-        throw new Error('Network response was not ok');
+    .then(res => {
+      console.log('Response status:', res.status);
+      
+      if (!res.ok) {
+        return res.text().then(text => {
+          console.error('Response text:', text);
+          throw new Error(`HTTP ${res.status}: ${text.substring(0, 200)}...`);
+        });
       }
-      return response.json();
+      
+      // Check if response is JSON
+      const contentType = res.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        return res.text().then(text => {
+          console.error('Expected JSON but got:', text);
+          throw new Error('Expected JSON response but got HTML/text');
+        });
+      }
+      
+      return res.json();
     })
     .then(data => {
       if (data.success) {
         hideModal();
-        // Add the new card to the ticket container
-        const container = document.getElementById("ticketContainer");
-        container.insertAdjacentHTML('afterbegin', data.card_html);
-
-        // Reset form
-        formElement.reset();
+        
+        // Check if we're on page 1 (where new items appear)
+        const urlParams = new URLSearchParams(window.location.search);
+        const currentPage = parseInt(urlParams.get('page')) || 1;
+        
+        if (currentPage === 1) {
+          addTicketToContainer(data.card_html);
+          showSuccessMessage('Job ticket created successfully!');
+        } else {
+          showSuccessMessage('Job ticket created successfully! It appears on page 1.');
+          setTimeout(() => {
+            if (confirm('Would you like to go to page 1 to see the new ticket?')) {
+              window.location.href = '?page=1';
+            }
+          }, 1500);
+        }
       } else {
-        formContainer.innerHTML = data.form_html;
-        initializeGenreToggle(); // Reinitialize genre toggle after form update
+        // Handle form errors - update the form container with new form HTML
+        if (data.form_html) {
+          formContainer.innerHTML = data.form_html;
+          initializeJobTicketForm(); // Re-attach listeners
+          initializeGenreToggle(); // Re-attach genre toggle
+        } else {
+          showErrorMessage(data.error || 'An error occurred. Please try again.');
+        }
       }
     })
     .catch(error => {
-      console.error("Error submitting form:", error);
+      console.error("Full error object:", error);
+      showErrorMessage(`Error creating job ticket: ${error.message}`);
+    })
+    .finally(() => {
+      submitButton.disabled = false;
+      submitButton.textContent = originalText;
     });
   });
 }
 
+// Genre Toggle Functionality
 function initializeGenreToggle() {
-  const genreSelect = document.getElementById("id_genre");
-  if (genreSelect) {
-    toggleCustomGenreField(genreSelect);
-    
-    // Add event listener for genre change
-    genreSelect.addEventListener("change", function() {
-      toggleCustomGenreField(this);
-    });
-  }
+  const genreSelects = document.querySelectorAll('select[name="genre"]');
+  genreSelects.forEach(select => {
+    select.addEventListener('change', () => toggleCustomGenreField(select));
+    toggleCustomGenreField(select); // Set initial state
+  });
 }
 
 function toggleCustomGenreField(selectElement) {
-  const customGenreField = document.getElementById("id_custom_genre");
-
-  if (!customGenreField) return;
-
-  if (selectElement.value === "Custom") {
-    customGenreField.closest(".mb-3").style.display = "block";
-  } else {
-    customGenreField.closest(".mb-3").style.display = "none";
-    customGenreField.value = "";  // Clear value when hiding
+  const form = selectElement.closest('form');
+  const customGenreField = form.querySelector('input[name="custom_genre"]');
+  const customGenreGroup = customGenreField?.closest('.mb-3');
+  
+  if (customGenreGroup) {
+    if (selectElement.value === 'Custom') {
+      customGenreGroup.style.display = 'block';
+      customGenreField.required = true;
+    } else {
+      customGenreGroup.style.display = 'none';
+      customGenreField.required = false;
+      customGenreField.value = '';
+    }
   }
 }
 
@@ -242,6 +500,11 @@ function attachEditFormSubmit() {
     e.preventDefault();
     const ticketId = newForm.dataset.ticketId;
     const formData = new FormData(newForm);
+    const submitButton = newForm.querySelector('button[type="submit"]');
+    const originalText = submitButton.textContent;
+
+    submitButton.disabled = true;
+    submitButton.textContent = 'Updating...';
 
     fetch(`/job-tickets/${ticketId}/edit/`, {
       method: "POST",
@@ -265,15 +528,176 @@ function attachEditFormSubmit() {
           tempDiv.innerHTML = data.card_html;
           wrapper.replaceWith(tempDiv.firstElementChild);
         }
+        showSuccessMessage('Job ticket updated successfully!');
       } else {
         document.getElementById("editModalBody").innerHTML = data.form_html;
         attachEditFormSubmit();  // reattach after rerender
+        initializeGenreToggle(); // Re-initialize genre toggle
       }
     })
     .catch(error => {
       console.error("Error updating ticket:", error);
+      showErrorMessage('Error updating job ticket. Please try again.');
+    })
+    .finally(() => {
+      submitButton.disabled = false;
+      submitButton.textContent = originalText;
     });
   });
 }
+
+// Clean Delete Functionality
+function deleteJobTicket(ticketId) {
+  if (!confirm('Are you sure you want to delete this job ticket? This action cannot be undone.')) {
+    return;
+  }
+
+  // Get a fresh submission token from the dedicated endpoint
+  fetch('/job-tickets/get-token/', {
+    headers: { "X-Requested-With": "XMLHttpRequest" }
+  })
+  .then(res => {
+    if (!res.ok) {
+      throw new Error('Could not get submission token');
+    }
+    return res.json();
+  })
+  .then(data => {
+    const token = data.submission_token;
+
+    if (!token) {
+      throw new Error('No submission token received');
+    }
+
+    // Now perform the delete with the token
+    const formData = new FormData();
+    formData.append('submission_token', token);
+    formData.append('csrfmiddlewaretoken', getCSRFToken());
+
+    return fetch(`/job-tickets/${ticketId}/delete/`, {
+      method: "POST",
+      headers: {
+        "X-Requested-With": "XMLHttpRequest"
+      },
+      body: formData
+    });
+  })
+  .then(res => {
+    if (!res.ok) {
+      return res.text().then(text => {
+        console.error('Delete response text:', text);
+        throw new Error(`HTTP ${res.status}: ${text.substring(0, 200)}...`);
+      });
+    }
+    
+    // Check if response is JSON
+    const contentType = res.headers.get('content-type');
+    if (!contentType || !contentType.includes('application/json')) {
+      return res.text().then(text => {
+        console.error('Expected JSON but got:', text);
+        throw new Error('Expected JSON response but got HTML/text');
+      });
+    }
+    
+    return res.json();
+  })
+  .then(data => {
+    if (data.success) {
+      removeTicketCard(ticketId);
+      showSuccessMessage(data.message || 'Job ticket deleted successfully!');
+    } else {
+      showErrorMessage(data.error || 'Could not delete job ticket.');
+    }
+  })
+  .catch(error => {
+    console.error("Error deleting ticket:", error);
+    showErrorMessage(`An error occurred while deleting the job ticket: ${error.message}`);
+  });
+}
+
+
+// Helper Functions
+function addTicketToContainer(cardHtml) {
+  const container = document.getElementById('ticketContainer');
+  const emptyMessage = container.querySelector('.text-center.py-5');
+  
+  if (emptyMessage) {
+    emptyMessage.remove();
+  }
+  
+  // Check if we have room for another card (assuming 6 per page)
+  const currentCards = container.querySelectorAll('[data-ticket-id]').length;
+  if (currentCards >= 6) {
+    // Page is full, just show success message and refresh
+    setTimeout(() => {
+      window.location.reload();
+    }, 1500);
+    return;
+  }
+  
+  const tempDiv = document.createElement('div');
+  tempDiv.innerHTML = cardHtml;
+  container.insertBefore(tempDiv.firstElementChild, container.firstChild);
+}
+
+function removeTicketCard(ticketId) {
+  const card = document.querySelector(`[data-ticket-id="${ticketId}"]`);
+  if (card) {
+    card.remove();
+    
+    // Check if this was the last card on the page
+    const container = document.getElementById('ticketContainer');
+    const remainingCards = container.querySelectorAll('[data-ticket-id]').length;
+    
+    if (remainingCards === 0) {
+      const urlParams = new URLSearchParams(window.location.search);
+      const currentPage = parseInt(urlParams.get('page')) || 1;
+      
+      // If this was the last card and we're not on page 1, redirect to previous page
+      if (currentPage > 1) {
+        window.location.href = `?page=${currentPage - 1}`;
+      } else {
+        // Show empty message
+        container.innerHTML = '<div class="col-12 text-muted text-center py-5">No job tickets yet. Add your first one!</div>';
+      }
+    }
+  }
+}
+
+function getCSRFToken() {
+  const tokenElement = document.querySelector('[name=csrfmiddlewaretoken]');
+  return tokenElement ? tokenElement.value : '';
+}
+
+function showSuccessMessage(message) {
+  showToast(message, 'success');
+}
+
+function showErrorMessage(message) {
+  showToast(message, 'error');
+}
+
+function showToast(message, type) {
+  // Create toast notification
+  const toast = document.createElement('div');
+  toast.className = `alert alert-${type === 'success' ? 'success' : 'danger'} position-fixed`;
+  toast.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+  toast.textContent = message;
+  
+  document.body.appendChild(toast);
+  
+  setTimeout(() => {
+    toast.remove();
+  }, 5000);
+}
+
+// Close modals on escape key
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') {
+    hideModal();
+    hideEditModal();
+    hideDetailsModal();
+  }
+});
 </script>
 {% endblock %}

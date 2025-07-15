@@ -1,0 +1,484 @@
+<!-- Updated job_ticket_details.html with proper color scheme -->
+{% load jobticket_extras %}
+
+<div class="job-ticket-details">
+  <!-- Header Section -->
+  <div class="details-header mb-4 p-3 border rounded">
+    <div class="row align-items-center">
+      <div class="col-md-8">
+        <h4 class="mb-1 text-primary">
+          <i class="fas fa-ticket-alt me-2"></i>
+          {{ ticket.customer_name }}
+        </h4>
+        <div class="row">
+          <div class="col-sm-6">
+            <p class="mb-1">
+              <strong>Boat:</strong> 
+              <span class="text-muted">{{ ticket.boat_name|default:"Not specified" }}</span>
+            </p>
+            <p class="mb-1">
+              <strong>Genre:</strong> 
+              <span class="badge badge-genre">{{ ticket.effective_genre }}</span>
+            </p>
+          </div>
+          <div class="col-sm-6">
+            <p class="mb-1">
+              <strong>Status:</strong>
+              <span class="badge badge-status-{{ ticket.status|lower }} ms-1">
+                {{ ticket.get_status_display }}
+              </span>
+            </p>
+            <p class="mb-1">
+              <strong>Created:</strong> 
+              <span class="text-muted">{{ ticket.created_at|date:"M d, Y g:i A" }}</span>
+            </p>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4 text-end">
+        {% if ticket.created_by %}
+          <p class="mb-1">
+            <strong>Created by:</strong><br>
+            <span class="text-muted">{{ ticket.created_by.username }}</span>
+          </p>
+        {% endif %}
+        <small class="text-muted">ID: #{{ ticket.id }}</small>
+      </div>
+    </div>
+  </div>
+
+  <!-- Summary Statistics -->
+  <div class="summary-stats mb-4">
+    <div class="row g-2">
+      <div class="col-6 col-md-3">
+        <div class="stat-card stat-card-primary p-3 border rounded text-center">
+          <h5 class="mb-1">{{ ticket.total_items_count }}</h5>
+          <small class="text-muted">Total Items</small>
+        </div>
+      </div>
+      <div class="col-6 col-md-3">
+        <div class="stat-card stat-card-blue p-3 border rounded text-center">
+          <h5 class="mb-1">{{ ticket.inventory_items_count }}</h5>
+          <small class="text-muted">Inventory Parts</small>
+        </div>
+      </div>
+      <div class="col-6 col-md-3">
+        <div class="stat-card stat-card-yellow p-3 border rounded text-center">
+          <h5 class="mb-1">{{ ticket.custom_parts_count }}</h5>
+          <small class="text-muted">Custom Parts</small>
+        </div>
+      </div>
+      <div class="col-6 col-md-3">
+        <div class="stat-card stat-card-total p-3 border rounded text-center">
+          <h5 class="mb-1">
+            ${{ ticket.total_cost|floatformat:2 }}
+          </h5>
+          <small class="text-muted">Total Cost</small>
+        </div>
+      </div>
+    </div>
+    
+  </div>
+
+  <!-- Items Section -->
+  {% if ticket.items.exists %}
+    <div class="items-section">
+      <h5 class="mb-3 section-title">
+        <i class="fas fa-list-ul me-2"></i>
+        All Items ({{ ticket.items.count }})
+      </h5>
+      
+      <div class="items-list">
+        {% for item in ticket.items.all|dictsort:"timestamp" %}
+          <div class="item-card item-card-{% if item.is_custom_part %}custom{% else %}inventory{% endif %} mb-3 border rounded p-3">
+            <div class="row align-items-start">
+              <!-- Item Type Icon -->
+              <div class="col-auto">
+                {% if item.is_custom_part %}
+                  <div class="item-icon item-icon-custom rounded-circle d-flex align-items-center justify-content-center">
+                    <i class="fas fa-tools"></i>
+                  </div>
+                {% else %}
+                  <div class="item-icon item-icon-inventory rounded-circle d-flex align-items-center justify-content-center">
+                    <i class="fas fa-box"></i>
+                  </div>
+                {% endif %}
+              </div>
+              
+              <!-- Item Details -->
+              <div class="col">
+                {% if item.is_custom_part %}
+                  <!-- Custom Part Display -->
+                  <div class="d-flex justify-content-between align-items-start mb-2">
+                    <div class="flex-grow-1">
+                      <h6 class="mb-1 item-title-custom fw-bold">
+                        {{ item.custom_part_name }}
+                        <span class="badge badge-custom ms-2">Custom</span>
+                      </h6>
+                      {% if item.custom_part_description %}
+                        <p class="mb-2 text-muted small">{{ item.custom_part_description }}</p>
+                      {% endif %}
+                    </div>
+                    <div class="text-end">
+                      <div class="fw-bold quantity-display">
+                        Qty: {{ item.quantity_used }}
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <!-- Custom Part Pricing -->
+                  {% if item.custom_part_cost %}
+                    <div class="pricing-info mt-2">
+                      <div class="row g-2">
+                        <div class="col-auto">
+                          <span class="badge badge-unit-price">
+                            Unit: ${{ item.custom_part_cost|floatformat:2 }}
+                          </span>
+                        </div>
+                        <div class="col-auto">
+                          <span class="badge badge-total-price">
+                            Total: ${{ item.custom_part_cost|mul:item.quantity_used|floatformat:2 }}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  {% endif %}
+                  
+                {% else %}
+                  <!-- Inventory Product Display -->
+                  <div class="d-flex justify-content-between align-items-start mb-2">
+                    <div class="flex-grow-1">
+                      <h6 class="mb-1 item-title-inventory fw-bold">
+                        {{ item.product.title }}
+                        <span class="badge badge-inventory ms-2">Inventory</span>
+                      </h6>
+                      <div class="product-details text-muted small">
+                        <div class="row g-2">
+                          <div class="col-auto">
+                            <strong>Part #:</strong> {{ item.product.product_ID }}
+                          </div>
+                          <div class="col-auto">
+                            <strong>Location:</strong> {{ item.product.location_ID }}
+                          </div>
+                          {% if item.product.vendor %}
+                            <div class="col-auto">
+                              <strong>Vendor:</strong> {{ item.product.vendor }}
+                            </div>
+                          {% endif %}
+                        </div>
+                      </div>
+                    </div>
+                    <div class="text-end">
+                      <div class="fw-bold quantity-display">
+                        Qty: {{ item.quantity_used }}
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <!-- Inventory Product Additional Info -->
+                  {% if item.product.description %}
+                    <p class="mb-2 text-muted small">
+                      <strong>Description:</strong> {{ item.product.description|truncatewords:15 }}
+                    </p>
+                  {% endif %}
+                  
+                  <!-- Inventory Pricing (if user has permission) -->
+                  {% if request.user.is_superuser and item.product.admin_field_price1 %}
+                    <div class="pricing-info mt-2">
+                      <div class="row g-2">
+                        <div class="col-auto">
+                          <span class="badge badge-unit-price">
+                            Unit: ${{ item.product.admin_field_price1|floatformat:2 }}
+                          </span>
+                        </div>
+                        <div class="col-auto">
+                          <span class="badge badge-total-price">
+                            Total: ${{ item.product.admin_field_price1|mul:item.quantity_used|floatformat:2 }}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  {% endif %}
+                {% endif %}
+                
+                <!-- Item Metadata -->
+                <div class="item-meta mt-2 pt-2 border-top">
+                  <div class="row g-2 align-items-center">
+                    <div class="col-auto">
+                      <small class="text-muted">
+                        <i class="fas fa-clock me-1"></i>
+                        Added {{ item.timestamp|date:"M d, Y g:i A" }}
+                      </small>
+                    </div>
+                    {% if item.added_by %}
+                      <div class="col-auto">
+                        <small class="text-muted">
+                          <i class="fas fa-user me-1"></i>
+                          by {{ item.added_by.username }}
+                        </small>
+                      </div>
+                    {% endif %}
+                    <div class="col-auto ms-auto">
+                      {% if item.is_custom_part %}
+                        <span class="badge badge-type-custom">Custom Part</span>
+                      {% else %}
+                        <span class="badge badge-type-inventory">Inventory Item</span>
+                      {% endif %}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+  {% else %}
+    <!-- No Items Message -->
+    <div class="no-items text-center py-5">
+      <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+      <h5 class="text-muted">No Items Added Yet</h5>
+      <p class="text-muted">This job ticket doesn't have any parts or products associated with it yet.</p>
+    </div>
+  {% endif %}
+</div>
+
+<style>
+:root {
+  --company-yellow: #fae043;
+  --company-blue: #01acca;
+  --company-dark-blue: #01849e;
+  --success-green: #28a745;
+  --danger-red: #dc3545;
+  --light-bg: #f8f9fa;
+  --white: #ffffff;
+  --gray-100: #f8f9fa;
+  --gray-200: #e9ecef;
+  --gray-300: #dee2e6;
+  --gray-600: #6c757d;
+  --gray-800: #343a40;
+}
+
+.job-ticket-details {
+  max-height: 75vh;
+  overflow-y: auto;
+}
+
+/* Header Styling */
+.details-header {
+  background: linear-gradient(135deg, var(--gray-100) 0%, var(--gray-200) 100%);
+  border-left: 4px solid var(--company-blue) !important;
+}
+
+.section-title {
+  color: var(--company-blue);
+  font-weight: 600;
+}
+
+/* Badge Styling */
+.badge-genre {
+  background-color: var(--company-blue);
+  color: white;
+}
+
+.badge-status-inprogress {
+  background-color: var(--company-yellow);
+  color: var(--gray-800);
+}
+
+.badge-status-complete {
+  background-color: var(--success-green);
+  color: white;
+}
+
+/* Stat Cards */
+.stat-card {
+  background: white;
+  transition: all 0.2s ease;
+  border: 1px solid var(--gray-200);
+}
+
+.stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(1, 172, 202, 0.15);
+}
+
+.stat-card-primary {
+  border-left: 4px solid var(--company-blue);
+}
+
+.stat-card-blue h5 {
+  color: var(--company-blue);
+}
+
+.stat-card-yellow h5 {
+  color: #f39c12; /* Darker yellow for better readability */
+}
+
+.stat-card-success h5 {
+  color: var(--success-green);
+}
+
+.stat-card-cost h5 {
+  color: var(--danger-red);
+}
+
+.stat-card-retail h5 {
+  color: var(--company-blue);
+}
+
+.stat-card-total h5 {
+  color: var(--gray-800);
+}
+
+.stat-card-profit h5 {
+  /* Color handled by template logic */
+}
+
+/* Item Cards */
+.item-card {
+  transition: all 0.2s ease;
+  border-left: 4px solid transparent !important;
+  background: white;
+}
+
+.item-card:hover {
+  transform: translateX(3px);
+  box-shadow: 0 3px 10px rgba(1, 172, 202, 0.1);
+}
+
+.item-card-custom {
+  border-left-color: var(--company-yellow) !important;
+  background: linear-gradient(135deg, #fffef7 0%, white 100%);
+}
+
+.item-card-inventory {
+  border-left-color: var(--company-blue) !important;
+  background: linear-gradient(135deg, #f0fcff 0%, white 100%);
+}
+
+/* Item Icons */
+.item-icon {
+  width: 40px;
+  height: 40px;
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.item-icon-custom {
+  background: linear-gradient(135deg, var(--company-yellow) 0%, #f1c40f 100%);
+  color: var(--gray-800);
+  {% comment %} border: 2px solid #f39c12; {% endcomment %}
+}
+
+.item-icon-inventory {
+  background: linear-gradient(135deg, var(--company-blue) 0%, var(--company-dark-blue) 100%);
+  color: white;
+  border: 2px solid var(--company-dark-blue);
+}
+
+/* Item Titles */
+.item-title-custom {
+  color: #000; /* Darker yellow/orange for readability */
+
+}
+
+.item-title-inventory {
+  color: var(--company-blue);
+}
+
+/* Badges */
+.badge-custom {
+  background-color: var(--company-yellow);
+  color: var(--gray-800);
+  {% comment %} border: 1px solid #f39c12; {% endcomment %}
+}
+
+.badge-inventory {
+  background-color: var(--company-blue);
+  color: white;
+}
+
+.badge-unit-price {
+  background-color: var(--gray-200);
+  color: var(--gray-800);
+  border: 1px solid var(--gray-300);
+}
+
+.badge-total-price {
+  background-color: var(--success-green);
+  color: white;
+}
+
+.badge-type-custom {
+  background-color: rgba(250, 224, 67, 0.2);
+  color: #d68910;
+  border: 1px solid var(--company-yellow);
+}
+
+.badge-type-inventory {
+  background-color: rgba(1, 172, 202, 0.2);
+  color: var(--company-blue);
+  border: 1px solid var(--company-blue);
+}
+
+/* Quantity Display */
+.quantity-display {
+  color: var(--success-green);
+  font-size: 1.1rem;
+}
+
+/* Item Metadata */
+.item-meta {
+  background-color: var(--gray-100);
+  border-radius: 6px;
+  padding: 0.75rem;
+  margin: 0 -0.5rem;
+  border-top: 1px solid var(--gray-200) !important;
+}
+
+/* No Items Message */
+.no-items {
+  background: linear-gradient(135deg, var(--gray-100) 0%, white 100%);
+  border-radius: 8px;
+  border: 2px dashed var(--gray-300);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .item-card .row {
+    --bs-gutter-x: 0.5rem;
+  }
+  
+  .item-icon {
+    width: 35px;
+    height: 35px;
+    font-size: 0.8rem;
+  }
+  
+  .stat-card {
+    margin-bottom: 0.5rem;
+  }
+}
+
+/* Custom scrollbar for the details modal */
+.job-ticket-details::-webkit-scrollbar {
+  width: 8px;
+}
+
+.job-ticket-details::-webkit-scrollbar-track {
+  background: var(--gray-100);
+  border-radius: 4px;
+}
+
+.job-ticket-details::-webkit-scrollbar-thumb {
+  background: var(--company-blue);
+  border-radius: 4px;
+}
+
+.job-ticket-details::-webkit-scrollbar-thumb:hover {
+  background: var(--company-dark-blue);
+}
+</style>
