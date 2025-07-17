@@ -1,0 +1,16 @@
+<!-- Templates/admin/auth/user/change_form.html -->
+{% extends "admin/change_form.html" %}
+
+{% block submit_buttons_bottom %}
+    {{ block.super }}
+    <div class="submit-row">
+        <p class="help" style="color: #666; font-style: italic; margin-top: 10px;">
+            <strong>Note:</strong> This user is automatically set as active staff member. 
+            {% if original.is_superuser %}
+                Superusers cannot be assigned to groups.
+            {% else %}
+                Users can only be assigned to one group maximum.
+            {% endif %}
+        </p>
+    </div>
+{% endblock %}
