@@ -1,15 +1,36 @@
 from django import forms
-from django.contrib.auth.models import User
+from django.contrib.auth.models import User, Group
 from django.contrib.auth.forms import UserCreationForm, AdminPasswordChangeForm
 from Products.models import Product 
 from Pages.models import Search
 from django.core.exceptions import ValidationError
 from jobtickets.models import JobTicket, JobTicketItem
 
+
+
 class UserRegistrationAdminForm(UserCreationForm):
+    """Enhanced user registration form with group restrictions"""
+    
+    groups = forms.ModelChoiceField(
+        queryset=Group.objects.all(),
+        required=False,
+        empty_label="No Group",
+        help_text="Select a single group for this user. Cannot be set if user is a superuser.",
+        widget=forms.Select(attrs={'class': 'form-control'})
+    )
+    
+    is_superuser = forms.BooleanField(
+        required=False,
+        label="Superuser status",
+        help_text="Designates that this user has all permissions on the program. Superusers cannot be assigned to groups.",
+        widget=forms.CheckboxInput(attrs={'class': 'form-check-input'})
+    )
+    
     class Meta:
         model = User
-        fields = ['username', 'password1', 'password2']
+        fields = ['username', 'password1', 'password2', 'is_superuser', 'groups']
+        # Exclude groups from automatic m2m handling
+        exclude = ['user_permissions']
 
     def clean_username(self):
         username = self.cleaned_data.get('username')
@@ -23,13 +44,67 @@ class UserRegistrationAdminForm(UserCreationForm):
             raise ValidationError("Password cannot contain ':'")
         return password
 
+    def clean(self):
+        cleaned_data = super().clean()
+        is_superuser = cleaned_data.get('is_superuser', False)
+        selected_group = cleaned_data.get('groups')
+        
+        # Prevent superusers from having groups
+        if is_superuser and selected_group:
+            raise ValidationError({
+                'groups': 'Superusers cannot be assigned to groups.'
+            })
+        
+        return cleaned_data
+
+    def save(self, commit=True):
+        user = super().save(commit=False)
+        
+        # Force is_staff to True for all users (as per requirement)
+        user.is_staff = True
+        
+        # Set superuser status from form
+        user.is_superuser = self.cleaned_data.get('is_superuser', False)
+        
+        if commit:
+            user.save()
+            # Groups will be handled in save_related method of admin
+        
+        return user
+    
+    def save_groups(self):
+        """Handle group assignment for add form"""
+        user = self.instance
+        selected_group = self.cleaned_data.get('groups')
+        
+        # Clear all existing groups first
+        user.groups.clear()
+        
+        # Add the selected group if any and user is not superuser
+        if selected_group and not user.is_superuser:
+            user.groups.add(selected_group)
+
+
 class NoColonAdminPasswordChangeForm(AdminPasswordChangeForm):
-     def clean_password1(self):
+    """Enhanced password change form with colon restriction"""
+    
+    def clean_password1(self):
         password = self.cleaned_data.get('password1')
         if ":" in password:
             raise ValidationError("Password cannot contain a colon (:) character.")
         return password
 
+    def clean_password2(self):
+        password1 = self.cleaned_data.get('password1')
+        password2 = self.cleaned_data.get('password2')
+        
+        if password1 and password2:
+            if password1 != password2:
+                raise ValidationError("The two password fields didn't match.")
+            if ":" in password2:
+                raise ValidationError("Password cannot contain a colon (:) character.")
+        
+        return password2
 
 class UserRegisterForm(UserCreationForm):
   email = forms.EmailField()

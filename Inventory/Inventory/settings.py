@@ -30,8 +30,8 @@ DEBUG = False
 ALLOWED_HOSTS = ['192.168.88.111', '0.0.0.0', '192.168.88.80', '127.0.0.1', '192.168.88.152']
 
 
-# Timeout duration in seconds (e.g., 15 minutes = 900 seconds)
-SESSION_COOKIE_AGE = 900
+# Timeout duration in seconds (e.g., 5 minutes = 300 seconds)
+SESSION_COOKIE_AGE = 300
 
 # Refresh session expiry time with every request
 SESSION_SAVE_EVERY_REQUEST = True
